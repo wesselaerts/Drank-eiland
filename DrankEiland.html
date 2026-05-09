@@ -1,0 +1,2088 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#0c1326" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="DrankEiland" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="icon" href="icon-192.png" />
+<title>DrankEiland</title>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg-0: #0a1124; --bg-1: #121b35; --bg-2: #1c2747;
+  --ink: #f4f1e8; --ink-dim: #b9b9c9; --ink-mute: #7d829a;
+  --accent: #ffb84d; --accent-2: #ff5e7a;
+  --lava: #ff5238; --leaf: #41c98a; --water: #4fb5e6;
+  --rule: #b88dff; --gold: #ffd24c;
+  --card: #182241; --card-2: #20305a;
+  --line: rgba(255,255,255,0.08);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+html, body { margin: 0; padding: 0;
+  background: radial-gradient(ellipse at top, #1a2a52 0%, #0a1124 60%, #050817 100%);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 17px; line-height: 1.4; -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none; touch-action: manipulation;
+}
+body { min-height: 100vh; min-height: 100dvh; }
+#app { width: 100%; max-width: 480px; margin: 0 auto; min-height: 100dvh;
+  position: relative; display: flex; flex-direction: column; }
+#screen-root { flex: 1; display: flex; flex-direction: column; }
+h1, h2, h3, .display { font-family: "SF Pro Display", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  letter-spacing: -0.01em; font-weight: 800; margin: 0; }
+h1 { font-size: 34px; line-height: 1.05; }
+h2 { font-size: 22px; line-height: 1.15; }
+h3 { font-size: 18px; }
+p { margin: 0 0 8px; }
+small, .small { font-size: 13px; color: var(--ink-dim); }
+.muted { color: var(--ink-mute); }
+.btn { appearance: none; border: 0; font: inherit; font-weight: 700;
+  color: #0a1124; background: var(--accent); border-radius: 14px;
+  padding: 14px 18px; min-height: 52px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.25), 0 8px 22px rgba(255,184,77,0.25);
+  transition: transform 80ms ease, box-shadow 80ms ease; user-select: none; }
+.btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+.btn[disabled] { opacity: 0.45; box-shadow: none; cursor: not-allowed; }
+.btn.full { width: 100%; }
+.btn.lg { min-height: 60px; font-size: 19px; border-radius: 16px; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+.btn.ghost:active { background: rgba(255,255,255,0.05); }
+.btn.danger { background: var(--accent-2); color: #fff; }
+.btn.dark { background: var(--card-2); color: var(--ink); box-shadow: none; }
+.btn.gold { background: var(--gold); }
+.btn-row { display: flex; gap: 10px; }
+.btn-row > .btn { flex: 1; }
+.section { background: var(--card); border: 1px solid var(--line);
+  border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+.section h2 { margin-bottom: 4px; }
+.section .hint { color: var(--ink-mute); font-size: 13px; margin-bottom: 12px; }
+.screen { padding: calc(16px + var(--safe-top)) 16px calc(20px + var(--safe-bot));
+  flex: 1; display: flex; flex-direction: column; }
+.screen-scroll { overflow-y: auto; }
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.brand-mark { width: 52px; height: 52px; border-radius: 14px;
+  background: radial-gradient(circle at 30% 30%, #ffd24c, #ff8b3a 50%, #ff5238 80%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 24px rgba(255,82,56,0.35); position: relative; overflow: hidden; }
+.brand-mark::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: 6px; height: 14px;
+  background: #2a3a64;
+  clip-path: polygon(0 100%, 20% 50%, 35% 70%, 55% 30%, 70% 60%, 85% 40%, 100% 100%); }
+.brand h1 { font-size: 28px; }
+.brand .tag { color: var(--ink-mute); font-size: 13px; }
+.player-row { display: grid; grid-template-columns: 44px 1fr 36px; gap: 10px;
+  align-items: center; padding: 10px; background: var(--card-2);
+  border-radius: 12px; margin-bottom: 8px; }
+.player-row .avatar { width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; color: #0a1124; font-size: 18px;
+  background: var(--accent); cursor: pointer; user-select: none; }
+.player-row .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.player-row .remove-btn { width: 36px; height: 36px; border-radius: 10px;
+  background: transparent; border: 1px solid var(--line); color: var(--ink-dim);
+  font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+input[type="text"], input[type="number"] { appearance: none; width: 100%;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+  color: var(--ink); font: inherit; padding: 10px 12px; border-radius: 10px;
+  outline: none; min-height: 40px; }
+input::placeholder { color: var(--ink-mute); }
+input:focus { border-color: var(--accent); background: rgba(255,184,77,0.08); }
+.add-player-btn { width: 100%; background: transparent;
+  border: 1.5px dashed rgba(255,255,255,0.15); color: var(--ink-dim);
+  border-radius: 12px; padding: 12px; font: inherit; font-weight: 600; cursor: pointer; }
+.add-player-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+.seg { display: flex; gap: 4px; background: var(--card-2);
+  border-radius: 12px; padding: 4px; }
+.seg button { flex: 1; appearance: none; border: 0; font: inherit; font-weight: 600;
+  color: var(--ink-dim); background: transparent; padding: 10px 8px;
+  min-height: 40px; border-radius: 9px; cursor: pointer; }
+.seg button.on { background: var(--bg-1); color: var(--ink);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+.radio-list { display: grid; gap: 8px; }
+.radio-card { display: grid; grid-template-columns: 22px 1fr; gap: 10px;
+  align-items: start; background: var(--card-2);
+  border: 1px solid transparent; border-radius: 12px; padding: 12px; cursor: pointer; }
+.radio-card.on { border-color: var(--accent); background: rgba(255,184,77,0.06); }
+.radio-card .dot { width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--ink-mute); margin-top: 2px; position: relative; }
+.radio-card.on .dot { border-color: var(--accent); }
+.radio-card.on .dot::after { content: ""; position: absolute; inset: 3px;
+  border-radius: 50%; background: var(--accent); }
+.radio-card .label { font-weight: 700; }
+.radio-card .desc { color: var(--ink-mute); font-size: 13px; margin-top: 2px; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.toggle-row .label { font-weight: 600; }
+.toggle { width: 50px; height: 30px; background: var(--card-2);
+  border-radius: 999px; position: relative; cursor: pointer; transition: background 120ms; }
+.toggle::after { content: ""; position: absolute; top: 3px; left: 3px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--ink); transition: transform 140ms ease; }
+.toggle.on { background: var(--leaf); }
+.toggle.on::after { transform: translateX(20px); }
+.sticky-foot { position: sticky; bottom: 0;
+  margin: 16px -16px calc(-20px - var(--safe-bot));
+  padding: 12px 16px calc(12px + var(--safe-bot));
+  background: linear-gradient(to top, var(--bg-0) 70%, rgba(10,17,36,0)); }
+.board-wrap { position: relative; flex: 1; display: flex; flex-direction: column;
+  padding: calc(8px + var(--safe-top)) 12px calc(12px + var(--safe-bot)); gap: 10px; }
+.board-topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.round-pill { background: var(--card); border: 1px solid var(--line);
+  border-radius: 999px; padding: 6px 10px; font-size: 12px;
+  color: var(--ink-dim); display: flex; align-items: center; gap: 6px; }
+.round-pill .dot-vol { width: 8px; height: 8px; border-radius: 50%; background: var(--leaf); }
+.round-pill.volcano .dot-vol { background: var(--lava); box-shadow: 0 0 8px var(--lava); }
+.icon-btn { background: var(--card); border: 1px solid var(--line); color: var(--ink);
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
+.island { flex: 1; position: relative; border-radius: 20px; overflow: hidden;
+  background: radial-gradient(ellipse 90% 60% at 50% 110%, #2c3e6e 0%, #0a1124 70%),
+              linear-gradient(to bottom, #1a2a52, #0a1124);
+  box-shadow: inset 0 0 0 1px var(--line); min-height: 380px; }
+.island.volcano-mode { animation: volcano-shake 1.6s ease-in-out infinite; }
+@keyframes volcano-shake { 0%,100%{transform:translate(0,0);} 25%{transform:translate(-1px,1px);} 50%{transform:translate(1px,-1px);} 75%{transform:translate(-1px,-1px);} }
+.island svg.board-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.token { position: absolute; width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #0a1124; font-weight: 800; font-size: 11px; border: 2px solid #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.45), inset 0 -3px 6px rgba(0,0,0,0.3); transform: translate(-50%, -50%);
+  transition: left 520ms cubic-bezier(.34,1.56,.64,1), top 520ms cubic-bezier(.34,1.56,.64,1); z-index: 5; }
+.token.active { outline: 3px solid var(--gold); outline-offset: 2px; z-index: 6; }
+.token.back { outline: 3px solid var(--lava); outline-offset: 2px; box-shadow: 0 0 18px var(--lava); }
+.turn-banner { background: var(--card); border-radius: 16px; border: 1px solid var(--line);
+  padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+.turn-banner .ava { width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; color: #0a1124; font-weight: 800; }
+.turn-banner .meta { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.turn-banner .who { font-weight: 700; }
+.turn-banner .sub { font-size: 12px; color: var(--ink-mute); }
+.dice-area { display: flex; align-items: center; gap: 12px; }
+.dice { width: 60px; height: 60px; border-radius: 14px; background: #fff;
+  color: #0a1124; display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: 900;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35), inset 0 -4px 0 rgba(0,0,0,0.1); }
+.dice.rolling { animation: dice-roll 0.6s linear; }
+@keyframes dice-roll { 0%{transform:rotate(0) scale(1);} 25%{transform:rotate(-25deg) scale(1.05);} 50%{transform:rotate(25deg) scale(0.95);} 75%{transform:rotate(-15deg) scale(1.03);} 100%{transform:rotate(0) scale(1);} }
+.rule-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.rule-strip::-webkit-scrollbar { display: none; }
+.rule-chip { flex: 0 0 auto; background: var(--card); border: 1px solid var(--line);
+  border-radius: 999px; padding: 6px 12px; font-size: 12px; color: var(--ink-dim);
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.rule-chip .ico { font-size: 14px; }
+.rule-chip.verbal { border-color: rgba(184,141,255,0.4); color: #d8c4ff; }
+.rule-chip.physical { border-color: rgba(79,181,230,0.4); color: #b3e1f6; }
+.rule-chip.name_mode { border-color: rgba(255,184,77,0.4); color: #ffd9a3; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(5,8,23,0.75);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: flex-end; justify-content: center; z-index: 50;
+  padding: 16px; padding-bottom: calc(16px + var(--safe-bot)); animation: fade-in 160ms ease; }
+.modal-backdrop.center { align-items: center; }
+@keyframes fade-in { from{opacity:0;} to{opacity:1;} }
+.modal { width: 100%; max-width: 460px; background: var(--bg-1);
+  border-radius: 22px; border: 1px solid var(--line); padding: 20px;
+  animation: modal-up 220ms cubic-bezier(.2,.8,.2,1.2); max-height: 90dvh; overflow-y: auto; }
+@keyframes modal-up { from{transform:translateY(40px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+.modal h2 { margin-bottom: 4px; }
+.modal .pre-bullets { display: grid; gap: 8px; margin: 14px 0; padding: 0; }
+.modal .pre-bullets li { list-style: none; display: grid;
+  grid-template-columns: 24px 1fr; gap: 8px; align-items: start;
+  font-size: 14px; color: var(--ink-dim); }
+.modal .pre-bullets li::before { content: ""; display: block;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  margin-top: 8px; margin-left: 8px; }
+#toast-root { position: fixed; top: calc(20px + var(--safe-top));
+  left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none; z-index: 100; }
+.toast { background: rgba(20,30,60,0.95); border: 1px solid var(--line);
+  color: var(--ink); padding: 10px 14px; border-radius: 999px; font-size: 14px;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.35);
+  animation: toast-in 220ms ease, toast-out 220ms ease 2.4s forwards;
+  max-width: 90%; text-align: center; }
+.toast.warn { border-color: rgba(255,184,77,0.5); }
+.toast.danger { border-color: rgba(255,82,56,0.5); color: #ffd1c9; }
+.toast.rule { border-color: rgba(184,141,255,0.5); color: #e7d7ff; }
+@keyframes toast-in { from{transform:translateY(-12px);opacity:0;} }
+@keyframes toast-out { to{transform:translateY(-12px);opacity:0;} }
+.chip-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chip { background: var(--card-2); border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.chip.win { background: rgba(65,201,138,0.18); color: #b8f0d2; }
+.chip.lose { background: rgba(255,82,56,0.18); color: #ffd1c9; }
+.chip.drink { background: rgba(255,184,77,0.18); color: #ffe1b3; }
+.chip.rule { background: rgba(184,141,255,0.18); color: #e7d7ff; }
+.score-row { display: grid; grid-template-columns: 28px 36px 1fr auto; gap: 10px;
+  align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.score-row:last-child { border-bottom: 0; }
+.score-row .rank { font-weight: 800; color: var(--ink-mute); text-align: center; }
+.score-row .ava { width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; color: #0a1124; font-weight: 800; }
+.score-row .info { min-width: 0; }
+.score-row .name { font-weight: 700; }
+.score-row .pos { font-size: 12px; color: var(--ink-mute); }
+.score-row .nums { text-align: right; font-size: 12px; color: var(--ink-dim); }
+.arena { background: linear-gradient(160deg, #0e1934, #14224a);
+  border-radius: 18px; border: 1px solid var(--line); padding: 16px;
+  display: flex; flex-direction: column; gap: 12px; }
+.tap-pad { flex: 1; min-height: 240px; border-radius: 16px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 22px; text-align: center;
+  user-select: none; cursor: pointer; transition: background 80ms; }
+.tap-pad.hot { background: rgba(255,82,56,0.25); border-color: var(--lava); }
+.tap-pad.go { background: rgba(65,201,138,0.25); border-color: var(--leaf); }
+.mem-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.mem-cell { aspect-ratio: 1/1; border-radius: 12px; background: var(--card-2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; cursor: pointer; user-select: none; }
+.mem-cell.show { background: var(--accent); color: #0a1124; }
+.won-banner { text-align: center; padding: 30px 16px; }
+.won-banner .crown { font-size: 56px; }
+.won-banner h1 { margin-top: 10px; }
+.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 90; }
+.confetti span { position: absolute; width: 8px; height: 14px; top: -20px;
+  animation: fall 3s linear forwards; border-radius: 2px; }
+@keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+.row { display: flex; gap: 8px; align-items: center; }
+.row.between { justify-content: space-between; }
+.gap-md { gap: 12px; }
+.mt { margin-top: 12px; }
+.mb { margin-bottom: 12px; }
+.center { text-align: center; }
+.tag-line { font-size: 12px; color: var(--ink-mute); text-align: center; margin-top: 8px; }
+hr.sep { border: 0; height: 1px; background: var(--line); margin: 14px 0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- screens get injected here -->
+  <div id="screen-root"></div>
+  <div id="toast-root"></div>
+</div>
+
+<script>
+
+/* === data.js === */
+/* ========== DrankEiland data ========== */
+// All static content lives here so it's easy to extend.
+
+// Avatar palette: 8 colors + initials
+const AVATAR_COLORS = [
+  "#ffb84d", "#ff5e7a", "#41c98a", "#4fb5e6",
+  "#b88dff", "#ffd24c", "#ff8b3a", "#7adfb1"
+];
+
+// Drinking intensity profiles
+const INTENSITIES = {
+  chill:  { label: "Chill",  blurb: "1–2 slokken. Soms een shotje.",            mult: 2, shotChance: 0.10, everyone: 0.10 },
+  normal: { label: "Normal", blurb: "2–3 slokken. Regelmatig shots.",            mult: 3, shotChance: 0.30, everyone: 0.18 },
+  chaos:  { label: "Chaos",  blurb: "3–5 slokken. Iedereen drinkt vaak.",         mult: 5, shotChance: 0.50, everyone: 0.30 }
+};
+
+// Name modes
+const NAME_MODES = {
+  real: "Use real names",
+  nick: "Use nicknames",
+  mix:  "Mix (random each round)"
+};
+
+// Baseline rules added when toggle is on
+const BASELINE_RULES = [
+  { id: "base_no_point", type: "physical", title: "No pointing", description: "Don't point at anyone with your finger. Slip-up = 1 sip.", duration: -1, source: "baseline" },
+  { id: "base_no_dword", type: "verbal",   title: "No D-words", description: "Don't say drink/drank/drunk. Use sip, consume, etc.", duration: -1, source: "baseline" },
+  { id: "base_wronghand",type: "physical", title: "Wrong-hand drinking", description: "Sip with your non-dominant hand only.", duration: -1, source: "baseline" }
+];
+
+// Pool of temporary rules a Rule Stone or mini-game can add
+const RULE_POOL = [
+  { id: "no_first",   type: "verbal",   title: "No first names",  description: "Don't use anyone's real first name. Slip-up = 1 sip.", duration: 4 },
+  { id: "nick_only",  type: "name_mode",title: "Nicknames only",  description: "Address everyone by their nickname.", duration: 4 },
+  { id: "no_nick",    type: "name_mode",title: "No nicknames",    description: "Use real names only. Nicknames forbidden.", duration: 4 },
+  { id: "no_swear",   type: "verbal",   title: "No swearing",     description: "Swears cost a sip.", duration: 4 },
+  { id: "forbidden",  type: "verbal",   title: "Forbidden word",  description: "Pick a word at random — no one may say it.", duration: 4 },
+  { id: "accent",     type: "verbal",   title: "Accent mode",     description: "Speak in a silly accent. Drop it = 1 sip.", duration: 3 },
+  { id: "caveman",    type: "verbal",   title: "Caveman speak",   description: "Short caveman sentences only.", duration: 3 },
+  { id: "question",   type: "verbal",   title: "Question tone",   description: "Every sentence must sound like a question.", duration: 3 },
+  { id: "trex",       type: "physical", title: "T-Rex arms",      description: "Elbows pinned to body. Break form = sip.", duration: 4 },
+  { id: "seatbelt",   type: "physical", title: "Invisible seatbelt", description: "Mime a seatbelt every sit/stand.", duration: 5 },
+  { id: "twohand",    type: "physical", title: "Two-handed drinking", description: "Hold the glass with both hands.", duration: 4 },
+  { id: "president",  type: "physical", title: "Mr. President",   description: "Two fingers to ear when you talk.", duration: 3 },
+  { id: "no_head",    type: "physical", title: "No touching your head", description: "Hands off your own head. Slip = sip.", duration: 4 },
+  { id: "left_name",  type: "name_mode",title: "Left-side names", description: "Address each person by the name of the player to their left.", duration: 3 },
+];
+
+// The board: 36 spaces around the volcano island.
+// Types: neutral, plus, minus, mini_1v1, mini_all, mini_all_v_1, tornado, swap, statue_good, statue_bad, volcano_trigger, rule_stone, finish
+const BOARD_SPACES = [
+  { type: "neutral",         label: "Beach Start" },
+  { type: "mini_1v1",        label: "Driftwood Duel" },
+  { type: "rule_stone",      label: "Rule Stone" },
+  { type: "plus",  amt: 3,   label: "Jungle Shortcut +3" },
+  { type: "tornado",         label: "Sea Breeze" },
+  { type: "mini_1v1",        label: "Tide Pool Duel" },
+  { type: "minus", amt: 3,   label: "Spilled Beer -3" },
+  { type: "swap",            label: "Sand Swap" },
+  { type: "tornado",         label: "Trade Winds" },
+  { type: "mini_all",        label: "Coconut Chaos" },
+  { type: "statue_good",     label: "Lucky Idol" },
+  { type: "mini_all",        label: "Lagoon Games" },
+  { type: "minus", amt: 4,   label: "Sneaky Shotje -4" },
+  { type: "rule_stone",      label: "Rule Stone" },
+  { type: "swap",            label: "Mirage Swap" },
+  { type: "mini_1v1",        label: "Cliff Duel" },
+  { type: "plus",  amt: 4,   label: "Goat Trail +4" },
+  { type: "tornado",         label: "Smoke Plume" },
+  { type: "mini_all_v_1",    label: "Cliffside Standoff" },
+  { type: "skull",           label: "Skull Pit" },
+  { type: "volcano_trigger", label: "Volcano Awakens!" },
+  { type: "mini_1v1",        label: "Ash Brawl" },
+  { type: "statue_bad",      label: "Cursed Idol" },
+  { type: "mini_1v1",        label: "Magma Dash Duel" },
+  { type: "minus", amt: 4,   label: "Lava Splash -4" },
+  { type: "rule_stone",      label: "Rule Stone" },
+  { type: "tornado",         label: "Hete Wind" },
+  { type: "plus",  amt: 5,   label: "Updraft +5" },
+  { type: "swap",            label: "Lava Swap" },
+  { type: "mini_all",        label: "Crater Carnival" },
+  { type: "mini_all_v_1",    label: "Caldera Showdown" },
+  { type: "minus", amt: 3,   label: "Sulfur Trip -3" },
+  { type: "statue_good",     label: "Ancient Totem" },
+  { type: "rule_stone",      label: "Rule Stone" },
+  { type: "skull",           label: "Lavakuil" },
+  { type: "finish",          label: "Volcano Treasure" }
+];
+
+// Pre-laid pixel coordinates for each space (in the 100x140 SVG viewBox)
+// Designed as a winding path from beach (bottom) to volcano (top).
+const PATH_POINTS = [
+  [12,132],[22,128],[34,128],[46,124],[58,128],[72,128],[84,124],[88,116],[80,112],[68,112],
+  [54,114],[40,114],[26,112],[14,108],[12,98],[22,94],[36,94],[50,92],[64,92],[78,92],
+  [88,86],[82,78],[68,78],[54,78],[40,78],[26,78],[14,72],[18,62],[32,60],[46,58],
+  [60,58],[72,54],[80,46],[68,40],[56,32],[50,18]
+];
+
+/* === state.js === */
+/* ========== GameState ========== */
+const GameState = {
+  // setup
+  players: [],                // { id, realName, nickname, color, pos, miniWins, drinks, penaltiesGiven, ruleBreaks }
+  intensity: "normal",
+  nameMode: "mix",
+  baselineRulesEnabled: true,
+  // runtime
+  board: [],
+  currentPlayerIndex: 0,
+  round: 1,
+  volcanoMode: 0,             // remaining rounds in volcano mode (0 = off)
+  activeRules: [],
+  miniGameHistory: [],
+  rngTurnNameStyle: "real",   // resolved per turn when nameMode === "mix"
+  finished: false,
+  winnerId: null,
+  // ui
+  screen: "setup"
+};
+
+function newPlayerId() { return "p" + Math.random().toString(36).slice(2, 8); }
+
+function makePlayer(idx) {
+  return {
+    id: newPlayerId(),
+    realName: "",
+    nickname: "",
+    color: AVATAR_COLORS[idx % AVATAR_COLORS.length],
+    pos: 0,
+    miniWins: 0,
+    drinks: 0,
+    penaltiesGiven: 0,
+    ruleBreaks: 0
+  };
+}
+
+function defaultPlayers() {
+  // start with two empty players to encourage filling
+  return [makePlayer(0), makePlayer(1)];
+}
+
+function nameOf(player, force) {
+  if (!player) return "";
+  const mode = force || (GameState.nameMode === "mix" ? GameState.rngTurnNameStyle : GameState.nameMode);
+  if (mode === "real") return player.realName || player.nickname || "?";
+  return player.nickname || player.realName || "?";
+}
+
+function initials(player) {
+  const n = (player.realName || player.nickname || "?").trim();
+  return (n[0] || "?").toUpperCase();
+}
+
+function intensityProfile() { return INTENSITIES[GameState.intensity] || INTENSITIES.normal; }
+
+// Roll a drink suggestion based on intensity. Returns { sips, shot }.
+function rollDrinkPenalty(strength = 1) {
+  const prof = intensityProfile();
+  let sips = 1;
+  if (prof.mult >= 2 && Math.random() < 0.55) sips = 2;
+  if (prof.mult >= 3 && Math.random() < 0.4) sips = 3;
+  sips = Math.max(1, Math.round(sips * strength));
+  const shot = Math.random() < prof.shotChance && strength >= 1.2;
+  return { sips, shot };
+}
+
+function describePenalty(p) {
+  if (!p) return "";
+  if (p.shot) return `${p.sips} sips or 1 shot`;
+  return p.sips === 1 ? "1 sip" : `${p.sips} sips`;
+}
+
+function applyDrinkTo(player, p, fromPlayer) {
+  player.drinks += (p.shot ? p.sips + 2 : p.sips);
+  if (fromPlayer && fromPlayer.id !== player.id) fromPlayer.penaltiesGiven += 1;
+}
+
+function currentPlayer() { return GameState.players[GameState.currentPlayerIndex]; }
+function nextPlayerIndex() { return (GameState.currentPlayerIndex + 1) % GameState.players.length; }
+function totalSpaces() { return GameState.board.length; }
+
+function clampPos(p) { return Math.max(0, Math.min(p, totalSpaces() - 1)); }
+
+/* === ui.js === */
+/* ========== UI helpers ========== */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+function el(tag, attrs = {}, children = []) {
+  const e = document.createElement(tag);
+  for (const k in attrs) {
+    if (k === "class") e.className = attrs[k];
+    else if (k === "style") Object.assign(e.style, attrs[k]);
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2).toLowerCase(), attrs[k]);
+    else if (k === "html") e.innerHTML = attrs[k];
+    else if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  }
+  (Array.isArray(children) ? children : [children]).forEach(c => {
+    if (c == null || c === false) return;
+    if (typeof c === "string" || typeof c === "number") e.appendChild(document.createTextNode(c));
+    else e.appendChild(c);
+  });
+  return e;
+}
+
+function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+function showScreen(name, render) {
+  const root = $("#screen-root");
+  clear(root);
+  GameState.screen = name;
+  const screen = el("div", { class: "screen", "data-screen-label": name });
+  root.appendChild(screen);
+  render(screen);
+  // ensure top
+  root.scrollTo?.({ top: 0 });
+}
+
+function toast(text, kind = "") {
+  // Sticky-style notification with confirm button so it doesn't disappear too fast.
+  notify(text, kind);
+}
+function notify(text, kind = "", after) {
+  const back = el("div", { class: "modal-backdrop center" });
+  const modal = el("div", { class: "modal", style: { textAlign: "center", maxWidth: "380px" } });
+  back.appendChild(modal);
+  const icon = kind === "danger" ? "⚠️" : kind === "warn" ? "❗" : kind === "rule" ? "📜" : "✨";
+  modal.appendChild(el("div", { style: { fontSize: "42px" } }, icon));
+  modal.appendChild(el("div", { style: { fontSize: "17px", fontWeight: "700", marginTop: "8px" } }, text));
+  modal.appendChild(el("button", { class: "btn full lg mt", onclick: () => { back.remove(); after?.(); } }, "Begrepen ✓"));
+  document.body.appendChild(back);
+}
+function confirmReset() {
+  const back = el("div", { class: "modal-backdrop center" });
+  const modal = el("div", { class: "modal", style: { textAlign: "center" } });
+  back.appendChild(modal);
+  modal.appendChild(el("h2", {}, "Spel resetten?"));
+  modal.appendChild(el("div", { class: "small muted" }, "Alle spelers en voortgang worden gewist. Je gaat terug naar het startscherm."));
+  const row = el("div", { class: "btn-row mt" }, [
+    el("button", { class: "btn ghost", onclick: () => back.remove() }, "Annuleer"),
+    el("button", { class: "btn danger", onclick: () => { back.remove(); fullReset(); } }, "Reset alles")
+  ]);
+  modal.appendChild(row);
+  document.body.appendChild(back);
+}
+function fullReset() {
+  GameState.players = defaultPlayers();
+  GameState.players.forEach(p => { p.realName = ""; p.nickname = ""; });
+  GameState.intensity = "normal";
+  GameState.nameMode = "mix";
+  GameState.baselineRulesEnabled = true;
+  GameState.board = [];
+  GameState.currentPlayerIndex = 0;
+  GameState.round = 1;
+  GameState.volcanoMode = 0;
+  GameState.activeRules = [];
+  GameState.miniGameHistory = [];
+  GameState.finished = false;
+  GameState.winnerId = null;
+  showScreen("setup", renderSetup);
+}
+
+function openModal(builder, opts = {}) {
+  const back = el("div", { class: "modal-backdrop" + (opts.center ? " center" : "") });
+  const modal = el("div", { class: "modal" });
+  back.appendChild(modal);
+  builder(modal, () => back.remove());
+  back.addEventListener("click", (e) => {
+    if (e.target === back && opts.dismissable !== false) back.remove();
+  });
+  document.body.appendChild(back);
+  return back;
+}
+
+function avatarBadge(player, size = 36) {
+  return el("div", {
+    class: "ava",
+    style: { width: size + "px", height: size + "px", background: player.color, borderRadius: (size * 0.28) + "px", fontSize: Math.round(size * 0.45) + "px" }
+  }, initials(player));
+}
+
+function fireConfetti(durationMs = 3000) {
+  const layer = el("div", { class: "confetti" });
+  const colors = ["#ffb84d", "#ff5e7a", "#41c98a", "#4fb5e6", "#b88dff", "#ffd24c"];
+  for (let i = 0; i < 80; i++) {
+    const piece = el("span");
+    piece.style.left = Math.random() * 100 + "%";
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDelay = (Math.random() * 0.8) + "s";
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    layer.appendChild(piece);
+  }
+  document.body.appendChild(layer);
+  setTimeout(() => layer.remove(), durationMs + 1000);
+}
+
+/* === board.js === */
+/* ========== Board rendering ========== */
+function buildBoardSVG() {
+  const svg = `
+    <svg class="board-svg" viewBox="0 0 100 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="water" cx="50%" cy="120%" r="90%">
+          <stop offset="0%" stop-color="#3a6fb8" />
+          <stop offset="60%" stop-color="#163566" />
+          <stop offset="100%" stop-color="#08122a" />
+        </radialGradient>
+        <radialGradient id="sand" cx="50%" cy="100%" r="70%">
+          <stop offset="0%" stop-color="#f0d394" />
+          <stop offset="55%" stop-color="#b08a4c" />
+          <stop offset="100%" stop-color="#5b4928" />
+        </radialGradient>
+        <linearGradient id="volc" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffb84d" />
+          <stop offset="30%" stop-color="#ff5238" />
+          <stop offset="70%" stop-color="#5a1d12" />
+          <stop offset="100%" stop-color="#1a0a08" />
+        </linearGradient>
+        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffd24c" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#ffd24c" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect x="0" y="0" width="100" height="140" fill="url(#water)" />
+      <!-- water shimmer -->
+      <path d="M0 124 Q25 122 50 124 T100 124" stroke="rgba(255,255,255,0.08)" stroke-width="0.6" fill="none"/>
+      <path d="M0 132 Q30 130 60 132 T100 132" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" fill="none"/>
+      <!-- island silhouette -->
+      <path d="M2 140 L2 110 Q4 92 14 84 Q22 70 16 56 Q12 38 28 24 Q42 8 50 12 Q58 16 70 22 Q86 30 84 50 Q86 72 92 84 Q98 96 98 110 L98 140 Z"
+            fill="url(#sand)" />
+      <!-- inner forest band -->
+      <path d="M8 116 Q20 100 32 102 Q48 100 60 102 Q76 100 90 110 Q86 124 50 122 Q14 124 8 116 Z" fill="#1f5634" opacity="0.85"/>
+      <path d="M14 96 Q30 86 50 88 Q72 86 86 96 Q78 104 50 104 Q22 104 14 96 Z" fill="#1b4a2c" opacity="0.75"/>
+      <!-- volcano body -->
+      <path d="M28 38 L50 6 L72 38 L66 60 L34 60 Z" fill="url(#volc)"/>
+      <!-- lava streams -->
+      <path d="M50 8 L48 28 L44 46 L40 60" stroke="#ff8b3a" stroke-width="1.4" fill="none" opacity="0.85" stroke-linecap="round"/>
+      <path d="M50 8 L52 24 L56 42 L60 58" stroke="#ffd24c" stroke-width="1.0" fill="none" opacity="0.7" stroke-linecap="round"/>
+      <!-- crater glow -->
+      <ellipse cx="50" cy="10" rx="14" ry="6" fill="url(#glow)"/>
+      <ellipse cx="50" cy="10" rx="6" ry="2" fill="#fff2a8"/>
+      <!-- palm trees (simple) -->
+      ${palms()}
+      <!-- path -->
+      ${pathLine()}
+      ${pathDots()}
+    </svg>
+  `;
+  return svg;
+}
+function palms() {
+  const trees = [[18,108],[36,116],[78,110],[88,100],[20,80],[80,72],[28,90],[68,86]];
+  return trees.map(([x,y]) => `
+    <g transform="translate(${x} ${y})">
+      <rect x="-0.4" y="-2.5" width="0.8" height="5" fill="#5a3a1c"/>
+      <ellipse cx="-1.6" cy="-3" rx="2.2" ry="0.8" fill="#2d8b46"/>
+      <ellipse cx="1.6" cy="-3" rx="2.2" ry="0.8" fill="#2d8b46"/>
+      <ellipse cx="0" cy="-4" rx="0.9" ry="2.0" fill="#3aa55a"/>
+    </g>`).join("");
+}
+function pathLine() {
+  const d = PATH_POINTS.map((p, i) => (i === 0 ? "M" : "L") + p[0] + " " + p[1]).join(" ");
+  return `<path d="${d}" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.4" stroke-dasharray="1.5 1.5" stroke-linecap="round"/>`;
+}
+function pathDots() {
+  return PATH_POINTS.map((p, i) => {
+    const sp = BOARD_SPACES[i];
+    const c = colorForSpace(sp.type, GameState.volcanoMode > 0);
+    const r = sp.type === "finish" ? 3.2 : 2.0;
+    const stroke = sp.type === "finish" ? "#fff" : "rgba(0,0,0,0.4)";
+    return `<circle cx="${p[0]}" cy="${p[1]}" r="${r}" fill="${c}" stroke="${stroke}" stroke-width="0.4"/>`;
+  }).join("");
+}
+function colorForSpace(type, vol) {
+  switch (type) {
+    case "neutral": return vol ? "#7a5640" : "#cbb38a";
+    case "plus": return "#41c98a";
+    case "minus": return vol ? "#ff5238" : "#ff8a8a";
+    case "mini_1v1": case "mini_all": case "mini_all_v_1": return "#ffb84d";
+    case "tornado": return "#4fb5e6";
+    case "swap": return "#b88dff";
+    case "statue_good": return "#ffd24c";
+    case "statue_bad": return "#7d6bd1";
+    case "volcano_trigger": return "#ff5238";
+    case "rule_stone": return "#b88dff";
+    case "skull": return "#7a2a1e";
+    case "finish": return "#ffd24c";
+    default: return "#cbb38a";
+  }
+}
+
+function placeTokens(islandEl) {
+  // Remove existing tokens
+  $$(".token", islandEl).forEach(t => t.remove());
+  // Group by position so they fan out
+  const groups = {};
+  GameState.players.forEach(p => {
+    (groups[p.pos] = groups[p.pos] || []).push(p);
+  });
+  Object.entries(groups).forEach(([pos, ps]) => {
+    const point = PATH_POINTS[pos] || PATH_POINTS[0];
+    ps.forEach((p, idx) => {
+      const offsetX = (idx - (ps.length - 1) / 2) * 5;   // % offset
+      const offsetY = idx * -1.5;
+      const t = el("div", {
+        class: "token" + (currentPlayer().id === p.id ? " active" : "") + (p._dir < 0 ? " back" : ""),
+        style: {
+          background: p.color,
+          left: (point[0] + offsetX) + "%",
+          top: (((point[1] / 140) * 100) + offsetY) + "%"
+        }
+      }, initials(p));
+      islandEl.appendChild(t);
+    });
+  });
+}
+
+/* === rules.js === */
+/* ========== Rules ========== */
+function addRule(rule) {
+  // avoid duplicates by id
+  if (GameState.activeRules.some(r => r.id === rule.id)) return false;
+  GameState.activeRules.push({ ...rule, addedRound: GameState.round });
+  toast(`New rule: ${rule.title}`, "rule");
+  return true;
+}
+
+function removeRule(ruleId) {
+  GameState.activeRules = GameState.activeRules.filter(r => r.id !== ruleId);
+}
+
+function pickRandomRule() {
+  const pool = RULE_POOL.filter(r => !GameState.activeRules.some(a => a.id === r.id));
+  if (!pool.length) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function tickRuleDurations() {
+  GameState.activeRules.forEach(r => {
+    if (r.duration > 0) r.duration -= 1;
+  });
+  const expired = GameState.activeRules.filter(r => r.duration === 0);
+  GameState.activeRules = GameState.activeRules.filter(r => r.duration !== 0);
+  expired.forEach(r => toast(`Rule expired: ${r.title}`, ""));
+}
+
+function ruleIcon(type) {
+  switch (type) {
+    case "verbal": return "💬";
+    case "physical": return "🤸";
+    case "name_mode": return "🪪";
+    default: return "✨";
+  }
+}
+
+/* === minigames.js === */
+/* ========== Mini-game framework ========== */
+// Each mini-game: { id, name, type, blurb, bullets, run(host, players, done) }
+// `run` mounts UI into `host` (a modal body) and calls done({winners,losers,note}).
+
+const MiniGames = {};
+
+function registerMiniGame(mg) { MiniGames[mg.id] = mg; }
+
+function pickMiniGame(type) {
+  const list = Object.values(MiniGames).filter(m => m.type === type);
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function startMiniGame(mg, players, after) {
+  // Pre-game explanation modal
+  openModal((modal, close) => {
+    modal.appendChild(el("h2", {}, mg.name));
+    modal.appendChild(el("div", { class: "small muted" }, mg.blurb));
+    const ul = el("ul", { class: "pre-bullets" });
+    mg.bullets.forEach(b => ul.appendChild(el("li", {}, b)));
+    modal.appendChild(ul);
+    modal.appendChild(el("div", { class: "chip-list" },
+      players.map(p => el("div", { class: "chip" }, [
+        el("span", { style: { color: p.color, marginRight: "4px" } }, "●"),
+        nameOf(p)
+      ]))
+    ));
+    const btn = el("button", { class: "btn full lg", onclick: () => {
+      clear(modal);
+      runMiniGame(mg, players, modal, (result) => {
+        clear(modal);
+        renderMiniResult(modal, mg, result, () => { close(); after?.(result); });
+      });
+    }}, "Start mini-game");
+    modal.appendChild(btn);
+  }, { dismissable: false });
+}
+
+function runMiniGame(mg, players, host, done) {
+  try { mg.run(host, players, done); }
+  catch (e) {
+    console.error(e);
+    done({ winners: [], losers: players, note: "Mini-game crashed — call it a draw." });
+  }
+}
+
+function renderMiniResult(modal, mg, result, close) {
+  modal.appendChild(el("h2", {}, "Result"));
+  modal.appendChild(el("div", { class: "small muted" }, mg.name));
+
+  if (result.winners?.length) {
+    modal.appendChild(el("h3", { class: "mt" }, "Winners"));
+    modal.appendChild(el("div", { class: "chip-list" },
+      result.winners.map(p => el("div", { class: "chip win" }, nameOf(p)))));
+  }
+  if (result.losers?.length) {
+    modal.appendChild(el("h3", { class: "mt" }, "Drink up"));
+    const list = el("div", { class: "chip-list" });
+    result.losers.forEach(p => {
+      const pen = rollDrinkPenalty(result.strength || 1);
+      applyDrinkTo(p, pen, currentPlayer());
+      list.appendChild(el("div", { class: "chip drink" }, `${nameOf(p)} — ${describePenalty(pen)}`));
+    });
+    modal.appendChild(list);
+  }
+  // record win
+  result.winners?.forEach(p => p.miniWins += 1);
+  GameState.miniGameHistory.push({ id: mg.id, when: GameState.round, winners: result.winners?.map(p=>p.id), losers: result.losers?.map(p=>p.id) });
+
+  // optional rule reward: 1v1 winner can add a random rule (chance)
+  if (mg.type === "1v1" && result.winners?.length === 1 && Math.random() < 0.4) {
+    const r = pickRandomRule();
+    if (r) {
+      addRule(r);
+      modal.appendChild(el("div", { class: "chip-list" }, [
+        el("div", { class: "chip rule" }, `${ruleIcon(r.type)} ${r.title}`)
+      ]));
+    }
+  }
+
+  if (result.note) modal.appendChild(el("p", { class: "small muted mt" }, result.note));
+
+  modal.appendChild(el("button", {
+    class: "btn full lg mt", onclick: close
+  }, "Back to island"));
+}
+
+/* ---------- Mini-games ---------- */
+
+// 1) Tap Duel — 1v1 reflex. Wait for GO, first to tap wins.
+registerMiniGame({
+  id: "tap_duel",
+  name: "Tap Duel",
+  type: "1v1",
+  blurb: "Reflex test. Wait for green, then tap.",
+  bullets: [
+    "1 vs 1 — both players hold the phone together.",
+    "Wait for the pad to turn green.",
+    "First to tap WHILE green wins.",
+    "Tapping early = you lose.",
+    "Loser drinks."
+  ],
+  run(host, players, done) {
+    // Mirrored split for 2-on-1-screen play. Top half is rotated 180°.
+    const arena = el("div", { class: "arena", style: { padding: "0", overflow: "hidden" } });
+    host.appendChild(arena);
+    const wrap = el("div", { style: { display:"grid", gridTemplateRows:"1fr 1fr", gap:"4px", height:"460px" } });
+    const padTop = el("div", { class: "tap-pad", style: { transform:"rotate(180deg)", borderRadius:"14px", margin:"0" } }, "WACHT");
+    const padBot = el("div", { class: "tap-pad", style: { borderRadius:"14px", margin:"0" } }, "WACHT");
+    wrap.appendChild(padTop); wrap.appendChild(padBot);
+    arena.appendChild(wrap);
+    const status = el("div", { class: "small muted center", style: { padding:"8px" } }, `${nameOf(players[0])} (boven, ondersteboven) vs ${nameOf(players[1])} (onder)`);
+    arena.appendChild(status);
+    let armed = false, fin = false;
+    const t = setTimeout(() => {
+      armed = true;
+      padTop.classList.add("go"); padBot.classList.add("go");
+      padTop.textContent = "TAP!"; padBot.textContent = "TAP!";
+    }, 1500 + Math.random() * 2500);
+    function tap(idx) {
+      if (fin) return;
+      fin = true;
+      clearTimeout(t);
+      if (!armed) {
+        const loser = players[idx];
+        done({ winners: [players[1-idx]], losers: [loser], note: `${nameOf(loser)} drukte te vroeg.` });
+        return;
+      }
+      done({ winners: [players[idx]], losers: [players[1-idx]] });
+    }
+    padTop.addEventListener("click", () => tap(0));
+    padBot.addEventListener("click", () => tap(1));
+  }
+});
+
+// 2) Tap Dash — all-vs-all reflex. Tap as many times as you can in 5s — last 2 lose.
+registerMiniGame({
+  id: "tap_dash",
+  name: "Tap Dash",
+  type: "all_vs_all",
+  blurb: "Pass the phone — most taps in 5 seconds wins.",
+  bullets: [
+    "Each player gets 5 seconds to tap the pad.",
+    "Pass the phone in turn.",
+    "Highest tap count wins. Lowest drinks."
+  ],
+  run(host, players, done) {
+    const arena = el("div", { class: "arena" });
+    host.appendChild(arena);
+    const scores = {};
+    let i = 0;
+
+    const showNext = () => {
+      if (i >= players.length) {
+        // results
+        let max = -1, min = Infinity;
+        players.forEach(p => { max = Math.max(max, scores[p.id]); min = Math.min(min, scores[p.id]); });
+        const winners = players.filter(p => scores[p.id] === max);
+        const losers = players.filter(p => scores[p.id] === min && !winners.includes(p));
+        done({ winners, losers: losers.length ? losers : [players[0]] });
+        return;
+      }
+      const p = players[i];
+      clear(arena);
+      const status = el("div", { class: "small muted" }, `Hand to ${nameOf(p)}`);
+      const pad = el("div", { class: "tap-pad" }, "Tap to start");
+      arena.appendChild(status);
+      arena.appendChild(pad);
+      let started = false, count = 0, end = 0;
+      pad.addEventListener("click", () => {
+        if (!started) {
+          started = true;
+          end = Date.now() + 5000;
+          pad.classList.add("hot");
+          tick();
+          return;
+        }
+        if (Date.now() < end) {
+          count++;
+          pad.textContent = count;
+        }
+      });
+      function tick() {
+        const left = Math.max(0, end - Date.now());
+        if (left <= 0) {
+          scores[p.id] = count;
+          status.textContent = `${nameOf(p)} — ${count} taps`;
+          setTimeout(() => { i++; showNext(); }, 700);
+          return;
+        }
+        status.textContent = `${nameOf(p)} — ${(left/1000).toFixed(1)}s`;
+        requestAnimationFrame(tick);
+      }
+    };
+    showNext();
+  }
+});
+
+// 3) Flash Memory — show grid for 2.5s then ask which color was where
+registerMiniGame({
+  id: "flash_memory",
+  name: "Flash Memory",
+  type: "all_vs_1",
+  blurb: "Soloist tries to remember the grid.",
+  bullets: [
+    "The active player has 2.5 seconds to memorize a grid.",
+    "Then 4 cells are blanked and they tap the one that was 🔥.",
+    "Soloist correct = others drink. Wrong = soloist drinks."
+  ],
+  run(host, players, done) {
+    const solo = players[0]; // first is soloist
+    const others = players.slice(1);
+    const arena = el("div", { class: "arena" });
+    host.appendChild(arena);
+    const cells = Array.from({ length: 16 }, () => ({
+      icon: ["🌴","🐚","⛰️","🌊","🥥","🐢"][Math.floor(Math.random()*6)]
+    }));
+    const fireIdx = Math.floor(Math.random() * 16);
+    cells[fireIdx].icon = "🔥";
+
+    const grid = el("div", { class: "mem-grid" });
+    cells.forEach((c, i) => {
+      grid.appendChild(el("div", { class: "mem-cell show", "data-i": i }, c.icon));
+    });
+    const status = el("div", { class: "small muted" }, `${nameOf(solo)} — memorize!`);
+    arena.appendChild(status);
+    arena.appendChild(grid);
+
+    setTimeout(() => {
+      // hide cells
+      $$(".mem-cell", grid).forEach(c => { c.classList.remove("show"); c.textContent = "?"; });
+      status.textContent = "Tap the 🔥 cell";
+      $$(".mem-cell", grid).forEach(c => {
+        c.addEventListener("click", () => {
+          const idx = parseInt(c.getAttribute("data-i"), 10);
+          if (idx === fireIdx) {
+            c.classList.add("show"); c.textContent = "🔥";
+            done({ winners: [solo], losers: others, strength: 0.8 });
+          } else {
+            c.classList.add("show"); c.textContent = cells[idx].icon;
+            const fc = grid.children[fireIdx];
+            fc.classList.add("show"); fc.textContent = "🔥";
+            done({ winners: others, losers: [solo], strength: 1.2 });
+          }
+        });
+      });
+    }, 2500);
+  }
+});
+
+// 4) Most Likely — vote
+registerMiniGame({
+  id: "most_likely",
+  name: "Most Likely To…",
+  type: "all_vs_all",
+  blurb: "Group vote. Majority pick drinks.",
+  bullets: [
+    "A 'Most likely to…' prompt appears.",
+    "Pass the phone — each player taps who they pick.",
+    "The most-voted player drinks (ties: all drink).",
+    "Don't peek at others' votes."
+  ],
+  run(host, players, done) {
+    const prompts = [
+      "Most likely to text their ex tonight",
+      "Most likely to start karaoke uninvited",
+      "Most likely to lose the phone in the next hour",
+      "Most likely to fall asleep on the couch",
+      "Most likely to convince a stranger to join us",
+      "Most likely to break the seal first",
+      "Most likely to send a regrettable voice note"
+    ];
+    const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+    const arena = el("div", { class: "arena" });
+    host.appendChild(arena);
+    arena.appendChild(el("h3", {}, prompt));
+    const status = el("div", { class: "small muted" }, "");
+    arena.appendChild(status);
+    const choices = el("div", { class: "chip-list" });
+    arena.appendChild(choices);
+    const votes = {};
+    let i = 0;
+
+    function ask() {
+      if (i >= players.length) {
+        // tally
+        const tally = {};
+        Object.values(votes).forEach(id => { tally[id] = (tally[id] || 0) + 1; });
+        let max = 0;
+        Object.values(tally).forEach(v => { if (v > max) max = v; });
+        const losers = players.filter(p => (tally[p.id] || 0) === max);
+        done({ winners: [], losers, note: `Picked: ${losers.map(nameOf).join(", ")}` });
+        return;
+      }
+      const voter = players[i];
+      status.textContent = `${nameOf(voter)} — pick someone`;
+      clear(choices);
+      players.forEach(p => {
+        choices.appendChild(el("button", {
+          class: "btn dark",
+          onclick: () => { votes[voter.id] = p.id; i++; ask(); }
+        }, nameOf(p)));
+      });
+    }
+    ask();
+  }
+});
+
+// 5) Bomb — pass the phone, hidden timer, whoever holds when it goes off loses
+registerMiniGame({
+  id: "bomb",
+  name: "Pass the Bomb",
+  type: "all_vs_all",
+  blurb: "Hidden timer. Tap to pass. Holding when it pops = drink.",
+  bullets: [
+    "A category is shown. Say something fitting, then tap PASS.",
+    "Hidden 8–18s timer running.",
+    "Whoever holds the phone when it pops drinks twice."
+  ],
+  run(host, players, done) {
+    const cats = ["A capital city","A cocktail","A pop song","A 90s movie","An animal that swims","Something on this island","A red object","A swear word substitute"];
+    const cat = cats[Math.floor(Math.random() * cats.length)];
+    const arena = el("div", { class: "arena" });
+    host.appendChild(arena);
+    arena.appendChild(el("h3", {}, cat));
+    const holderEl = el("div", { class: "small muted" }, `Start: ${nameOf(players[0])}`);
+    arena.appendChild(holderEl);
+    const pad = el("div", { class: "tap-pad" }, "PASS →");
+    arena.appendChild(pad);
+
+    const end = Date.now() + 8000 + Math.random() * 10000;
+    let idx = 0, finished = false;
+    pad.addEventListener("click", () => {
+      if (finished) return;
+      idx = (idx + 1) % players.length;
+      holderEl.textContent = `Holder: ${nameOf(players[idx])}`;
+    });
+    const ti = setInterval(() => {
+      if (Date.now() >= end) {
+        finished = true;
+        clearInterval(ti);
+        pad.classList.add("hot");
+        pad.textContent = "💥 BOOM";
+        const loser = players[idx];
+        done({ winners: players.filter(p => p !== loser), losers: [loser], strength: 1.4 });
+      }
+    }, 100);
+  }
+});
+
+// 6) Word Sneak — social: secret word card; pass shows result
+registerMiniGame({
+  id: "word_sneak",
+  name: "Word Sneak",
+  type: "social",
+  blurb: "Sneak a secret word into normal conversation.",
+  bullets: [
+    "The active player gets a secret word.",
+    "They have 60 seconds of normal chat to slip it in.",
+    "Group decides if it sounded natural.",
+    "Success = group drinks. Caught = solo drinks 2x."
+  ],
+  run(host, players, done) {
+    const words = ["pinguïn","kapsalon","wasknijper","tractor","spaghetti","horizon","zeepbel","stofzuiger","kameleon","bowlingbal"];
+    const word = words[Math.floor(Math.random()*words.length)];
+    const solo = players[0];
+    const others = players.slice(1);
+    const arena = el("div", { class: "arena" });
+    host.appendChild(arena);
+    arena.appendChild(el("div", { class: "small muted" }, `Secret word for ${nameOf(solo)} (hide the screen!)`));
+    const card = el("div", { class: "tap-pad" }, "Tap to reveal");
+    arena.appendChild(card);
+    let revealed = false;
+    card.addEventListener("click", () => {
+      if (!revealed) { card.textContent = word.toUpperCase(); revealed = true; return; }
+      // Now buttons for verdict
+      clear(arena);
+      arena.appendChild(el("h3", {}, "Did it sound natural?"));
+      arena.appendChild(el("div", { class: "small muted" }, `Word: ${word}`));
+      const row = el("div", { class: "btn-row mt" }, [
+        el("button", { class: "btn", onclick: () => done({ winners: [solo], losers: others, strength: 0.8 }) }, "Yes — sneaky!"),
+        el("button", { class: "btn danger", onclick: () => done({ winners: others, losers: [solo], strength: 1.5 }) }, "No — busted")
+      ]);
+      arena.appendChild(row);
+    });
+  }
+});
+
+// 7) Blind Type — type a target word with hidden keyboard (typed letters hidden)
+registerMiniGame({
+  id: "blind_type",
+  name: "Blind Type",
+  type: "1v1",
+  blurb: "Type the word — but you can't see what you typed.",
+  bullets: [
+    "1 vs 1 — both players see the same target word.",
+    "Type it on the on-screen pad. Your input is hidden.",
+    "First to type it correctly wins. Loser drinks."
+  ],
+  run(host, players, done) {
+    const words = ["VULKAAN","STRAND","PAPEGAAI","COCKTAIL","KOKOSNOOT","HORIZON"];
+    const target = words[Math.floor(Math.random()*words.length)];
+    const arena = el("div", { class: "arena" });
+    host.appendChild(arena);
+    arena.appendChild(el("h3", {}, `Type: ${target}`));
+    const status = el("div", { class: "small muted" }, "Pick who types first");
+    arena.appendChild(status);
+    const board = el("div", { style: { display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:"6px" } });
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(ch => {
+      board.appendChild(el("button", { class: "btn dark", style: { padding:"10px", minHeight:"38px", fontSize:"15px" }, onclick: () => press(ch) }, ch));
+    });
+    const ctrl = el("div", { class: "btn-row mt" });
+    arena.appendChild(board);
+    arena.appendChild(ctrl);
+    let active = 0; let typed = ["",""]; let done_ = false;
+    function setActive(i) { active = i; status.textContent = `${nameOf(players[i])} typing — ${typed[i].length}/${target.length} chars`; }
+    function press(ch) {
+      if (done_) return;
+      typed[active] = (typed[active] + ch).slice(0, target.length);
+      status.textContent = `${nameOf(players[active])} typing — ${typed[active].length}/${target.length} chars`;
+      if (typed[active] === target) {
+        done_ = true;
+        done({ winners: [players[active]], losers: [players[1-active]], strength: 1 });
+      } else if (typed[active].length === target.length) {
+        // wrong — that player loses
+        done_ = true;
+        done({ winners: [players[1-active]], losers: [players[active]], strength: 1, note: `${nameOf(players[active])} typed "${typed[active]}"` });
+      }
+    }
+    ctrl.appendChild(el("button", { class: "btn ghost", onclick: () => { typed[active] = ""; setActive(active); } }, "Reset"));
+    ctrl.appendChild(el("button", { class: "btn", onclick: () => setActive(0) }, nameOf(players[0]) + " types"));
+    ctrl.appendChild(el("button", { class: "btn", onclick: () => setActive(1) }, nameOf(players[1]) + " types"));
+  }
+});
+
+// 8) Reaction Train — a sequence flashes, then you tap them in order
+registerMiniGame({
+  id: "reaction_train",
+  name: "Reaction Train",
+  type: "all_vs_all",
+  blurb: "Watch a flashing sequence, then repeat it.",
+  bullets: [
+    "A 4-step color sequence flashes.",
+    "Each player taps the colors in the same order.",
+    "Anyone who messes up drinks 1 sip per error.",
+    "Anyone who nails it: skip the round."
+  ],
+  run(host, players, done) {
+    const arena = el("div", { class: "arena" });
+    host.appendChild(arena);
+    const seq = Array.from({length: 4}, () => Math.floor(Math.random()*4));
+    const colors = ["#ff5e7a","#41c98a","#4fb5e6","#ffb84d"];
+    const status = el("div", { class: "small muted" }, "Watch carefully…");
+    arena.appendChild(status);
+    const grid = el("div", { style: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px" } });
+    const cells = colors.map((c,i) => {
+      const cell = el("div", { style: { background:c, opacity:"0.4", borderRadius:"14px", height:"80px", cursor:"pointer", transition:"opacity 100ms" } });
+      grid.appendChild(cell);
+      return cell;
+    });
+    arena.appendChild(grid);
+
+    const errorsByPlayer = {};
+    let stage = "show", playerIdx = 0, step = 0;
+
+    function flashSeq(idx, cb) {
+      if (idx >= seq.length) { cb(); return; }
+      const c = cells[seq[idx]];
+      c.style.opacity = "1";
+      setTimeout(() => { c.style.opacity = "0.4"; setTimeout(() => flashSeq(idx+1, cb), 200); }, 500);
+    }
+
+    flashSeq(0, () => startPlayer());
+
+    function startPlayer() {
+      if (playerIdx >= players.length) {
+        const losers = players.filter(p => (errorsByPlayer[p.id]||0) > 0);
+        const winners = players.filter(p => !(errorsByPlayer[p.id]>0));
+        const totalErr = Object.values(errorsByPlayer).reduce((a,b)=>a+b,0);
+        done({ winners, losers, strength: 0.7, note: totalErr ? `${totalErr} total mis-taps` : "Everyone nailed it!" });
+        return;
+      }
+      step = 0;
+      status.textContent = `${nameOf(players[playerIdx])} — repeat the sequence`;
+      cells.forEach((c,i)=>{ c.onclick = () => press(i); c.style.opacity = "0.7"; });
+    }
+    function press(i) {
+      const expect = seq[step];
+      if (i === expect) {
+        cells[i].style.opacity = "1"; setTimeout(()=>cells[i].style.opacity="0.7",150);
+      } else {
+        errorsByPlayer[players[playerIdx].id] = (errorsByPlayer[players[playerIdx].id]||0)+1;
+        cells[i].style.background = "#000";
+        setTimeout(()=>cells[i].style.background = colors[i], 200);
+      }
+      step++;
+      if (step >= seq.length) {
+        status.textContent = `${nameOf(players[playerIdx])} — ${errorsByPlayer[players[playerIdx].id]||0} mistakes`;
+        cells.forEach(c => c.onclick = null);
+        playerIdx++;
+        setTimeout(startPlayer, 700);
+      }
+    }
+  }
+});
+
+// 9) VingerGok — finger guess. Active player picks 1–5, others place fingers, count via touches.
+registerMiniGame({
+  id: "vingergok",
+  name: "VingerGok",
+  type: "all_vs_all",
+  blurb: "Raad het aantal vingers.",
+  bullets: [
+    "De actieve speler kiest stiekem een aantal (1–5).",
+    "Iedereen legt tegelijk vingers op het scherm bij de countdown.",
+    "De app telt het aantal vingers.",
+    "Klopt het met de gok? → raden wint, rest drinkt.",
+    "Klopt het niet? → rader drinkt 2 sips."
+  ],
+  run(host, players, done) {
+    const guesser = players[0];
+    const others = players.slice(1);
+    const arena = el("div", { class: "arena" });
+    host.appendChild(arena);
+    arena.appendChild(el("div", { class: "small muted" }, `${nameOf(guesser)} — kies een getal (verberg het scherm voor de rest)`));
+    const pickRow = el("div", { style: { display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:"6px" } });
+    arena.appendChild(pickRow);
+    let guess = null;
+    [1,2,3,4,5].forEach(n => {
+      const b = el("button", { class: "btn dark", style:{minHeight:"54px", fontSize:"22px"}, onclick: () => { guess = n; goCountdown(); } }, String(n));
+      pickRow.appendChild(b);
+    });
+
+    function goCountdown() {
+      clear(arena);
+      arena.appendChild(el("h3", {}, "Vingers klaar!"));
+      arena.appendChild(el("div", { class: "small muted" }, "Iedereen legt op '0' vingers op het pad. Hou ze stil tot het telt."));
+      const cd = el("div", { class: "tap-pad", style: { fontSize: "60px" } }, "3");
+      arena.appendChild(cd);
+      let n = 3;
+      const t = setInterval(() => {
+        n--;
+        if (n > 0) cd.textContent = String(n);
+        else { clearInterval(t); cd.textContent = "NU!"; cd.classList.add("go"); startCount(cd); }
+      }, 1000);
+    }
+
+    function startCount(pad) {
+      pad.style.touchAction = "none";
+      let maxTouches = 0;
+      const onTouch = (e) => {
+        e.preventDefault();
+        if (e.touches) {
+          maxTouches = Math.max(maxTouches, e.touches.length);
+          pad.textContent = `${e.touches.length} vinger${e.touches.length===1?"":"s"}…`;
+        }
+      };
+      pad.addEventListener("touchstart", onTouch, { passive: false });
+      pad.addEventListener("touchmove", onTouch, { passive: false });
+      pad.addEventListener("touchend", onTouch, { passive: false });
+      let clickCount = 0;
+      const onClick = () => { clickCount++; pad.textContent = `${clickCount} (klik)`; };
+      pad.addEventListener("click", onClick);
+      // Sample a bit longer so multiple players have time to plant fingers
+      setTimeout(() => {
+        pad.removeEventListener("touchstart", onTouch);
+        pad.removeEventListener("touchmove", onTouch);
+        pad.removeEventListener("touchend", onTouch);
+        pad.removeEventListener("click", onClick);
+        const counted = Math.max(maxTouches, clickCount);
+        pad.textContent = `${counted} vinger${counted===1?"":"s"}`;
+        setTimeout(() => verdict(counted), 900);
+      }, 2500);
+    }
+
+    function verdict(counted) {
+      clear(arena);
+      arena.appendChild(el("h3", {}, `Gok: ${guess} · Geteld: ${counted}`));
+      const correct = guess === counted;
+      arena.appendChild(el("div", { class: "chip-list mt" }, [
+        el("div", { class: "chip " + (correct?"win":"lose") }, correct ? "Goed geraden!" : "Misgegokt")
+      ]));
+      const btn = el("button", { class: "btn full lg mt", onclick: () => {
+        if (correct) done({ winners: [guesser], losers: others, strength: 0.9 });
+        else done({ winners: others, losers: [guesser], strength: 1.5, note: "Rader drinkt extra." });
+      }}, "Verder");
+      arena.appendChild(btn);
+    }
+  }
+});
+
+function spinWheel(type, cb) {
+  const list = Object.values(MiniGames).filter(m => m.type === type);
+  if (!list.length) { cb(null); return; }
+  // Shuffle so display order is randomised each spin (Fisher–Yates)
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  const back = el("div", { class: "modal-backdrop center" });
+  const modal = el("div", { class: "modal", style: { textAlign:"center" } });
+  back.appendChild(modal);
+  modal.appendChild(el("h2", {}, "Rad der Minigames"));
+  modal.appendChild(el("div", { class: "small muted" }, "Tik op SPIN!"));
+  const cur = el("div", { style: { fontSize:"26px", fontWeight:"900", padding:"22px", margin:"14px 0", background:"var(--card-2)", borderRadius:"16px", minHeight:"80px", display:"flex", alignItems:"center", justifyContent:"center" } }, "—");
+  modal.appendChild(cur);
+  const btn = el("button", { class: "btn full lg" }, "🎰 SPIN");
+  modal.appendChild(btn);
+  document.body.appendChild(back);
+  btn.onclick = () => {
+    btn.disabled = true;
+    const final = list[Math.floor(Math.random() * list.length)];
+    let i = 0, delay = 60;
+    const ticks = 18 + Math.floor(Math.random() * 6);
+    function step() {
+      cur.textContent = list[i % list.length].name;
+      i++;
+      if (i >= ticks) {
+        cur.textContent = final.name;
+        cur.style.background = "var(--accent)";
+        cur.style.color = "#0a1124";
+        setTimeout(() => {
+          btn.textContent = "Speel " + final.name;
+          btn.disabled = false;
+          btn.onclick = () => { back.remove(); cb(final); };
+        }, 600);
+        return;
+      }
+      delay += 12;
+      setTimeout(step, delay);
+    }
+    step();
+  };
+}
+
+/* ========== Drink banner — extra-clear penalty announcement ========== */
+function showDrinkBanner(player, penalty, reason, after) {
+  const back = el("div", { class: "modal-backdrop center" });
+  const modal = el("div", { class: "modal", style: { textAlign: "center", borderColor: "rgba(255,184,77,0.6)" } });
+  back.appendChild(modal);
+  modal.appendChild(el("div", { style: { fontSize: "56px" } }, penalty.shot ? "🥃" : "🍺"));
+  modal.appendChild(el("h2", {}, `${nameOf(player)} drinks!`));
+  modal.appendChild(el("div", { class: "small muted", style: { marginTop: "4px" } }, reason || ""));
+  modal.appendChild(el("div", {
+    style: { fontSize: "30px", fontWeight: "900", color: "var(--accent)", marginTop: "12px" }
+  }, describePenalty(penalty)));
+  modal.appendChild(el("button", {
+    class: "btn full lg mt", onclick: () => { back.remove(); after?.(); }
+  }, "Cheers — next"));
+  document.body.appendChild(back);
+}
+
+/* === setup.js === */
+/* ========== Setup screen ========== */
+function renderSetup(screen) {
+  if (GameState.players.length < 2) GameState.players = defaultPlayers();
+
+  screen.classList.add("screen-scroll");
+
+  // Brand header
+  screen.appendChild(el("div", { class: "brand" }, [
+    el("div", { class: "brand-mark" }),
+    el("div", {}, [
+      el("h1", {}, "DrankEiland"),
+      el("div", { class: "tag" }, "Volcano island party drinking game on one phone.")
+    ])
+  ]));
+
+  // Players section
+  const playersSec = el("div", { class: "section" });
+  playersSec.appendChild(el("h2", {}, "Players"));
+  playersSec.appendChild(el("div", { class: "hint" }, "2–8 players. Pass the phone each turn."));
+
+  const playerList = el("div", { id: "player-list" });
+  playersSec.appendChild(playerList);
+
+  const addBtn = el("button", {
+    class: "add-player-btn",
+    onclick: () => {
+      if (GameState.players.length >= 8) return;
+      GameState.players.push(makePlayer(GameState.players.length));
+      renderPlayerList(playerList, addBtn, startBtn);
+      validateStart(startBtn);
+    }
+  }, "+ Add player");
+  playersSec.appendChild(addBtn);
+  screen.appendChild(playersSec);
+
+  // Name mode
+  const nameSec = el("div", { class: "section" });
+  nameSec.appendChild(el("h2", {}, "Name mode"));
+  nameSec.appendChild(el("div", { class: "hint" }, "How players are addressed in-game."));
+  const seg = el("div", { class: "seg" });
+  ["real", "nick", "mix"].forEach(k => {
+    const label = k === "real" ? "Real" : k === "nick" ? "Nickname" : "Mix";
+    const b = el("button", {
+      class: GameState.nameMode === k ? "on" : "",
+      onclick: () => {
+        GameState.nameMode = k;
+        $$(".seg button", nameSec).forEach((x, i) => x.classList.toggle("on", ["real","nick","mix"][i] === k));
+      }
+    }, label);
+    seg.appendChild(b);
+  });
+  nameSec.appendChild(seg);
+  screen.appendChild(nameSec);
+
+  // Drinking intensity
+  const intSec = el("div", { class: "section" });
+  intSec.appendChild(el("h2", {}, "Drinking intensity"));
+  intSec.appendChild(el("div", { class: "hint" }, "Sets the size of penalties."));
+  const radioList = el("div", { class: "radio-list" });
+  Object.entries(INTENSITIES).forEach(([k, v]) => {
+    const card = el("div", {
+      class: "radio-card" + (GameState.intensity === k ? " on" : ""),
+      onclick: () => {
+        GameState.intensity = k;
+        $$(".radio-card", radioList).forEach((c, i) => {
+          c.classList.toggle("on", Object.keys(INTENSITIES)[i] === k);
+        });
+      }
+    }, [
+      el("div", { class: "dot" }),
+      el("div", {}, [
+        el("div", { class: "label" }, v.label),
+        el("div", { class: "desc" }, v.blurb)
+      ])
+    ]);
+    radioList.appendChild(card);
+  });
+  intSec.appendChild(radioList);
+  screen.appendChild(intSec);
+
+  // Baseline rules toggle
+  const ruleSec = el("div", { class: "section" });
+  ruleSec.appendChild(el("h2", {}, "Party rules"));
+  ruleSec.appendChild(el("div", { class: "hint" }, "Always-on baseline rules during the game."));
+  const tog = el("div", {
+    class: "toggle " + (GameState.baselineRulesEnabled ? "on" : ""),
+    onclick: () => {
+      GameState.baselineRulesEnabled = !GameState.baselineRulesEnabled;
+      tog.classList.toggle("on", GameState.baselineRulesEnabled);
+    }
+  });
+  const togRow = el("div", { class: "toggle-row" }, [
+    el("div", {}, [
+      el("div", { class: "label" }, "Enable baseline rules"),
+      el("div", { class: "desc small muted" }, "No pointing · No D-words · Wrong-hand drinking")
+    ]),
+    tog
+  ]);
+  ruleSec.appendChild(togRow);
+  screen.appendChild(ruleSec);
+
+  // Safety note
+  screen.appendChild(el("div", { class: "tag-line" },
+    "Drink responsibly. You can swap any drink suggestion for a fun dare."));
+
+  // Sticky start
+  const foot = el("div", { class: "sticky-foot" });
+  const startBtn = el("button", {
+    class: "btn lg full",
+    onclick: () => {
+      if (!validateStart(startBtn, true)) return;
+      startGame();
+    }
+  }, "Start Game");
+  foot.appendChild(startBtn);
+  screen.appendChild(foot);
+
+  renderPlayerList(playerList, addBtn, startBtn);
+  validateStart(startBtn);
+}
+
+function renderPlayerList(host, addBtn, startBtn) {
+  clear(host);
+  GameState.players.forEach((p, i) => {
+    const row = el("div", { class: "player-row" });
+    const ava = el("div", {
+      class: "avatar",
+      style: { background: p.color },
+      onclick: () => {
+        const idx = AVATAR_COLORS.indexOf(p.color);
+        p.color = AVATAR_COLORS[(idx + 1) % AVATAR_COLORS.length];
+        ava.style.background = p.color;
+      }
+    }, initials(p));
+    const fields = el("div", { class: "fields" }, [
+      el("input", {
+        type: "text", placeholder: "Real name", value: p.realName, maxlength: 16,
+        oninput: (e) => { p.realName = e.target.value; ava.textContent = initials(p); validateStart(startBtn); }
+      }),
+      el("input", {
+        type: "text", placeholder: "Nickname", value: p.nickname, maxlength: 16,
+        oninput: (e) => { p.nickname = e.target.value; validateStart(startBtn); }
+      })
+    ]);
+    const remove = el("button", {
+      class: "remove-btn",
+      onclick: () => {
+        if (GameState.players.length <= 2) {
+          toast("Minimum 2 players", "warn");
+          return;
+        }
+        GameState.players.splice(i, 1);
+        renderPlayerList(host, addBtn, startBtn);
+        validateStart(startBtn);
+      }
+    }, "×");
+    row.appendChild(ava);
+    row.appendChild(fields);
+    row.appendChild(remove);
+    host.appendChild(row);
+  });
+  if (addBtn) addBtn.disabled = GameState.players.length >= 8;
+}
+
+function validateStart(btn, withToast = false) {
+  if (!btn) return false;
+  const ok =
+    GameState.players.length >= 2 &&
+    GameState.players.every(p => p.realName.trim() && p.nickname.trim());
+  btn.disabled = !ok;
+  if (!ok && withToast) {
+    toast("Each player needs a real name and nickname", "warn");
+  }
+  return ok;
+}
+
+/* === game.js === */
+/* ========== Game flow ========== */
+
+function startGame() {
+  GameState.board = BOARD_SPACES.slice();
+  GameState.players.forEach(p => { p.pos = 0; p.miniWins = 0; p.drinks = 0; p.penaltiesGiven = 0; p.ruleBreaks = 0; });
+  GameState.currentPlayerIndex = 0;
+  GameState.round = 1;
+  GameState.volcanoMode = 0;
+  GameState.activeRules = [];
+  GameState.miniGameHistory = [];
+  GameState.finished = false;
+  GameState.winnerId = null;
+  if (GameState.baselineRulesEnabled) {
+    BASELINE_RULES.forEach(r => GameState.activeRules.push({ ...r }));
+  }
+  resolveTurnNameStyle();
+  showScreen("board", renderBoard);
+}
+
+function resolveTurnNameStyle() {
+  if (GameState.nameMode === "mix") {
+    GameState.rngTurnNameStyle = Math.random() < 0.5 ? "real" : "nick";
+  }
+}
+
+function renderBoard(screen) {
+  screen.classList.remove("screen-scroll");
+  screen.classList.add("board-wrap");
+  clear(screen);
+
+  // top bar
+  const top = el("div", { class: "board-topbar" });
+  const pill = el("div", { class: "round-pill" + (GameState.volcanoMode > 0 ? " volcano" : "") }, [
+    el("span", { class: "dot-vol" }),
+    el("span", {}, GameState.volcanoMode > 0 ? `Volcano · ${GameState.volcanoMode} left` : `Round ${GameState.round}`)
+  ]);
+  top.appendChild(pill);
+  top.appendChild(el("div", { class: "row gap-md" }, [
+    el("button", { class: "icon-btn", title: "Scoreboard", onclick: () => showScoreboard() }, "🏁"),
+    el("button", { class: "icon-btn", title: "Rules", onclick: () => showRulesModal() }, "📜"),
+    el("button", { class: "icon-btn", title: "Reset", onclick: () => confirmReset() }, "↻")
+  ]));
+  screen.appendChild(top);
+
+  // rule strip
+  if (GameState.activeRules.length) {
+    const strip = el("div", { class: "rule-strip" });
+    GameState.activeRules.forEach(r => {
+      strip.appendChild(el("div", {
+        class: "rule-chip " + r.type,
+        onclick: () => showRulesModal()
+      }, [
+        el("span", { class: "ico" }, ruleIcon(r.type)),
+        el("span", {}, r.title)
+      ]));
+    });
+    screen.appendChild(strip);
+  }
+
+  // island
+  const island = el("div", { class: "island" + (GameState.volcanoMode > 0 ? " volcano-mode" : "") });
+  island.innerHTML = buildBoardSVG();
+  screen.appendChild(island);
+  placeTokens(island);
+
+  // turn banner
+  const cp = currentPlayer();
+  const banner = el("div", { class: "turn-banner" }, [
+    avatarBadge(cp, 36),
+    el("div", { class: "meta" }, [
+      el("div", { class: "who" }, `${nameOf(cp)}'s turn`),
+      el("div", { class: "sub" }, `Position ${cp.pos + 1} / ${totalSpaces()} · ${BOARD_SPACES[cp.pos].label}`)
+    ])
+  ]);
+  screen.appendChild(banner);
+
+  // dice + roll
+  const diceEl = el("div", { class: "dice" }, "?");
+  const rollBtn = el("button", { class: "btn lg", onclick: () => doRoll(island, diceEl, rollBtn) }, "Roll Dice");
+  const dice = el("div", { class: "dice-area" }, [
+    diceEl,
+    el("div", { style: { flex: "1" } }, [
+      rollBtn,
+      el("div", { class: "small muted mt", style: { textAlign: "center" } }, "Pass the phone after rolling.")
+    ])
+  ]);
+  screen.appendChild(dice);
+}
+
+function doRoll(island, diceEl, btn) {
+  if (GameState.finished) return;
+  btn.disabled = true;
+  diceEl.classList.add("rolling");
+  let n = 1, ticks = 0;
+  const t = setInterval(() => {
+    n = 1 + Math.floor(Math.random() * 6);
+    diceEl.textContent = n;
+    ticks++;
+    if (ticks > 10) {
+      clearInterval(t);
+      diceEl.classList.remove("rolling");
+      const value = 1 + Math.floor(Math.random() * 6);
+      diceEl.textContent = value;
+      movePlayer(value, island, () => {
+        resolveLandingSpace(() => {
+          endTurn();
+        });
+      });
+    }
+  }, 60);
+}
+
+function movePlayer(amount, island, done) {
+  const p = currentPlayer();
+  const target = clampPos(p.pos + amount);
+  stepThrough(p, p.pos, target, island, done);
+}
+
+function stepThrough(player, from, to, island, done) {
+  if (from === to) { setTimeout(done, 240); return; }
+  const dir = to > from ? 1 : -1;
+  player.pos = from + dir;
+  player._dir = dir;
+  placeTokens(island);
+  setTimeout(() => { player._dir = 0; stepThrough(player, player.pos, to, island, done); }, 480);
+}
+
+function resolveLandingSpace(after) {
+  const p = currentPlayer();
+  const sp = BOARD_SPACES[p.pos];
+  const island = $(".island");
+
+  // win condition
+  if (sp.type === "finish") {
+    volcanoFinalChallenge(p, () => {
+      if (GameState.finished) {
+        setTimeout(() => showWinScreen(), 400);
+      } else {
+        after();
+      }
+    });
+    return;
+  }
+
+  switch (sp.type) {
+    case "neutral":
+      toast(`${nameOf(p)} — ${sp.label}`);
+      after(); break;
+
+    case "plus": {
+      stepThrough(p, p.pos, clampPos(p.pos + sp.amt), island, () => notify(`✨ ${sp.label}`, "", after));
+      break;
+    }
+    case "minus": {
+      const pen = rollDrinkPenalty(0.8);
+      applyDrinkTo(p, pen);
+      stepThrough(p, p.pos, clampPos(p.pos + sp.amt), island, () => {
+        notify(`⬅️ ${nameOf(p)} ${Math.abs(sp.amt)} terug — ${sp.label}`, "warn", () => showDrinkBanner(p, pen, sp.label, after));
+      });
+      break;
+    }
+    case "tornado":
+      pickTargetModal("Push back another player 4–6 spaces", (target) => {
+        if (target) {
+          const back = 4 + Math.floor(Math.random() * 3);
+          const pen = rollDrinkPenalty(0.8);
+          applyDrinkTo(target, pen, p);
+          stepThrough(target, target.pos, clampPos(target.pos - back), island, () => {
+            notify(`🌪️ ${nameOf(target)} blown back ${back} spaces`, "warn", () => showDrinkBanner(target, pen, `Hit by ${nameOf(p)}'s tornado`, after));
+          });
+        } else after();
+      });
+      break;
+
+    case "swap":
+      pickTargetModal("Swap places with…", (target) => {
+        if (target) {
+          const pen = rollDrinkPenalty(0.6);
+          applyDrinkTo(p, pen);
+          const tmp = p.pos; p.pos = target.pos; target.pos = tmp;
+          toast(`🔮 ${nameOf(p)} swapped with ${nameOf(target)}`, "rule");
+          placeTokens(island);
+          showDrinkBanner(p, pen, "Mirage Swap toll", after);
+          return;
+        }
+        after();
+      });
+      break;
+
+    case "statue_good": {
+      const jump = 12 + Math.floor(Math.random() * 5);
+      toast(`${sp.label} — soaring +${jump}!`, "");
+      setTimeout(() => stepThrough(p, p.pos, clampPos(p.pos + jump), island, after), 250);
+      break;
+    }
+    case "statue_bad": {
+      const drop = 10 + Math.floor(Math.random() * 7);
+      const pen = rollDrinkPenalty(1.2);
+      applyDrinkTo(p, pen);
+      stepThrough(p, p.pos, clampPos(p.pos - drop), island, () => {
+        notify(`💀 ${sp.label} — ${drop} terug!`, "danger", () => showDrinkBanner(p, pen, sp.label, after));
+      });
+      break;
+    }
+    case "skull": {
+      const drop = 8 + Math.floor(Math.random() * 6);
+      const pen = rollDrinkPenalty(1.5);
+      applyDrinkTo(p, pen);
+      stepThrough(p, p.pos, clampPos(p.pos - drop), island, () => {
+        notify(`💀 ${sp.label} — in de lavakuil! ${drop} terug`, "danger", () => showDrinkBanner(p, pen, "Lava-bad: drink stevig", after));
+      });
+      break;
+    }
+    case "volcano_trigger": {
+      GameState.volcanoMode = 3;
+      toast("🌋 Volcano awakens — 3 rounds of chaos!", "danger");
+      // briefly re-render top bar
+      $(".island")?.classList.add("volcano-mode");
+      $(".round-pill")?.classList.add("volcano");
+      setTimeout(after, 500);
+      break;
+    }
+    case "rule_stone": {
+      const r = pickRandomRule();
+      if (r) addRule(r);
+      else toast("No new rules left in the pool", "");
+      setTimeout(after, 400);
+      break;
+    }
+    case "mini_1v1": {
+      pickTargetModal("Choose your duel opponent", (target) => {
+        if (!target) { after(); return; }
+        spinWheel("1v1", (mg) => {
+          if (!mg) { after(); return; }
+          startMiniGame(mg, [p, target], (res) => {
+            const w = res.winners?.[0]; const l = res.losers?.[0];
+            if (w) stepThrough(w, w.pos, clampPos(w.pos + 3), island, () => {
+              if (l) stepThrough(l, l.pos, clampPos(l.pos - 2), island, after);
+              else after();
+            }); else after();
+          });
+        });
+      });
+      break;
+    }
+    case "mini_all": {
+      spinWheel("all_vs_all", (mg) => {
+        if (!mg) { after(); return; }
+        startMiniGame(mg, GameState.players.slice(), () => after());
+      });
+      break;
+    }
+    case "mini_all_v_1": {
+      const others = GameState.players.filter(x => x.id !== p.id);
+      const type = Object.values(MiniGames).some(m=>m.type==="all_vs_1") ? "all_vs_1" : "all_vs_all";
+      spinWheel(type, (mg) => {
+        if (!mg) { after(); return; }
+        startMiniGame(mg, [p, ...others], (res) => {
+          const wonSolo = res.winners?.some(w => w.id === p.id);
+          if (wonSolo) stepThrough(p, p.pos, clampPos(p.pos + 4), island, after);
+          else stepThrough(p, p.pos, clampPos(p.pos - 3), island, after);
+        });
+      });
+      break;
+    }
+    default: after();
+  }
+}
+
+function pickTargetModal(title, cb) {
+  const cp = currentPlayer();
+  const others = GameState.players.filter(p => p.id !== cp.id);
+  if (!others.length) { cb(null); return; }
+  openModal((modal, close) => {
+    modal.appendChild(el("h2", {}, title));
+    const list = el("div", { class: "chip-list mt" });
+    others.forEach(p => {
+      list.appendChild(el("button", {
+        class: "btn dark",
+        onclick: () => { close(); cb(p); }
+      }, nameOf(p)));
+    });
+    modal.appendChild(list);
+    modal.appendChild(el("button", {
+      class: "btn ghost full mt",
+      onclick: () => { close(); const r = others[Math.floor(Math.random()*others.length)]; cb(r); }
+    }, "Pick at random"));
+  }, { dismissable: false });
+}
+
+function endTurn() {
+  if (GameState.finished) return;
+  GameState.currentPlayerIndex = nextPlayerIndex();
+  let recap = false;
+  if (GameState.currentPlayerIndex === 0) {
+    GameState.round += 1;
+    tickRuleDurations();
+    if (GameState.volcanoMode > 0) {
+      GameState.volcanoMode -= 1;
+      if (GameState.volcanoMode === 0) toast("Volcano calmed.", "");
+    }
+    if (GameState.round % 2 === 1) recap = true;
+  }
+  resolveTurnNameStyle();
+  renderBoard($("#screen-root").firstChild);
+  if (recap) setTimeout(() => showScoreboard(true), 200);
+}
+
+function showRulesModal() {
+  openModal((modal, close) => {
+    modal.appendChild(el("h2", {}, "Active rules"));
+    if (!GameState.activeRules.length) {
+      modal.appendChild(el("p", { class: "muted small mt" }, "No rules yet. Land on a Rule Stone."));
+    } else {
+      const list = el("div", { class: "mt" });
+      GameState.activeRules.forEach(r => {
+        list.appendChild(el("div", { class: "section", style: { marginBottom: "8px" } }, [
+          el("div", { class: "row between" }, [
+            el("div", { class: "row" }, [
+              el("span", { style: { fontSize: "20px", marginRight: "6px" } }, ruleIcon(r.type)),
+              el("strong", {}, r.title)
+            ]),
+            el("span", { class: "small muted" }, r.duration < 0 ? "always" : r.duration + "r")
+          ]),
+          el("div", { class: "small muted mt" }, r.description)
+        ]));
+      });
+      modal.appendChild(list);
+    }
+    modal.appendChild(el("button", { class: "btn full mt", onclick: close }, "Close"));
+  });
+}
+
+function showScoreboard(autoFromRound = false) {
+  openModal((modal, close) => {
+    modal.appendChild(el("h2", {}, autoFromRound ? `End of round ${GameState.round - 1}` : "Scoreboard"));
+    modal.appendChild(el("div", { class: "small muted" }, "Recap of progress and active rules."));
+
+    const ranked = GameState.players.slice().sort((a, b) => b.pos - a.pos);
+    const list = el("div", { class: "mt" });
+    ranked.forEach((p, i) => {
+      list.appendChild(el("div", { class: "score-row" }, [
+        el("div", { class: "rank" }, "#" + (i + 1)),
+        avatarBadge(p, 36),
+        el("div", { class: "info" }, [
+          el("div", { class: "name" }, nameOf(p)),
+          el("div", { class: "pos" }, `${BOARD_SPACES[p.pos].label} · ${sectionFor(p.pos)}`)
+        ]),
+        el("div", { class: "nums" }, [
+          el("div", {}, `${p.miniWins} wins`),
+          el("div", {}, `${p.drinks} drinks`)
+        ])
+      ]));
+    });
+    modal.appendChild(list);
+
+    // Badges
+    const badgeRow = el("div", { class: "chip-list mt" });
+    const topMini = topBy(GameState.players, p => p.miniWins);
+    if (topMini && topMini.miniWins > 0) badgeRow.appendChild(el("div", { class: "chip win" }, `🏆 Mini-game royal: ${nameOf(topMini)}`));
+    const topPen = topBy(GameState.players, p => p.penaltiesGiven);
+    if (topPen && topPen.penaltiesGiven > 0) badgeRow.appendChild(el("div", { class: "chip rule" }, `🌪️ Chaos bringer: ${nameOf(topPen)}`));
+    const topDrink = topBy(GameState.players, p => p.drinks);
+    if (topDrink && topDrink.drinks > 0) badgeRow.appendChild(el("div", { class: "chip drink" }, `🌋 Volcano victim: ${nameOf(topDrink)}`));
+    if (badgeRow.children.length) modal.appendChild(badgeRow);
+
+    if (GameState.activeRules.length) {
+      modal.appendChild(el("hr", { class: "sep" }));
+      modal.appendChild(el("h3", {}, "Active rules"));
+      const ulr = el("div", { class: "chip-list mt" });
+      GameState.activeRules.forEach(r => ulr.appendChild(el("div", { class: "chip rule" }, [
+        el("span", { style: { marginRight: "6px" } }, ruleIcon(r.type)),
+        r.title,
+        r.duration > 0 ? el("span", { class: "muted", style: { marginLeft: "6px" } }, `· ${r.duration}r`) : null
+      ])));
+      modal.appendChild(ulr);
+    }
+
+    modal.appendChild(el("button", { class: "btn full lg mt", onclick: close }, "Continue"));
+  });
+}
+
+function sectionFor(pos) {
+  if (pos < 8) return "Beach";
+  if (pos < 18) return "Forest";
+  if (pos < 28) return "Volcano Slope";
+  return "Summit";
+}
+
+function topBy(arr, fn) {
+  let best = null, bv = -Infinity;
+  arr.forEach(p => { const v = fn(p); if (v > bv) { bv = v; best = p; } });
+  return best;
+}
+
+function volcanoFinalChallenge(player, done) {
+  // Spin a wheel for target 1–6, then player rolls dice; ≥ target = win, else 7 back.
+  const back = el("div", { class: "modal-backdrop center" });
+  const modal = el("div", { class: "modal", style: { textAlign: "center" } });
+  back.appendChild(modal);
+  modal.appendChild(el("h2", {}, "🌋 Vulkaan Uitdaging"));
+  modal.appendChild(el("div", { class: "small muted" }, `${nameOf(player)} staat op de top — eerst het rad draaien voor het doelgetal.`));
+  const cur = el("div", { style: { fontSize:"58px", fontWeight:"900", padding:"22px", margin:"14px 0", background:"var(--card-2)", borderRadius:"16px", minHeight:"100px", display:"flex", alignItems:"center", justifyContent:"center" } }, "?");
+  modal.appendChild(cur);
+  const btn = el("button", { class: "btn full lg" }, "🎰 Spin doelgetal");
+  modal.appendChild(btn);
+  document.body.appendChild(back);
+  btn.onclick = () => {
+    btn.disabled = true;
+    let i = 0, delay = 50;
+    const ticks = 16 + Math.floor(Math.random() * 6);
+    const target = 1 + Math.floor(Math.random() * 6);
+    function step() {
+      cur.textContent = String(1 + (i % 6));
+      i++;
+      if (i >= ticks) {
+        cur.textContent = String(target);
+        cur.style.background = "var(--lava)";
+        cur.style.color = "#fff";
+        const sub = el("div", { class: "small mt", style: { fontWeight:"700" } }, `Doelgetal: ${target} — gooi gelijk of hoger om te winnen!`);
+        modal.appendChild(sub);
+        btn.textContent = "🎲 Gooi dobbelsteen";
+        btn.disabled = false;
+        btn.onclick = () => {
+          btn.disabled = true;
+          let j = 0; const dticks = 12 + Math.floor(Math.random() * 5);
+          const roll = 1 + Math.floor(Math.random() * 6);
+          (function dstep() {
+            cur.textContent = String(1 + Math.floor(Math.random() * 6));
+            j++;
+            if (j >= dticks) {
+              cur.textContent = String(roll);
+              const ok = roll >= target;
+              const verdict = el("div", { class: "small mt", style: { fontWeight:"800", color: ok ? "var(--leaf)" : "var(--lava)" } },
+                ok ? `🏆 ${roll} ≥ ${target} — JE WINT!` : `💥 ${roll} < ${target} — 7 stappen terug`);
+              modal.appendChild(verdict);
+              btn.textContent = "Verder";
+              btn.disabled = false;
+              btn.onclick = () => {
+                back.remove();
+                if (ok) {
+                  GameState.finished = true;
+                  GameState.winnerId = player.id;
+                  done();
+                } else {
+                  const pen = rollDrinkPenalty(1.4);
+                  applyDrinkTo(player, pen);
+                  const island = $(".island");
+                  stepThrough(player, player.pos, clampPos(player.pos - 7), island, () => {
+                    showDrinkBanner(player, pen, "Vulkaan stootte je terug", done);
+                  });
+                }
+              };
+              return;
+            }
+            setTimeout(dstep, 60 + j * 14);
+          })();
+        };
+        return;
+      }
+      delay += 10;
+      setTimeout(step, delay);
+    }
+    step();
+  };
+}
+
+function showWinScreen() {
+  fireConfetti(3500);
+  const winner = GameState.players.find(p => p.id === GameState.winnerId);
+  showScreen("end", (screen) => {
+    screen.classList.add("screen-scroll");
+    const banner = el("div", { class: "won-banner" }, [
+      el("div", { class: "crown" }, "👑"),
+      el("h1", {}, `${nameOf(winner)} wins DrankEiland!`),
+      el("p", { class: "muted small mt" }, "First to the volcano treasure.")
+    ]);
+    screen.appendChild(banner);
+
+    // standings
+    const sec = el("div", { class: "section" });
+    sec.appendChild(el("h2", {}, "Final standings"));
+    const ranked = GameState.players.slice().sort((a, b) => b.pos - a.pos);
+    ranked.forEach((p, i) => {
+      sec.appendChild(el("div", { class: "score-row" }, [
+        el("div", { class: "rank" }, "#" + (i + 1)),
+        avatarBadge(p, 36),
+        el("div", { class: "info" }, [
+          el("div", { class: "name" }, nameOf(p)),
+          el("div", { class: "pos" }, `${BOARD_SPACES[p.pos].label} · ${sectionFor(p.pos)}`)
+        ]),
+        el("div", { class: "nums" }, [
+          el("div", {}, `${p.miniWins} wins`),
+          el("div", {}, `${p.drinks} drinks`)
+        ])
+      ]));
+    });
+    screen.appendChild(sec);
+
+    // titles
+    const titles = el("div", { class: "section" });
+    titles.appendChild(el("h2", {}, "Titles"));
+    const tBadge = el("div", { class: "chip-list" });
+    tBadge.appendChild(el("div", { class: "chip win" }, `👑 Island Royal — ${nameOf(winner)}`));
+    const lw = topBy(GameState.players, p => p.drinks);
+    if (lw) tBadge.appendChild(el("div", { class: "chip drink" }, `🍹 Lightweight — ${nameOf(lw)}`));
+    const cb = topBy(GameState.players, p => p.penaltiesGiven);
+    if (cb && cb.penaltiesGiven > 0) tBadge.appendChild(el("div", { class: "chip rule" }, `🌪️ Chaos Bringer — ${nameOf(cb)}`));
+    titles.appendChild(tBadge);
+    screen.appendChild(titles);
+
+    // actions
+    screen.appendChild(el("button", { class: "btn full lg", onclick: () => startGame() }, "Play again with same players"));
+    screen.appendChild(el("div", { style: { height: "10px" } }));
+    screen.appendChild(el("button", { class: "btn ghost full", onclick: () => showScreen("setup", renderSetup) }, "Back to lobby"));
+  });
+}
+
+/* === boot.js === */
+/* ========== Boot ========== */
+document.addEventListener("DOMContentLoaded", () => {
+  showScreen("setup", renderSetup);
+});
+
+</script>
+</body>
+</html>
