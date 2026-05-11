@@ -587,7 +587,7 @@
 
     /* ===== Krokodil — vertical mouth, teeth around perimeter ===== */
     .kroko-back { position: fixed; inset: 0; z-index: 60; background: #000;
-      display: flex; flex-direction: column; padding: max(6px, env(safe-area-inset-top)) 6px max(6px, env(safe-area-inset-bottom));
+      display: flex; flex-direction: column; padding: max(6px, env(safe-area-inset-top)) 6px 4px;
       color: #fff; animation: fadeIn .25s ease; user-select: none; overflow: hidden; }
     .kroko-head { text-align: center; padding: 4px 8px 6px; position: relative; z-index: 3; }
     .kroko-head h2 { margin: 0; font-size: 18px; font-weight: 900; opacity: 0.85; }
@@ -598,9 +598,9 @@
     .kroko-turn .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--pcol); }
     .kroko-turn .name { font-weight: 900; font-size: 18px; color: var(--pcol); text-shadow: 0 1px 0 rgba(0,0,0,0.6); }
     .kroko-turn .lbl { font-size: 13px; opacity: 0.7; margin-right: 4px; }
-    .kroko-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 4px; }
-    .kroko-croc { position: relative; width: min(86vw, 380px); height: min(72vh, 720px);
-      max-height: 78vh; aspect-ratio: 0.5 / 1;
+    .kroko-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 4px; min-height: 0; }
+    .kroko-croc { position: relative; width: min(80vw, 340px); height: 100%; max-height: 64vh;
+      aspect-ratio: 0.5 / 1;
       background: radial-gradient(ellipse at 50% 0%, #6cc05a 0%, #4a9a3c 30%, #2e6a26 70%, #1a3f14 100%);
       border-radius: 18% / 8%;
       box-shadow: inset 0 0 60px rgba(0,0,0,0.5), 0 8px 30px rgba(0,0,0,0.6);
@@ -636,8 +636,9 @@
     .tooth.bite::before { background: linear-gradient(180deg, #ff5050 0%, #aa1010 100%);
       animation: bitePulse 0.25s ease 5; }
     @keyframes bitePulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.8); } }
-    .kroko-foot { display: flex; gap: 10px; justify-content: center; padding: 8px 8px 4px;
-      flex-wrap: wrap; position: relative; z-index: 3; }
+    .kroko-foot { display: flex; gap: 10px; justify-content: center;
+      padding: 8px 8px max(6px, env(safe-area-inset-bottom));
+      flex-wrap: wrap; position: relative; z-index: 3; flex-shrink: 0; }
     .kroko-back .btn-pill { min-height: 52px; padding: 0 22px; border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.1);
       color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
@@ -841,6 +842,299 @@
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-10px); }
     }
+
+    /* =============================================================
+       Mystery Wheel (mw-) — universal minigame picker
+       ============================================================= */
+    .mw-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
+      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      background:
+        radial-gradient(ellipse at 50% 30%, #5a1a8a 0%, #2a0a4a 45%, #0a0820 100%);
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      touch-action: manipulation; }
+    .mw-back::before { content:""; position: absolute; inset: -10%; pointer-events: none;
+      background: radial-gradient(circle at 30% 20%, rgba(255,80,200,0.20), transparent 40%),
+                  radial-gradient(circle at 70% 80%, rgba(120,80,255,0.22), transparent 50%);
+      animation: mw-shimmer 6s ease-in-out infinite alternate; }
+    @keyframes mw-shimmer { from { opacity: 0.6; } to { opacity: 1; } }
+    .mw-header { position: relative; z-index: 2; padding: 10px 16px 4px; text-align: center; }
+    .mw-title { font-size: 22px; font-weight: 900; letter-spacing: 0.5px;
+      text-shadow: 0 2px 0 #000, 0 0 22px #d950ff; }
+    .mw-sub { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+    .mw-stage { flex: 1; position: relative; z-index: 1; display: flex;
+      align-items: center; justify-content: center; padding: 8px; min-height: 0; }
+    .mw-wheel-wrap { position: relative; width: min(82vw, 380px); aspect-ratio: 1/1;
+      max-height: 60vh; }
+    .mw-wheel { position: absolute; inset: 0; border-radius: 50%;
+      box-shadow: 0 0 0 6px #ffd54a, 0 0 0 9px #b86c00, 0 0 50px rgba(217,80,255,0.55);
+      transform: rotate(0deg); transition: transform 4.5s cubic-bezier(.18,.9,.25,1);
+      overflow: hidden; }
+    .mw-seg { position: absolute; inset: 0; transform-origin: 50% 50%; }
+    .mw-seg .label { position: absolute; left: 50%; top: 14%; transform: translateX(-50%);
+      font-size: 13px; font-weight: 900; color: #fff; text-shadow: 0 1px 0 #000, 0 0 6px rgba(0,0,0,0.6);
+      text-align: center; max-width: 80px; line-height: 1.1; pointer-events: none; }
+    .mw-seg .label .emo { display: block; font-size: 24px; margin-bottom: 2px; }
+    .mw-pointer { position: absolute; left: 50%; top: -16px; transform: translateX(-50%);
+      width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent;
+      border-top: 28px solid #ffd54a; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.6)); z-index: 3; }
+    .mw-pointer::after { content: ""; position: absolute; left: 50%; top: -26px; transform: translateX(-50%);
+      width: 16px; height: 16px; border-radius: 50%; background: #ffd54a;
+      box-shadow: 0 0 12px #ffd54a, inset 0 -3px 0 #b86c00; }
+    .mw-hub { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: 26%; aspect-ratio: 1/1; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffe78a, #ffaa1a 60%, #b86c00 100%);
+      box-shadow: inset 0 -6px 0 #b86c00, 0 0 20px rgba(255,200,80,0.6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; pointer-events: none; z-index: 2; }
+    .mw-foot { display: flex; gap: 10px; justify-content: center; padding: 10px 14px 6px;
+      position: relative; z-index: 3; flex-shrink: 0; }
+    .mw-back .btn-pill { min-height: 52px; padding: 0 26px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.1);
+      color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+    .mw-back .btn-pill.gold { background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+      color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
+    .mw-back .btn-pill:active { transform: translateY(2px); }
+    .mw-result { position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; flex-direction: column; gap: 10px;
+      background: radial-gradient(ellipse at center, rgba(10,8,32,0.85) 0%, rgba(10,8,32,0.98) 80%);
+      opacity: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 5; padding: 24px; }
+    .mw-result.show { opacity: 1; pointer-events: auto; }
+    .mw-result .ann { font-size: 16px; opacity: 0.7; }
+    .mw-result .emo-big { font-size: 72px; animation: chompZoom 0.5s cubic-bezier(.4,1.6,.5,1); }
+    .mw-result .pick { font-size: 32px; font-weight: 900; text-align: center;
+      text-shadow: 0 4px 0 rgba(0,0,0,0.6), 0 0 30px #d950ff; }
+
+    /* =============================================================
+       Vulkaan Roulette (vr-)
+       ============================================================= */
+    .vr-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
+      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      background:
+        radial-gradient(ellipse at 50% 110%, #ff5a1f 0%, #aa1a08 25%, #2a0a14 60%, #0a0612 100%);
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      touch-action: manipulation; }
+    .vr-back::before { content:""; position: absolute; inset: -10%; pointer-events: none;
+      background: radial-gradient(circle at 20% 30%, rgba(255,180,80,0.15), transparent 40%),
+                  radial-gradient(circle at 80% 70%, rgba(255,80,40,0.18), transparent 50%);
+      animation: vh-heat 8s ease-in-out infinite alternate; }
+    .vr-header { position: relative; z-index: 2; padding: 10px 16px 4px; text-align: center; }
+    .vr-title { font-size: 22px; font-weight: 900; letter-spacing: 0.5px;
+      text-shadow: 0 2px 0 #000, 0 0 18px #ff7a1f; }
+    .vr-sub { font-size: 13px; opacity: 0.85; margin-top: 4px; min-height: 18px; }
+    .vr-who { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px;
+      padding: 6px 14px; border-radius: 999px; background: rgba(0,0,0,0.4);
+      border: 2px solid var(--pcol, #fff); box-shadow: 0 0 20px var(--pcol, transparent); }
+    .vr-who .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--pcol); }
+    .vr-who .nm { font-weight: 900; color: var(--pcol); font-size: 14px; }
+    .vr-stage { flex: 1; position: relative; z-index: 1; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 8px 16px; gap: 14px; min-height: 0; }
+    /* Roll-the-bet phase */
+    .vr-betbox { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .vr-betbox .lbl { font-size: 14px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+    .vr-die { width: 110px; height: 110px; border-radius: 22px;
+      background: linear-gradient(180deg, #fff8e6 0%, #d0c4a0 100%);
+      color: #2a1a00; display: flex; align-items: center; justify-content: center;
+      font-size: 72px; font-weight: 900;
+      box-shadow: 0 8px 0 #5a4a20, 0 0 24px rgba(255,200,80,0.4),
+                  inset 0 2px 0 rgba(255,255,255,0.6); }
+    .vr-die.rolling { animation: vrDieShake 0.06s linear infinite; }
+    @keyframes vrDieShake {
+      0% { transform: rotate(-6deg) translate(-2px,-1px) scale(1.04); }
+      50% { transform: rotate(6deg) translate(2px,1px) scale(1.04); }
+      100% { transform: rotate(-6deg) translate(-2px,-1px) scale(1.04); }
+    }
+    /* Pick-a-color phase */
+    .vr-picks { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 360px; }
+    .vr-pick { min-width: 88px; min-height: 96px; padding: 12px 18px; border-radius: 16px;
+      border: 3px solid rgba(255,255,255,0.4); cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      font-weight: 900; -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .vr-pick:active { transform: translateY(2px); }
+    .vr-pick.red { background: linear-gradient(180deg, #ff3a3a, #b41010); box-shadow: 0 6px 0 #6a0408; color: #fff; }
+    .vr-pick.black { background: linear-gradient(180deg, #2a2a2a, #0a0a0a); box-shadow: 0 6px 0 #000; color: #fff; }
+    .vr-pick.gold { background: linear-gradient(180deg, #ffd54a, #ff9a1a); box-shadow: 0 6px 0 #b56a00; color: #2a1a00; }
+    .vr-pick .e { font-size: 28px; }
+    .vr-pick .t { font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+    .vr-pick .o { font-size: 11px; opacity: 0.85; }
+    /* Wheel phase */
+    .vr-wheel-wrap { position: relative; width: min(78vw, 340px); aspect-ratio: 1/1; max-height: 56vh; }
+    .vr-wheel { position: absolute; inset: 0; border-radius: 50%;
+      box-shadow: 0 0 0 6px #c9a35a, 0 0 0 9px #5a4020, 0 0 40px rgba(255,120,40,0.5);
+      transform: rotate(0deg); transition: transform 4.5s cubic-bezier(.18,.9,.25,1);
+      overflow: hidden; }
+    .vr-wseg { position: absolute; inset: 0; transform-origin: 50% 50%; }
+    .vr-wseg .lab { position: absolute; left: 50%; top: 18%; transform: translateX(-50%);
+      font-size: 14px; font-weight: 900; color: #fff;
+      text-shadow: 0 1px 0 #000, 0 0 6px rgba(0,0,0,0.7); }
+    .vr-wpointer { position: absolute; left: 50%; top: -14px; transform: translateX(-50%);
+      width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent;
+      border-top: 26px solid #ffd54a; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.6)); z-index: 3; }
+    .vr-hub { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: 22%; aspect-ratio: 1/1; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffe78a, #ff9a1a 60%, #b86c00 100%);
+      box-shadow: inset 0 -5px 0 #b86c00, 0 0 16px rgba(255,200,80,0.6);
+      display: flex; align-items: center; justify-content: center; font-size: 28px; pointer-events: none; z-index: 2; }
+    .vr-foot { display: flex; gap: 10px; justify-content: center; padding: 8px 14px 6px;
+      position: relative; z-index: 3; flex-shrink: 0; }
+    .vr-back .btn-pill { min-height: 52px; padding: 0 26px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.1);
+      color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+    .vr-back .btn-pill.gold { background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+      color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
+    .vr-back .btn-pill:active { transform: translateY(2px); }
+    .vr-result { position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; flex-direction: column; gap: 8px; padding: 24px;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.96) 80%);
+      opacity: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 5; }
+    .vr-result.show { opacity: 1; pointer-events: auto; }
+    .vr-result .big { font-size: 48px; font-weight: 900;
+      text-shadow: 0 4px 0 rgba(0,0,0,0.6), 0 0 30px var(--glo, #ffd54a);
+      animation: chompZoom 0.5s cubic-bezier(.4,1.6,.5,1); text-align: center; }
+    .vr-result .sub { font-size: 18px; opacity: 0.95; text-align: center; padding: 0 16px; max-width: 320px; }
+
+    /* =============================================================
+       Blackjack van de Goden (bj-)
+       ============================================================= */
+    .bj-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
+      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      background:
+        radial-gradient(ellipse at 50% 50%, #1a4a2a 0%, #0a2818 60%, #050a08 100%);
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom); }
+    .bj-back::before { content: ""; position: absolute; inset: -10%; pointer-events: none;
+      background: radial-gradient(circle at 30% 30%, rgba(255,200,80,0.08), transparent 50%),
+                  radial-gradient(circle at 70% 70%, rgba(255,80,40,0.10), transparent 60%);
+      animation: vh-heat 7s ease-in-out infinite alternate; }
+    .bj-header { position: relative; z-index: 2; padding: 8px 16px 0; text-align: center; }
+    .bj-title { font-size: 20px; font-weight: 900;
+      text-shadow: 0 2px 0 #000, 0 0 18px #ff9a3a; }
+    .bj-sub { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+    .bj-stage { flex: 1; position: relative; z-index: 1; display: flex;
+      flex-direction: column; padding: 8px 12px; gap: 6px; min-height: 0; overflow: hidden; }
+    .bj-side { display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 8px; border-radius: 16px; background: rgba(0,0,0,0.25);
+      border: 2px solid rgba(255,255,255,0.08); flex: 1; min-height: 0; }
+    .bj-side.you { border-color: var(--pcol, #4da6ff); box-shadow: 0 0 22px rgba(77,166,255,0.25); }
+    .bj-side.god { border-color: #ff7a1f; box-shadow: 0 0 22px rgba(255,122,31,0.25); }
+    .bj-name { font-size: 14px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
+    .bj-name.you { color: var(--pcol, #4da6ff); }
+    .bj-name.god { color: #ff9a3a; }
+    .bj-hand { display: flex; gap: -10px; align-items: center; justify-content: center;
+      flex-wrap: nowrap; min-height: 0; flex: 1; }
+    .bj-card { width: clamp(46px, 12vw, 64px); aspect-ratio: 0.7/1; border-radius: 8px;
+      background: #fff; color: #111; position: relative;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.4), 0 6px 14px rgba(0,0,0,0.5);
+      margin: 0 -8px; flex-shrink: 0;
+      animation: bj-deal 0.35s cubic-bezier(.3,1.7,.5,1) backwards; }
+    .bj-card.red { color: #c81030; }
+    .bj-card.back { background: linear-gradient(135deg, #5a1a1a, #2a0a0a);
+      color: transparent; border: 2px solid #b86c00; }
+    .bj-card.back::after { content: "🌋"; position: absolute; inset: 0; display: flex;
+      align-items: center; justify-content: center; font-size: 26px; color: #ff9a3a; }
+    .bj-card .tl { position: absolute; top: 4px; left: 5px; font-size: 12px; font-weight: 900; line-height: 1; }
+    .bj-card .tl .s { display: block; font-size: 14px; }
+    .bj-card .ctr { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      font-size: clamp(22px, 6vw, 32px); }
+    @keyframes bj-deal { from { transform: translateY(-40px) rotate(-12deg); opacity: 0; }
+                         to   { transform: translateY(0) rotate(0); opacity: 1; } }
+    .bj-val { font-size: 16px; font-weight: 900; padding: 4px 12px; border-radius: 999px;
+      background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); }
+    .bj-val.bust { background: rgba(200,0,40,0.5); border-color: #ff5050; }
+    .bj-val.bj { background: rgba(255,200,80,0.4); border-color: #ffd54a; }
+    .bj-foot { display: flex; gap: 10px; justify-content: center; padding: 8px 14px 6px;
+      position: relative; z-index: 3; flex-shrink: 0; }
+    .bj-back .btn-pill { min-height: 52px; padding: 0 26px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.1);
+      color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+    .bj-back .btn-pill.gold { background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+      color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
+    .bj-back .btn-pill.red { background: linear-gradient(180deg, #ff5050, #c01020);
+      color: #fff; border-color: rgba(255,80,80,0.6); box-shadow: 0 4px 0 #5a0408; }
+    .bj-back .btn-pill:active { transform: translateY(2px); }
+    .bj-back .btn-pill[disabled] { opacity: 0.45; pointer-events: none; }
+    .bj-result { position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; flex-direction: column; gap: 10px; padding: 24px;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.96) 80%);
+      opacity: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 5; }
+    .bj-result.show { opacity: 1; pointer-events: auto; }
+    .bj-result .big { font-size: 44px; font-weight: 900; text-align: center;
+      text-shadow: 0 4px 0 rgba(0,0,0,0.6), 0 0 30px var(--glo, #ff9a3a);
+      animation: chompZoom 0.5s cubic-bezier(.4,1.6,.5,1); }
+    .bj-result .sub { font-size: 17px; opacity: 0.95; text-align: center; padding: 0 16px; max-width: 320px; }
+
+    /* =============================================================
+       Hoofdsteden Vuurdoop (hf-)
+       ============================================================= */
+    .hf-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
+      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      background:
+        radial-gradient(ellipse at 50% 30%, #2a3a8a 0%, #100a3a 60%, #050514 100%);
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      touch-action: manipulation; }
+    .hf-back::before { content: ""; position: absolute; inset: -10%; pointer-events: none;
+      background: radial-gradient(circle at 20% 20%, rgba(80,160,255,0.15), transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(255,120,200,0.12), transparent 55%); }
+    .hf-header { position: relative; z-index: 2; padding: 10px 16px 4px; text-align: center; }
+    .hf-title { font-size: 22px; font-weight: 900; text-shadow: 0 2px 0 #000, 0 0 18px #ff7a1f; }
+    .hf-sub { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+    .hf-who { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px;
+      padding: 6px 14px; border-radius: 999px; background: rgba(0,0,0,0.4);
+      border: 2px solid var(--pcol, #fff); }
+    .hf-who .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--pcol); }
+    .hf-who .nm { font-weight: 900; color: var(--pcol); font-size: 14px; }
+    .hf-timer-bar { position: relative; z-index: 2; height: 10px; margin: 8px 16px 0;
+      background: rgba(0,0,0,0.5); border-radius: 999px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.15); }
+    .hf-timer-fill { height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #5cff7a 0%, #ffd54a 50%, #ff3a3a 100%);
+      width: 100%; transform-origin: left center;
+      box-shadow: 0 0 12px rgba(255,200,80,0.5); }
+    .hf-stage { flex: 1; position: relative; z-index: 1; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 16px; gap: 18px; min-height: 0; }
+    .hf-prompt { text-align: center; }
+    .hf-prompt .lbl { font-size: 14px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
+    .hf-prompt .country { display: block; font-size: clamp(36px, 9vw, 56px); font-weight: 900;
+      margin-top: 6px; color: #ffd54a;
+      text-shadow: 0 4px 0 rgba(0,0,0,0.6), 0 0 30px rgba(255,200,80,0.6); }
+    .hf-input-row { display: flex; gap: 10px; align-items: center; width: 100%; max-width: 360px; }
+    .hf-input { flex: 1; min-height: 56px; padding: 0 18px; border-radius: 14px;
+      background: rgba(255,255,255,0.95); color: #1a1a2a; font-size: 20px; font-weight: 700;
+      border: 3px solid rgba(255,215,80,0.6);
+      box-shadow: 0 6px 0 rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.7);
+      outline: none; -webkit-appearance: none; }
+    .hf-input::placeholder { color: #999; font-weight: 500; }
+    .hf-input:focus { border-color: #ffd54a; box-shadow: 0 6px 0 rgba(0,0,0,0.4), 0 0 0 4px rgba(255,215,80,0.3); }
+    .hf-go { min-width: 64px; min-height: 56px; border-radius: 14px;
+      background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+      color: #2a1a00; font-weight: 900; font-size: 22px; border: 0;
+      box-shadow: 0 6px 0 #b56a00; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .hf-go:active { transform: translateY(2px); box-shadow: 0 4px 0 #b56a00; }
+    .hf-foot { display: flex; gap: 10px; justify-content: center; padding: 8px 14px 6px;
+      position: relative; z-index: 3; flex-shrink: 0; }
+    .hf-back .btn-pill { min-height: 48px; padding: 0 22px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.1);
+      color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+    .hf-result { position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; flex-direction: column; gap: 10px; padding: 24px;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.96) 80%);
+      opacity: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 5; }
+    .hf-result.show { opacity: 1; pointer-events: auto; }
+    .hf-result .big { font-size: 48px; font-weight: 900; text-align: center;
+      text-shadow: 0 4px 0 rgba(0,0,0,0.6), 0 0 30px var(--glo, #ffd54a);
+      animation: chompZoom 0.5s cubic-bezier(.4,1.6,.5,1); }
+    .hf-result .sub { font-size: 17px; opacity: 0.95; text-align: center; padding: 0 16px; max-width: 320px; }
+    .hf-result .answer { font-size: 14px; opacity: 0.75; margin-top: 2px; }
+
 </style>
 </head>
 <body>
@@ -1512,17 +1806,18 @@ const TILE_MATS = {
     blue:       tileMaterial(0x4da6ff, 0.35),       // +2 / Lucky
     red:        tileMaterial(0xff5c5c, 0.35),       // -2 / Unlucky
     green:      tileMaterial(0x5cff7a, 0.35),       // Drink/cheers tile
-    purple:     tileMaterial(0xb87aff, 0.55),       // Krokodil
+    purple:     tileMaterial(0xb87aff, 0.55),       // Krokodil (legacy — kept for back-compat)
     yellow:     tileMaterial(0xffd633, 0.55),       // Chwazi
     lava:       tileMaterial(0xff7a1a, 0.85),       // Lava — risk of falling
-    cyan:       tileMaterial(0x4af2ff, 0.55),       // Paddle Duel
-    pink:       tileMaterial(0xff7ad6, 0.55),       // Tappy Bird
-    teal:       tileMaterial(0x3aff9e, 0.55),       // Volcano Hop
+    cyan:       tileMaterial(0x4af2ff, 0.55),       // Paddle Duel (legacy)
+    pink:       tileMaterial(0xff7ad6, 0.55),       // Tappy Bird (legacy)
+    teal:       tileMaterial(0x3aff9e, 0.55),       // Volcano Hop (legacy)
     bluestatue: tileMaterial(0x00d0ff, 0.95),       // BLUE STATUE — mega boost +6
     redstatue:  tileMaterial(0xff1a3a, 0.95),       // RED STATUE — mega knockback -6
     ufo:        tileMaterial(0xc77aff, 0.85),       // UFO — swap places
     tornado:    tileMaterial(0xe8f4ff, 0.65),       // TORNADO — blow someone back
     skull:      tileMaterial(0x222028, 0.20),       // SKULL — into the volcano!
+    mystery:    tileMaterial(0xff3acf, 0.90),       // MYSTERY — random minigame wheel
 };
 
 // shared tile geometry + shared white outline geometry
@@ -1551,11 +1846,12 @@ function tileTypeFor(i) {
     if (i === 0)                          return 'start';
     if (i >= NUM_TILES - 6 && i < NUM_TILES - 1) return 'lava';
     if (SPECIAL_TILES[i])                 return SPECIAL_TILES[i];
-    if (i > 0 && i % 13 === 0)            return 'krokodil';
+    // Chwazi stays its own thing — different mechanic (random drinker).
     if (i > 0 && i % 9 === 0)             return 'chwazi';
-    if (i > 0 && i % 17 === 0)            return 'volcanoHop';
-    if (i > 0 && i % 11 === 0)            return 'tappy';
-    if (i > 0 && i % 7 === 0)             return 'paddle';
+    // All other minigame tiles (formerly krokodil/paddle/tappy/volcanoHop) now
+    // funnel into a single 'mystery' tile that spins a wheel to pick the
+    // minigame. The old modulo positions are merged so the board stays varied.
+    if (i > 0 && (i % 13 === 0 || i % 11 === 0 || i % 7 === 0 || i % 17 === 0)) return 'mystery';
     // Convert "filler" tiles into action tiles based on a stable hash:
     const r = (Math.sin(i * 9.13) * 0.5 + 0.5);
     if (r < 0.40)                         return 'plus';   // blue → lucky +2
@@ -1566,11 +1862,14 @@ function tileTypeFor(i) {
 const TILE_TYPE_TO_MAT = {
     'start':       TILE_MATS.green,
     'lava':        TILE_MATS.lava,
+    // Legacy tile types — kept in case the board generator is ever reverted.
     'krokodil':    TILE_MATS.purple,
     'chwazi':      TILE_MATS.yellow,
     'volcanoHop':  TILE_MATS.teal,
     'tappy':       TILE_MATS.pink,
     'paddle':      TILE_MATS.cyan,
+    // New universal minigame tile.
+    'mystery':     TILE_MATS.mystery,
     'plus':        TILE_MATS.blue,
     'minus':       TILE_MATS.red,
     'drink':       TILE_MATS.green,
@@ -2981,12 +3280,17 @@ function renderSetup() {
     const mgGrid = el('div', { className: 'mg-grid' });
 
     const MINIGAMES = [
-        { id: 'chwazi',   emoji: '👆', name: 'Chwazi',        meta: '1 willekeurig', tag: null,    locked: false },
-        { id: 'krokodil', emoji: '🐊', name: 'Krokodil',      meta: '1v1',           tag: null,    locked: false },
-        { id: 'paddle',   emoji: '🏓', name: 'Paddle Duel',   meta: '1v1',           tag: null,    locked: false },
-        { id: 'flappy',   emoji: '🐦', name: 'Tappy Bird',    meta: 'iedereen',      tag: null,    locked: false },
-        { id: 'volcano',  emoji: '🌋', name: 'Volcano Hop',   meta: 'iedereen',      tag: null,    locked: false },
-        { id: 'raft',     emoji: '🏴‍☠️', name: 'Raft Battle',   meta: '1v1',           tag: null,    locked: false },
+        { id: 'chwazi',      emoji: '👆',  name: 'Chwazi',              meta: '1 willekeurig', tag: null, locked: false },
+        { id: 'krokodil',    emoji: '🐊',  name: 'Krokodil',             meta: '1v1',           tag: null, locked: false },
+        { id: 'paddle',      emoji: '🏓',  name: 'Paddle Duel',          meta: '1v1',           tag: null, locked: false },
+        { id: 'flappy',      emoji: '🐦',  name: 'Tappy Bird',           meta: 'iedereen',      tag: null, locked: false },
+        { id: 'volcano',     emoji: '🌋',  name: 'Volcano Hop',          meta: 'iedereen',      tag: null, locked: false },
+        { id: 'raft',        emoji: '🏴‍☠️', name: 'Raft Battle',          meta: '1v1',           tag: null, locked: false },
+        // ── nieuwe minigames ──
+        { id: 'roulette',    emoji: '🎰',  name: 'Vulkaan Roulette',     meta: 'solo',          tag: 'NIEUW', locked: false },
+        { id: 'blackjack',   emoji: '🃏',  name: 'Blackjack v/d Goden',  meta: 'vs CPU',        tag: 'NIEUW', locked: false },
+        { id: 'hoofdsteden', emoji: '🏙️',  name: 'Hoofdsteden Vuurdoop', meta: 'solo / trivia', tag: 'NIEUW', locked: false },
+        { id: 'mystery',     emoji: '🎡',  name: 'Mystery Wheel',        meta: 'random',        tag: 'NIEUW', locked: false },
     ];
 
     for (const mg of MINIGAMES) {
@@ -3093,6 +3397,50 @@ async function launchStandaloneMinigame(id) {
         const a = G.players[0], b = G.players[1];
         const winner = await playRaftBattle({ playerA: a, playerB: b, drinks: 4 });
         if (winner) { winner.bonusDice = (winner.bonusDice || 0) + 1; refreshHUD(); }
+    } else if (id === 'roulette') {
+        await playVulcanoRoulette({ player: G.players[0] });
+        // Standalone: no board to move on, no drinks payout — the in-game result
+        // screen already explains what would have happened.
+    } else if (id === 'blackjack') {
+        const res = await playGodBlackjack({ player: G.players[0] });
+        if (res && res.won) {
+            await showModal({
+                emoji: '🏆', title: `${G.players[0].name} versloeg de goden!`,
+                body: [`Hand: ${res.playerVal} vs ${res.dealerVal}.`,
+                       `In het bordspel zou je een tegenstander ${res.drinks} slokken laten drinken.`],
+                actions: [{ label: 'Klaar', value: true }],
+            });
+        } else if (res && !res.tie) {
+            await showModal({
+                emoji: '⚡', title: `${G.players[0].name} verloor`,
+                body: [`Hand: ${res.playerVal} vs ${res.dealerVal}.`,
+                       `In het bordspel zou je zelf ${res.drinks} slokken drinken.`],
+                actions: [{ label: 'Klaar', value: true }],
+            });
+        }
+    } else if (id === 'hoofdsteden') {
+        const res = await playHoofdsteden({ player: G.players[0] });
+        if (res) {
+            await showModal({
+                emoji: res.won ? '🎯' : (res.timeout ? '⏰' : '❌'),
+                title: res.won ? 'Goed gedaan!' : (res.timeout ? 'Te laat!' : 'Fout!'),
+                body: [`Hoofdstad van ${res.country}: ${res.expected}.`,
+                       res.won ? 'In het bordspel zou je vooruit gegaan zijn.' :
+                                 `In het bordspel zou je ${res.drinks} slokken drinken.`],
+                actions: [{ label: 'Klaar', value: true }],
+            });
+        }
+    } else if (id === 'mystery' && G.players.length >= 1) {
+        // Standalone Mystery Wheel: spin it, then dispatch to the same standalone
+        // launcher recursively (after un-doing the stash, so the inner call
+        // doesn't re-stash an already-stashed list).
+        const pickedId = await playMysteryWheel({});
+        if (pickedId) {
+            // restore the stash early so the recursive launch can re-stash cleanly
+            G.players = stash;
+            await launchStandaloneMinigame(pickedId);
+            return; // renderSetup already called by inner launch
+        }
     }
 
     G.players = stash;
@@ -4627,6 +4975,964 @@ function playKrokodil({ playerA, playerB, drinks = 4, teethCount = 18 } = {}) {
     });
 }
 
+/* ============================================================
+   Universal Minigame Picker — the "Mystery Wheel"
+   ============================================================
+   Used by the universal 'mystery' tile (which replaces all the
+   per-minigame tiles on the board, except Chwazi). Returns the
+   chosen minigame id ('krokodil','paddle','tappy','volcano',
+   'raft','roulette','blackjack','hoofdsteden') or null if skipped.
+   ============================================================ */
+const MYSTERY_OPTIONS = [
+    { id: 'krokodil',    emoji: '🐊', label: 'Krokodil',     color: '#b87aff' },
+    { id: 'paddle',      emoji: '🏓', label: 'Paddle Duel',  color: '#4af2ff' },
+    { id: 'tappy',       emoji: '🐦', label: 'Tappy Bird',   color: '#ff7ad6' },
+    { id: 'volcano',     emoji: '🌋', label: 'Volcano Hop',  color: '#3aff9e' },
+    { id: 'raft',        emoji: '🏴‍☠️', label: 'Raft Battle',  color: '#ff8a4a' },
+    { id: 'roulette',    emoji: '🎰', label: 'Roulette',     color: '#ff3a3a' },
+    { id: 'blackjack',   emoji: '🃏', label: 'Blackjack',    color: '#2a8a3a' },
+    { id: 'hoofdsteden', emoji: '🏙️', label: 'Hoofdsteden',  color: '#5aaaff' },
+];
+
+function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Wheel', subtitle = 'Welke minigame wordt het?' } = {}) {
+    return new Promise(resolve => {
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'mw-back' });
+        const header = el('div', { className: 'mw-header' });
+        header.append(
+            el('div', { className: 'mw-title' }, title),
+            el('div', { className: 'mw-sub' }, subtitle),
+        );
+
+        const stage = el('div', { className: 'mw-stage' });
+        const wrap = el('div', { className: 'mw-wheel-wrap' });
+        const pointer = el('div', { className: 'mw-pointer' });
+        const wheel = el('div', { className: 'mw-wheel' });
+        const hub = el('div', { className: 'mw-hub' }, '🌋');
+
+        const N = options.length;
+        const segAngle = 360 / N;
+
+        // Build the wheel as a single radial-gradient background of conic segments.
+        // Then place each label inside its own rotated container.
+        const stops = options.map((o, i) => {
+            const from = i * segAngle;
+            const to = (i + 1) * segAngle;
+            return `${o.color} ${from}deg ${to}deg`;
+        }).join(', ');
+        wheel.style.background = `conic-gradient(${stops})`;
+
+        for (let i = 0; i < N; i++) {
+            const seg = el('div', { className: 'mw-seg' });
+            // rotate the seg container so its label sits in the centre of its slice
+            seg.style.transform = `rotate(${i * segAngle + segAngle / 2}deg)`;
+            const lab = el('div', { className: 'label' });
+            lab.append(
+                el('span', { className: 'emo' }, options[i].emoji),
+                document.createTextNode(options[i].label),
+            );
+            seg.append(lab);
+            wheel.append(seg);
+        }
+
+        wrap.append(pointer, wheel, hub);
+        stage.append(wrap);
+
+        const foot = el('div', { className: 'mw-foot' });
+        const spinBtn = el('button', { className: 'btn-pill gold', type: 'button' }, '🎡 Draai!');
+        const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
+        foot.append(spinBtn, skipBtn);
+
+        const result = el('div', { className: 'mw-result' });
+        stage.append(result);
+
+        back.append(header, stage, foot);
+        ui.append(back);
+
+        let spun = false;
+
+        spinBtn.addEventListener('click', () => {
+            if (spun) return;
+            spun = true;
+            spinBtn.disabled = true;
+            skipBtn.disabled = true;
+
+            // pre-pick the winner
+            const winIdx = Math.floor(Math.random() * N);
+            // the pointer sits at 12 o'clock (0deg, top). A segment with centre
+            // at angle A points to 12 o'clock when the wheel is rotated by -A.
+            // We add a chunk of full spins for drama and a tiny ±jitter so it
+            // doesn't always stop dead centre on the line.
+            const winCentre = winIdx * segAngle + segAngle / 2;
+            const jitter = (Math.random() - 0.5) * (segAngle * 0.6);
+            const spins = 5;  // full rotations
+            const finalRot = spins * 360 - winCentre + jitter;
+            wheel.style.transform = `rotate(${finalRot}deg)`;
+
+            // when the CSS transition is done, show the result
+            wheel.addEventListener('transitionend', function done() {
+                wheel.removeEventListener('transitionend', done);
+                const opt = options[winIdx];
+                result.style.setProperty('--glo', opt.color);
+                clear(result);
+                result.append(
+                    el('div', { className: 'ann' }, 'En het wordt…'),
+                    el('div', { className: 'emo-big' }, opt.emoji),
+                    el('div', { className: 'pick' }, opt.label),
+                    el('button', { className: 'btn-pill gold', type: 'button',
+                        style: { marginTop: '10px' },
+                        on: { click: () => finish(opt.id) } }, '▶️ Start!'),
+                );
+                result.classList.add('show');
+            }, { once: true });
+        });
+
+        skipBtn.addEventListener('click', () => finish(null));
+
+        function finish(id) {
+            back.style.transition = 'opacity 0.3s ease';
+            back.style.opacity = '0';
+            setTimeout(() => { back.remove(); resolve(id); }, 300);
+        }
+    });
+}
+
+/* ============================================================
+   Minigame 1 — Vulkaan Roulette
+   ============================================================
+   Solo gambling minigame. Flow:
+     1. Player rolls a virtual 1-6 die (the "bet").
+     2. Player picks Red, Black or Gold.
+     3. Wheel spins and lands on a colour.
+     4. Win:  +diceValue tiles forward (Gold pays ×3) + drink 1 (lucky tax).
+        Loss: −diceValue tiles back + drink slokken(diceValue).
+   Returns: { won: bool, color: 'red'|'black'|'gold', pick: ..., bet: 1-6,
+              steps: number (signed, ±), drinks: number }
+   ============================================================ */
+function playVulcanoRoulette({ player, drinks = null } = {}) {
+    return new Promise(resolve => {
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'vr-back' });
+        if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
+
+        // Header
+        const header = el('div', { className: 'vr-header' });
+        const title = el('div', { className: 'vr-title' }, '🎰 Vulkaan Roulette');
+        const sub = el('div', { className: 'vr-sub' }, 'Gooi de inzet, kies je kleur, laat de Vulkaangod beslissen!');
+        const who = el('div', { className: 'vr-who' });
+        who.append(
+            el('span', { className: 'dot' }),
+            el('span', { className: 'nm' }, player?.name || 'Speler'),
+        );
+        header.append(title, sub, who);
+
+        const stage = el('div', { className: 'vr-stage' });
+        const foot = el('div', { className: 'vr-foot' });
+        const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
+        skipBtn.addEventListener('click', () => finish(null));
+        foot.append(skipBtn);
+        back.append(header, stage, foot);
+        ui.append(back);
+
+        // ── Phase 1: roll the bet die ──
+        const betbox = el('div', { className: 'vr-betbox' });
+        const betLbl = el('div', { className: 'lbl' }, 'Tik om de inzet te gooien');
+        const die = el('div', { className: 'vr-die' }, '?');
+        const rollBtn = el('button', { className: 'btn-pill gold', type: 'button' }, '🎲 Gooi de inzet');
+        betbox.append(betLbl, die, rollBtn);
+        stage.append(betbox);
+
+        let bet = 0;
+        let rolling = false;
+        rollBtn.addEventListener('click', () => {
+            if (rolling || bet) return;
+            rolling = true;
+            rollBtn.disabled = true;
+            die.classList.add('rolling');
+            let ticks = 0;
+            const fakeRoll = setInterval(() => {
+                die.textContent = String(1 + Math.floor(Math.random() * 6));
+                ticks++;
+                if (ticks > 18) {
+                    clearInterval(fakeRoll);
+                    bet = 1 + Math.floor(Math.random() * 6);
+                    die.classList.remove('rolling');
+                    die.textContent = String(bet);
+                    setTimeout(() => phasePick(), 600);
+                }
+            }, 70);
+        });
+
+        function phasePick() {
+            // Phase 2 — pick a colour. Keep the die visible (it's the bet).
+            clear(stage);
+            const pickbox = el('div', { className: 'vr-betbox' });
+            pickbox.append(
+                el('div', { className: 'lbl' }, `Inzet: ${bet} • Kies je kleur`),
+                die,
+            );
+            const picks = el('div', { className: 'vr-picks' });
+            const mkPick = (cls, emoji, lbl, odd) => {
+                const b = el('button', { className: `vr-pick ${cls}`, type: 'button' });
+                b.append(
+                    el('div', { className: 'e' }, emoji),
+                    el('div', { className: 't' }, lbl),
+                    el('div', { className: 'o' }, odd),
+                );
+                b.addEventListener('click', () => phaseSpin(cls));
+                return b;
+            };
+            picks.append(
+                mkPick('red',   '🔴', 'Rood',  '×1'),
+                mkPick('black', '⚫', 'Zwart', '×1'),
+                mkPick('gold',  '🟡', 'Goud',  '×3'),
+            );
+            pickbox.append(picks);
+            stage.append(pickbox);
+        }
+
+        function phaseSpin(pickColor) {
+            // Phase 3 — build the wheel and spin.
+            // 16-segment wheel: 7 red, 7 black, 2 gold (≈ 12.5% gold chance, 43.75% red, 43.75% black)
+            clear(stage);
+            const wrap = el('div', { className: 'vr-wheel-wrap' });
+            const pointer = el('div', { className: 'vr-wpointer' });
+            const wheel = el('div', { className: 'vr-wheel' });
+            const hub = el('div', { className: 'vr-hub' }, '🌋');
+
+            // Pattern: r b r b r b r g r b r b r b r g (16 segments)
+            const segs = [];
+            const pattern = ['red','black','red','black','red','black','red','gold',
+                             'red','black','red','black','red','black','red','gold'];
+            const colorMap = { red: '#c81030', black: '#1a1a1a', gold: '#ffaa1a' };
+            const N = pattern.length;
+            const segAngle = 360 / N;
+            const stops = pattern.map((c, i) =>
+                `${colorMap[c]} ${i * segAngle}deg ${(i + 1) * segAngle}deg`).join(', ');
+            wheel.style.background = `conic-gradient(${stops})`;
+
+            for (let i = 0; i < N; i++) {
+                const s = el('div', { className: 'vr-wseg' });
+                s.style.transform = `rotate(${i * segAngle + segAngle / 2}deg)`;
+                const lab = pattern[i] === 'gold' ? '★' : (pattern[i] === 'red' ? '◆' : '◇');
+                s.append(el('div', { className: 'lab' }, lab));
+                wheel.append(s);
+                segs.push(pattern[i]);
+            }
+            wrap.append(pointer, wheel, hub);
+            stage.append(wrap);
+
+            // Pick a random segment.
+            const winIdx = Math.floor(Math.random() * N);
+            const winColor = segs[winIdx];
+            const winCentre = winIdx * segAngle + segAngle / 2;
+            const jitter = (Math.random() - 0.5) * (segAngle * 0.55);
+            const finalRot = 6 * 360 - winCentre + jitter;
+            // Apply rotation on next frame so the transition fires.
+            requestAnimationFrame(() => {
+                wheel.style.transform = `rotate(${finalRot}deg)`;
+            });
+
+            wheel.addEventListener('transitionend', function done() {
+                wheel.removeEventListener('transitionend', done);
+                phaseResult(pickColor, winColor);
+            }, { once: true });
+        }
+
+        function phaseResult(pickColor, winColor) {
+            const res = el('div', { className: 'vr-result show' });
+            let won = false;
+            let steps = 0;
+            let drinkN = 0;
+            let bigTxt = '';
+            let subTxt = '';
+            let glo = '#ff7a1f';
+
+            if (pickColor === winColor) {
+                won = true;
+                if (winColor === 'gold') {
+                    steps = bet * 3;
+                    drinkN = drinks ?? slokken(1);
+                    bigTxt = `🌟 GOUD! +${steps}`;
+                    subTxt = `${player.name} schiet ${steps} tegels vooruit! Iedereen anders drinkt ${slokken(2)} 🍻`;
+                    glo = '#ffd54a';
+                } else {
+                    steps = bet;
+                    drinkN = drinks ?? slokken(1);
+                    bigTxt = `🎉 WINST! +${steps}`;
+                    subTxt = `${player.name} mag ${steps} tegels vooruit. Lucky tax: drink ${drinkN} 🍻`;
+                    glo = winColor === 'red' ? '#ff3a3a' : '#ffd54a';
+                }
+            } else {
+                won = false;
+                steps = -bet;
+                drinkN = drinks ?? slokken(bet);
+                bigTxt = `💥 VERLIES! ${steps}`;
+                subTxt = `${player.name} valt ${bet} tegels terug en drinkt ${drinkN} 🍻`;
+                glo = '#ff3a3a';
+            }
+
+            res.style.setProperty('--glo', glo);
+            res.append(
+                el('div', { className: 'big' }, bigTxt),
+                el('div', { className: 'sub' }, subTxt),
+                el('div', { className: 'sub', style: { fontSize: '13px', opacity: '0.7' } },
+                    `(Inzet ${bet} • Gekozen ${pickColor === 'red' ? 'Rood' : pickColor === 'black' ? 'Zwart' : 'Goud'} • Bal ${winColor === 'red' ? 'Rood' : winColor === 'black' ? 'Zwart' : 'Goud'})`),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    style: { marginTop: '12px' },
+                    on: { click: () => finish({ won, color: winColor, pick: pickColor, bet, steps, drinks: drinkN }) } },
+                    'Verder'),
+            );
+            back.append(res);
+        }
+
+        function finish(payload) {
+            back.style.transition = 'opacity 0.3s ease';
+            back.style.opacity = '0';
+            setTimeout(() => { back.remove(); resolve(payload); }, 300);
+        }
+    });
+}
+
+/* ============================================================
+   Minigame 2 — Blackjack van de Goden
+   ============================================================
+   Player (current) vs. the Vulkaan God (computer dealer).
+   Standard 21-rules: Aces count as 1 or 11 (auto-best),
+   face cards = 10, dealer hits until 17 (stands on soft 17).
+   Returns: { won: bool, tie: bool, playerVal, dealerVal, drinks }
+   ============================================================ */
+function playGodBlackjack({ player, drinks = null } = {}) {
+    return new Promise(resolve => {
+        // ── Card deck ──
+        const SUITS = [
+            { s: '♠', red: false }, { s: '♣', red: false },
+            { s: '♥', red: true  }, { s: '♦', red: true  },
+        ];
+        const RANKS = [
+            { r: 'A', v: 11 }, { r: '2', v: 2 }, { r: '3', v: 3 }, { r: '4', v: 4 },
+            { r: '5', v: 5 }, { r: '6', v: 6 }, { r: '7', v: 7 }, { r: '8', v: 8 },
+            { r: '9', v: 9 }, { r: '10', v: 10 }, { r: 'J', v: 10 },
+            { r: 'Q', v: 10 }, { r: 'K', v: 10 },
+        ];
+
+        function buildDeck() {
+            const d = [];
+            for (const s of SUITS) for (const r of RANKS) d.push({ ...s, ...r });
+            // Fisher-Yates shuffle
+            for (let i = d.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [d[i], d[j]] = [d[j], d[i]];
+            }
+            return d;
+        }
+
+        function handValue(hand) {
+            // Sum, then demote aces from 11→1 while bust.
+            let total = hand.reduce((s, c) => s + c.v, 0);
+            let aces = hand.filter(c => c.r === 'A').length;
+            while (total > 21 && aces > 0) { total -= 10; aces--; }
+            return total;
+        }
+        function isBlackjack(hand) {
+            return hand.length === 2 && handValue(hand) === 21;
+        }
+
+        const deck = buildDeck();
+        const draw = () => deck.pop();
+        const playerHand = [draw(), draw()];
+        const dealerHand = [draw(), draw()];
+        let playerStood = false;
+        let dealerRevealed = false;
+        let gameOver = false;
+
+        // ── UI ──
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'bj-back' });
+        if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
+
+        const header = el('div', { className: 'bj-header' });
+        header.append(
+            el('div', { className: 'bj-title' }, '🃏 Blackjack van de Goden'),
+            el('div', { className: 'bj-sub' }, 'Zo dicht mogelijk bij 21, niet eroverheen'),
+        );
+
+        const stage = el('div', { className: 'bj-stage' });
+
+        // Dealer (god) side — top
+        const godSide = el('div', { className: 'bj-side god' });
+        const godName = el('div', { className: 'bj-name god' }, '🌋 Vulkaan God');
+        const godHand = el('div', { className: 'bj-hand' });
+        const godVal = el('div', { className: 'bj-val' }, '—');
+        godSide.append(godName, godHand, godVal);
+
+        // Player side — bottom
+        const youSide = el('div', { className: 'bj-side you' });
+        const youName = el('div', { className: 'bj-name you' }, player?.name || 'Speler');
+        const youHand = el('div', { className: 'bj-hand' });
+        const youVal = el('div', { className: 'bj-val' }, '—');
+        youSide.append(youName, youHand, youVal);
+
+        stage.append(godSide, youSide);
+
+        // Foot — hit/stand
+        const foot = el('div', { className: 'bj-foot' });
+        const hitBtn = el('button', { className: 'btn-pill gold', type: 'button' }, '🎴 Hit');
+        const standBtn = el('button', { className: 'btn-pill red', type: 'button' }, '✋ Stand');
+        const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
+        foot.append(hitBtn, standBtn, skipBtn);
+        back.append(header, stage, foot);
+        ui.append(back);
+
+        // ── Render ──
+        function renderCard(c, hidden = false) {
+            const div = el('div', { className: 'bj-card' + (hidden ? ' back' : (c.red ? ' red' : '')) });
+            if (!hidden) {
+                div.append(
+                    el('div', { className: 'tl' }, [
+                        document.createTextNode(c.r),
+                        el('span', { className: 's' }, c.s),
+                    ]),
+                    el('div', { className: 'ctr' }, c.s),
+                );
+            }
+            return div;
+        }
+        function render() {
+            // Dealer
+            clear(godHand);
+            dealerHand.forEach((c, i) => {
+                const hidden = !dealerRevealed && i === 1;
+                godHand.append(renderCard(c, hidden));
+            });
+            const dv = dealerRevealed ? handValue(dealerHand) : dealerHand[0].v;
+            godVal.textContent = dealerRevealed ? String(dv) : `${dv} + ?`;
+            godVal.className = 'bj-val';
+            if (dealerRevealed && dv > 21) godVal.classList.add('bust');
+            if (dealerRevealed && isBlackjack(dealerHand)) godVal.classList.add('bj');
+
+            // Player
+            clear(youHand);
+            playerHand.forEach(c => youHand.append(renderCard(c)));
+            const pv = handValue(playerHand);
+            youVal.textContent = String(pv);
+            youVal.className = 'bj-val';
+            if (pv > 21) youVal.classList.add('bust');
+            if (isBlackjack(playerHand)) youVal.classList.add('bj');
+        }
+        render();
+
+        // ── Game flow ──
+        function checkBust() {
+            if (handValue(playerHand) > 21) {
+                playerStood = true;
+                hitBtn.disabled = true; standBtn.disabled = true;
+                setTimeout(() => endGame(), 600);
+                return true;
+            }
+            return false;
+        }
+
+        hitBtn.addEventListener('click', () => {
+            if (gameOver || playerStood) return;
+            playerHand.push(draw());
+            render();
+            if (handValue(playerHand) >= 21) {
+                if (!checkBust()) {
+                    playerStood = true;
+                    hitBtn.disabled = true; standBtn.disabled = true;
+                    setTimeout(() => endGame(), 500);
+                }
+            }
+        });
+        standBtn.addEventListener('click', () => {
+            if (gameOver || playerStood) return;
+            playerStood = true;
+            hitBtn.disabled = true; standBtn.disabled = true;
+            endGame();
+        });
+        skipBtn.addEventListener('click', () => finish(null));
+
+        // Edge case: opening blackjack
+        if (isBlackjack(playerHand)) {
+            playerStood = true;
+            hitBtn.disabled = true; standBtn.disabled = true;
+            setTimeout(() => endGame(), 700);
+        }
+
+        function endGame() {
+            if (gameOver) return;
+            // Reveal dealer's hole card with a beat
+            dealerRevealed = true;
+            render();
+            // Dealer hits until ≥ 17 (stand on soft 17)
+            function dealerStep() {
+                const dv = handValue(dealerHand);
+                if (dv < 17 && handValue(playerHand) <= 21) {
+                    setTimeout(() => {
+                        dealerHand.push(draw());
+                        render();
+                        dealerStep();
+                    }, 500);
+                } else {
+                    setTimeout(() => decide(), 600);
+                }
+            }
+            dealerStep();
+        }
+
+        function decide() {
+            gameOver = true;
+            const pv = handValue(playerHand);
+            const dv = handValue(dealerHand);
+            let outcome, bigTxt, subTxt, glo;
+
+            // Player bust → loss
+            if (pv > 21) {
+                outcome = 'lose';
+                bigTxt = '💥 BUST!';
+                subTxt = `${player.name} schoot voorbij 21 (${pv}). De goden lachen.`;
+                glo = '#ff3a3a';
+            }
+            // Dealer bust → win
+            else if (dv > 21) {
+                outcome = 'win';
+                bigTxt = '🔥 DE GOD BUSTE!';
+                subTxt = `Vulkaan God ging te ver (${dv}). ${player.name} wint!`;
+                glo = '#ffd54a';
+            }
+            // Both 21 → could be tie or one blackjack
+            else if (pv === dv) {
+                outcome = 'tie';
+                bigTxt = '🤝 GELIJK';
+                subTxt = `Beiden ${pv}. De Vulkaangod schenkt vrede — niets gebeurt.`;
+                glo = '#9fa3aa';
+            }
+            else if (pv > dv) {
+                outcome = 'win';
+                bigTxt = '🏆 WINST!';
+                subTxt = `${pv} > ${dv}. ${player.name} verslaat de Vulkaangod!`;
+                glo = '#ffd54a';
+            }
+            else {
+                outcome = 'lose';
+                bigTxt = '⚡ VERLIES';
+                subTxt = `${pv} < ${dv}. De Vulkaangod wint.`;
+                glo = '#ff3a3a';
+            }
+
+            const drinkN = drinks ?? slokken(4);
+            const res = el('div', { className: 'bj-result show' });
+            res.style.setProperty('--glo', glo);
+            res.append(
+                el('div', { className: 'big' }, bigTxt),
+                el('div', { className: 'sub' }, subTxt),
+                el('div', { className: 'sub', style: { fontSize: '14px', opacity: '0.78' } },
+                    outcome === 'tie'
+                        ? 'Geen straf, geen beloning.'
+                        : (outcome === 'win'
+                            ? `Kies straks een slachtoffer: ${drinkN} slokken + ${knockBy(3)} tegels achteruit.`
+                            : `${player.name} drinkt zelf ${drinkN} 🍻 en valt ${knockBy(3)} tegels terug.`)),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    style: { marginTop: '10px' },
+                    on: { click: () => finish({
+                        won: outcome === 'win', tie: outcome === 'tie',
+                        playerVal: pv, dealerVal: dv, drinks: drinkN,
+                    }) } }, 'Verder'),
+            );
+            back.append(res);
+        }
+
+        function finish(payload) {
+            back.style.transition = 'opacity 0.3s ease';
+            back.style.opacity = '0';
+            setTimeout(() => { back.remove(); resolve(payload); }, 300);
+        }
+    });
+}
+
+/* ============================================================
+   Minigame 3 — Hoofdsteden Vuurdoop
+   ============================================================
+   Trivia under time pressure: type the capital of a random
+   country before the timer runs out.
+   Returns: { won: bool, correct: bool, timeout: bool,
+              country: string, expected: string, given: string,
+              drinks: number }
+   ============================================================ */
+const CAPITALS = [
+    // Country → array of accepted answers (first is canonical).
+    { country: 'Mongolië',     answers: ['Ulaanbaatar', 'Ulan Bator'] },
+    { country: 'Kazachstan',   answers: ['Astana', 'Nur-Sultan'] },
+    { country: 'Bhutan',       answers: ['Thimphu'] },
+    { country: 'Eritrea',      answers: ['Asmara'] },
+    { country: 'Vanuatu',      answers: ['Port Vila'] },
+    { country: 'Sri Lanka',    answers: ['Sri Jayawardenepura Kotte', 'Colombo', 'Kotte'] },
+    { country: 'Suriname',     answers: ['Paramaribo'] },
+    { country: 'Burkina Faso', answers: ['Ouagadougou'] },
+    { country: 'Madagaskar',   answers: ['Antananarivo'] },
+    { country: 'Kirgizië',     answers: ['Bisjkek', 'Bishkek'] },
+    { country: 'Botswana',     answers: ['Gaborone'] },
+    { country: 'Brunei',       answers: ['Bandar Seri Begawan'] },
+    { country: 'Tadzjikistan', answers: ['Doesjanbe', 'Dushanbe'] },
+    { country: 'Oezbekistan',  answers: ['Tasjkent', 'Tashkent'] },
+    { country: 'Azerbeidzjan', answers: ['Bakoe', 'Baku'] },
+    { country: 'Tsjaad',       answers: ['Ndjamena', "N'Djamena"] },
+    { country: 'Djibouti',     answers: ['Djibouti'] },
+    { country: 'Lesotho',      answers: ['Maseru'] },
+    { country: 'Bahrein',      answers: ['Manama'] },
+    { country: 'Litouwen',     answers: ['Vilnius'] },
+];
+
+function playHoofdsteden({ player, drinks = null, timeMs = 12000 } = {}) {
+    return new Promise(resolve => {
+        const item = CAPITALS[Math.floor(Math.random() * CAPITALS.length)];
+
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'hf-back' });
+        if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
+
+        const header = el('div', { className: 'hf-header' });
+        header.append(
+            el('div', { className: 'hf-title' }, '🏙️ Hoofdsteden Vuurdoop'),
+            el('div', { className: 'hf-sub' }, 'Typ de juiste hoofdstad voor de timer afloopt!'),
+            (() => {
+                const w = el('div', { className: 'hf-who' });
+                w.append(
+                    el('span', { className: 'dot' }),
+                    el('span', { className: 'nm' }, player?.name || 'Speler'),
+                );
+                return w;
+            })(),
+        );
+
+        const bar = el('div', { className: 'hf-timer-bar' });
+        const fill = el('div', { className: 'hf-timer-fill' });
+        bar.append(fill);
+
+        const stage = el('div', { className: 'hf-stage' });
+        const prompt = el('div', { className: 'hf-prompt' });
+        prompt.append(
+            el('div', { className: 'lbl' }, 'Hoofdstad van:'),
+            el('div', { className: 'country' }, item.country),
+        );
+
+        const row = el('div', { className: 'hf-input-row' });
+        const input = el('input', {
+            className: 'hf-input', type: 'text', placeholder: 'Typ je antwoord…',
+            autocomplete: 'off', autocorrect: 'off', autocapitalize: 'words', spellcheck: false,
+        });
+        const goBtn = el('button', { className: 'hf-go', type: 'button' }, '▶');
+        row.append(input, goBtn);
+        stage.append(prompt, row);
+
+        const foot = el('div', { className: 'hf-foot' });
+        const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
+        foot.append(skipBtn);
+
+        back.append(header, bar, stage, foot);
+        ui.append(back);
+
+        // Focus the input after a beat so iOS opens the keyboard
+        setTimeout(() => input.focus(), 250);
+
+        // ── Timer ──
+        let startTs = performance.now();
+        let done = false;
+        let rafId = null;
+        function tick(now) {
+            const elapsed = now - startTs;
+            const left = Math.max(0, timeMs - elapsed);
+            const pct = left / timeMs;
+            fill.style.transform = `scaleX(${pct.toFixed(4)})`;
+            if (left <= 0) {
+                judge(true); // timeout
+                return;
+            }
+            rafId = requestAnimationFrame(tick);
+        }
+        rafId = requestAnimationFrame(tick);
+
+        // ── Comparison ──
+        function normalise(s) {
+            // case-insensitive, ignore leading/trailing whitespace and accents
+            return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase().trim().replace(/\s+/g, ' ');
+        }
+        function isCorrect(given) {
+            const g = normalise(given);
+            if (!g) return false;
+            return item.answers.some(a => normalise(a) === g);
+        }
+
+        function submit() {
+            if (done) return;
+            judge(false);
+        }
+        function judge(timeout) {
+            if (done) return;
+            done = true;
+            if (rafId) cancelAnimationFrame(rafId);
+            const given = input.value;
+            const correct = !timeout && isCorrect(given);
+
+            const drinkN = drinks ?? (correct ? slokken(1) : slokken(2));
+            let bigTxt, subTxt, glo;
+            if (correct) {
+                bigTxt = '🎯 GOED!';
+                subTxt = `${player.name} verdient +${knockBy(3)} tegels • drink ${drinkN} (lucky tax) 🍻`;
+                glo = '#5cff7a';
+            } else if (timeout) {
+                bigTxt = '⏰ TE LAAT!';
+                subTxt = `${player.name} valt ${knockBy(2)} tegels terug en drinkt ${drinkN} 🍻`;
+                glo = '#ff7a1f';
+            } else {
+                bigTxt = '❌ FOUT!';
+                subTxt = `${player.name} valt ${knockBy(2)} tegels terug en drinkt ${drinkN} 🍻`;
+                glo = '#ff3a3a';
+            }
+
+            const res = el('div', { className: 'hf-result show' });
+            res.style.setProperty('--glo', glo);
+            res.append(
+                el('div', { className: 'big' }, bigTxt),
+                el('div', { className: 'sub' }, subTxt),
+                el('div', { className: 'answer' },
+                    `Juist antwoord: ${item.answers[0]}` + (given ? ` — jij typte: "${given}"` : '')),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    style: { marginTop: '12px' },
+                    on: { click: () => finish({
+                        won: correct, correct, timeout,
+                        country: item.country, expected: item.answers[0], given,
+                        drinks: drinkN,
+                    }) } }, 'Verder'),
+            );
+            back.append(res);
+        }
+
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); submit(); }
+        });
+        goBtn.addEventListener('click', submit);
+        skipBtn.addEventListener('click', () => {
+            done = true;
+            if (rafId) cancelAnimationFrame(rafId);
+            finish(null);
+        });
+
+        function finish(payload) {
+            back.style.transition = 'opacity 0.3s ease';
+            back.style.opacity = '0';
+            setTimeout(() => { back.remove(); resolve(payload); }, 300);
+        }
+    });
+}
+
+/* ============================================================
+   runMinigameOnTile(id, player)
+   ============================================================
+   Shared dispatcher used by the 'mystery' tile (and by the legacy
+   per-minigame tile types). Handles opponent picking, drink scaling,
+   bonus-die rewards, and the final result modal.
+   ============================================================ */
+async function runMinigameOnTile(id, player) {
+    const others = G.players.filter(p => p !== player);
+    const pickOpp = () => others[Math.floor(Math.random() * others.length)];
+
+    if (id === 'krokodil' && G.players.length >= 2) {
+        const opp = pickOpp();
+        const d = slokken(4);
+        const go = await showModal({
+            emoji: '🐊', title: 'Krokodil 1v1!',
+            body: [`${player.name} tegen ${opp.name}.`,
+                   `Druk om de beurt op een tand. Wie de pijnlijke vindt, drinkt ${d}.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        const loser = await playKrokodil({ playerA: player, playerB: opp, drinks: d });
+        if (loser) {
+            const winner = loser === player ? opp : player;
+            winner.bonusDice = (winner.bonusDice || 0) + 1;
+            refreshHUD();
+            await showModal({
+                emoji: '🍻', title: `${loser.name} drinkt!`,
+                body: [`Neem ${d} flinke slokken. Proost! 🥂`,
+                       `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
+                actions: [{ label: 'OK', value: true }],
+            });
+        }
+    }
+    else if (id === 'paddle' && G.players.length >= 2) {
+        const opp = pickOpp();
+        const d = slokken(4);
+        const go = await showModal({
+            emoji: '🏓', title: 'Paddle Duel!',
+            body: [`${player.name} tegen ${opp.name}.`,
+                   `Sleep in je helft. Eerste bij 3 punten wint, verliezer drinkt ${d}.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        const loser = await playPaddleDuel({ playerA: player, playerB: opp, drinks: d });
+        if (loser) {
+            const winner = loser === player ? opp : player;
+            winner.bonusDice = (winner.bonusDice || 0) + 1;
+            refreshHUD();
+            await showModal({
+                emoji: '🍻', title: `${loser.name} drinkt!`,
+                body: [`Neem ${d} flinke slokken. Proost! 🥂`,
+                       `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
+                actions: [{ label: 'OK', value: true }],
+            });
+        }
+    }
+    else if (id === 'tappy') {
+        const d = slokken(2);
+        const go = await showModal({
+            emoji: '🐦', title: 'Tappy Bird!',
+            body: ['Iedereen speelt één potje, geef de telefoon door.',
+                   `Wie het verst komt wint — anderen drinken ${d}.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        const w = await playTappyBird({ players: G.players, drinks: d });
+        if (w) {
+            w.bonusDice = (w.bonusDice || 0) + 1;
+            refreshHUD();
+            await showStamp({
+                emoji: '🎲💛', big: `${w.name} krijgt bonus!`,
+                sub: '1 × gouden bonus-dobbelsteen', palette: 'gold',
+            });
+        }
+    }
+    else if (id === 'volcano') {
+        const d = slokken(2);
+        const go = await showModal({
+            emoji: '🌋', title: 'Volcano Hop!',
+            body: ['Iedereen kiest stiekem een platform.', 'Fout = lava + ⚡, laatste man wint.'],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        const w = await playVolcanoHop({ players: G.players, drinks: d });
+        if (w) {
+            w.bonusDice = (w.bonusDice || 0) + 1;
+            refreshHUD();
+            await showStamp({
+                emoji: '🎲💛', big: `${w.name} krijgt bonus!`,
+                sub: '1 × gouden bonus-dobbelsteen — gebruik op je volgende worp',
+                palette: 'gold',
+            });
+        }
+    }
+    else if (id === 'raft' && G.players.length >= 2) {
+        const opp = pickOpp();
+        const d = slokken(4);
+        const go = await showModal({
+            emoji: '🏴‍☠️', title: 'Raft Battle!',
+            body: [`${player.name} tegen ${opp.name}.`,
+                   `Knock je tegenstander van het vlot. Verliezer drinkt ${d}.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        const winner = await playRaftBattle({ playerA: player, playerB: opp, drinks: d });
+        if (winner) {
+            const loser = winner === player ? opp : player;
+            winner.bonusDice = (winner.bonusDice || 0) + 1;
+            refreshHUD();
+            await showModal({
+                emoji: '🍻', title: `${loser.name} drinkt!`,
+                body: [`Neem ${d} flinke slokken. Proost! 🥂`,
+                       `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
+                actions: [{ label: 'OK', value: true }],
+            });
+        }
+    }
+    else if (id === 'roulette') {
+        const res = await playVulcanoRoulette({ player });
+        if (!res) return;
+        // Apply the steps movement (signed) — no events on knockback steps
+        if (res.steps !== 0) {
+            await new Promise(r => moveTokenBy(player, res.steps, r));
+            layoutTokensOnTile(player.tileIdx);
+        }
+        // Gold win is so juicy that we also reward a bonus die
+        if (res.won && res.color === 'gold') {
+            player.bonusDice = (player.bonusDice || 0) + 1;
+            await showStamp({
+                emoji: '🎲💛', big: 'JACKPOT BONUS!',
+                sub: `${player.name} krijgt ook een gouden dobbelsteen`,
+                palette: 'gold',
+            });
+        }
+        refreshHUD();
+    }
+    else if (id === 'blackjack') {
+        const res = await playGodBlackjack({ player });
+        if (!res) return;
+        if (res.won) {
+            // Pick a victim to punish
+            await showStamp({
+                emoji: '⚡', big: 'STRAF UITDELEN',
+                sub: `${player.name} kiest een slachtoffer`,
+                palette: 'gold', auto: true, duration: 1100,
+            });
+            const victim = G.players.length >= 2 ? await pickVictim({
+                title: '⚡ Wie moet de straf incasseren?',
+                subtitle: `Drink ${res.drinks} 🍻 • ${knockBy(3)} tegels achteruit`,
+                exclude: [player],
+            }) : null;
+            if (victim) {
+                screenShake(450);
+                await showStamp({
+                    emoji: '⚡', big: `${victim.name} →`,
+                    sub: `Drink ${res.drinks} 🍻 + ${knockBy(3)} tegels achteruit`,
+                    palette: 'red',
+                });
+                await new Promise(r => moveTokenBy(victim, -knockBy(3), r));
+                layoutTokensOnTile(victim.tileIdx);
+            }
+            // Winner gets a bonus die for beating the gods
+            player.bonusDice = (player.bonusDice || 0) + 1;
+        } else if (!res.tie) {
+            // Player loses — self-punishment
+            screenShake(450);
+            await new Promise(r => moveTokenBy(player, -knockBy(3), r));
+            layoutTokensOnTile(player.tileIdx);
+            await showStamp({
+                emoji: '🍻', big: `${player.name} drinkt ${res.drinks}`,
+                sub: `${knockBy(3)} tegels achteruit. De goden zijn streng.`,
+                palette: 'red',
+            });
+        }
+        refreshHUD();
+    }
+    else if (id === 'hoofdsteden') {
+        const res = await playHoofdsteden({ player });
+        if (!res) return;
+        if (res.won) {
+            const stepsFwd = knockBy(3);
+            await new Promise(r => moveTokenBy(player, +stepsFwd, r));
+            layoutTokensOnTile(player.tileIdx);
+            player.bonusDice = (player.bonusDice || 0) + 1;
+            await showStamp({
+                emoji: '🎲💛', big: 'KENNIS = MACHT',
+                sub: `+${stepsFwd} tegels • bonus-dobbelsteen voor ${player.name}`,
+                palette: 'gold',
+            });
+        } else {
+            screenShake(350);
+            const stepsBack = knockBy(2);
+            await new Promise(r => moveTokenBy(player, -stepsBack, r));
+            layoutTokensOnTile(player.tileIdx);
+            await showStamp({
+                emoji: '📚', big: `−${stepsBack} TEGELS`,
+                sub: `${player.name} moet bijspijkeren — drink ${res.drinks} 🍻`,
+                palette: 'red',
+            });
+        }
+        refreshHUD();
+    }
+}
+
 // ── Landing logic ──
 async function onLandedOnTile(player) {
     layoutTokensOnTile(player.tileIdx);
@@ -4887,32 +6193,10 @@ async function onLandedOnTile(player) {
         layoutTokensOnTile(player.tileIdx);
         refreshHUD();
     }
-    // ─── KROKODIL — 1v1 minigame, loser drinks; winner gets a bonus die ───
+    // ─── KROKODIL (legacy tile type — kept in case the board generator is reverted) ───
     else if (tileType === 'krokodil' && G.players.length >= 2) {
         G.phase = 'event';
-        const others = G.players.filter(p => p !== player);
-        const opp = others[Math.floor(Math.random() * others.length)];
-        const d = slokken(4);
-        const go = await showModal({
-            emoji: '🐊', title: 'Krokodil 1v1!',
-            body: [`${player.name} tegen ${opp.name}.`,
-                   `Druk om de beurt op een tand. Wie de pijnlijke vindt, drinkt ${d}.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
-        });
-        if (go) {
-            const loser = await playKrokodil({ playerA: player, playerB: opp, drinks: d });
-            if (loser) {
-                const winner = loser === player ? opp : player;
-                winner.bonusDice = (winner.bonusDice || 0) + 1;
-                refreshHUD();
-                await showModal({
-                    emoji: '🍻', title: `${loser.name} drinkt!`,
-                    body: [`Neem ${d} flinke slokken. Proost! 🥂`,
-                           `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
-                    actions: [{ label: 'OK', value: true }],
-                });
-            }
-        }
+        await runMinigameOnTile('krokodil', player);
     }
     // ─── CHWAZI — random player drinks ───
     else if (tileType === 'chwazi') {
@@ -4938,77 +6222,36 @@ async function onLandedOnTile(player) {
             }
         }
     }
-    // ─── VOLCANO HOP — survivor gets a bonus die, eliminated drink ───
+    // ─── MYSTERY — spin the wheel, then play whichever minigame the wheel landed on ───
+    else if (tileType === 'mystery') {
+        G.phase = 'event';
+        await showStamp({
+            emoji: '🎡', big: 'MYSTERY!',
+            sub: `${player.name} draait aan het rad — wat wordt het?`,
+            palette: 'purple', auto: true, duration: 1200,
+        });
+        // Filter wheel options based on player count: 1v1 games need 2+
+        const playerOk = G.players.length >= 2;
+        const options = MYSTERY_OPTIONS.filter(o => {
+            if (!playerOk) return ['roulette','blackjack','hoofdsteden'].includes(o.id);
+            return true;
+        });
+        const id = await playMysteryWheel({ options });
+        if (id) await runMinigameOnTile(id, player);
+    }
+    // ─── Legacy minigame tile types — only triggered if the board generator hasn't
+    // been updated yet. They route through the same minigame dispatcher.
     else if (tileType === 'volcanoHop') {
         G.phase = 'event';
-        const d = slokken(2);
-        const go = await showModal({
-            emoji: '🌋', title: 'Volcano Hop!',
-            body: ['Iedereen kiest stiekem een platform.', 'Fout = lava + ⚡, laatste man wint.'],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
-        });
-        if (go) {
-            const w = await playVolcanoHop({ players: G.players, drinks: d });
-            if (w) {
-                w.bonusDice = (w.bonusDice || 0) + 1;
-                refreshHUD();
-                await showStamp({
-                    emoji: '🎲💛', big: `${w.name} krijgt bonus!`,
-                    sub: '1 × gouden bonus-dobbelsteen — gebruik op je volgende worp',
-                    palette: 'gold',
-                });
-            }
-        }
+        await runMinigameOnTile('volcano', player);
     }
-    // ─── TAPPY BIRD — winner gets a bonus die ───
     else if (tileType === 'tappy') {
         G.phase = 'event';
-        const d = slokken(2);
-        const go = await showModal({
-            emoji: '🐦', title: 'Tappy Bird!',
-            body: ['Iedereen speelt één potje, geef de telefoon door.',
-                   `Wie het verst komt wint — anderen drinken ${d}.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
-        });
-        if (go) {
-            const w = await playTappyBird({ players: G.players, drinks: d });
-            if (w) {
-                w.bonusDice = (w.bonusDice || 0) + 1;
-                refreshHUD();
-                await showStamp({
-                    emoji: '🎲💛', big: `${w.name} krijgt bonus!`,
-                    sub: '1 × gouden bonus-dobbelsteen',
-                    palette: 'gold',
-                });
-            }
-        }
+        await runMinigameOnTile('tappy', player);
     }
-    // ─── PADDLE DUEL — winner gets a bonus die ───
     else if (tileType === 'paddle' && G.players.length >= 2) {
         G.phase = 'event';
-        const others = G.players.filter(p => p !== player);
-        const opp = others[Math.floor(Math.random() * others.length)];
-        const d = slokken(4);
-        const go = await showModal({
-            emoji: '🏓', title: 'Paddle Duel!',
-            body: [`${player.name} tegen ${opp.name}.`,
-                   `Sleep in je helft. Eerste bij 3 punten wint, verliezer drinkt ${d}.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
-        });
-        if (go) {
-            const loser = await playPaddleDuel({ playerA: player, playerB: opp, drinks: d });
-            if (loser) {
-                const winner = loser === player ? opp : player;
-                winner.bonusDice = (winner.bonusDice || 0) + 1;
-                refreshHUD();
-                await showModal({
-                    emoji: '🍻', title: `${loser.name} drinkt!`,
-                    body: [`Neem ${d} flinke slokken. Proost! 🥂`,
-                           `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
-                    actions: [{ label: 'OK', value: true }],
-                });
-            }
-        }
+        await runMinigameOnTile('paddle', player);
     }
 
     // Re-check if a previous +tile movement landed someone on a finish tile

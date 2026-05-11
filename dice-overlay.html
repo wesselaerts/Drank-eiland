@@ -287,7 +287,9 @@ const tableGroup = new THREE.Group();
 scene.add(tableGroup);
 
 // circular felt table — semi-transparent so the island/board behind shows through
-const feltGeo = new THREE.CircleGeometry(6.2, 96);
+// NOTE: shrunk from 6.2 → 5.3 so the table fits comfortably on smaller iPhone screens
+// (previously dice could roll past the visible edge on a 375-wide viewport).
+const feltGeo = new THREE.CircleGeometry(5.3, 96);
 const feltMat = new THREE.MeshStandardMaterial({
   color: 0x1a1410,
   roughness: 0.95,
@@ -313,7 +315,7 @@ tableGroup.add(felt);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   const overlay = new THREE.Mesh(
-    new THREE.CircleGeometry(6.15, 96),
+    new THREE.CircleGeometry(5.25, 96),
     new THREE.MeshBasicMaterial({ map: tex, transparent:true, depthWrite:false, opacity: 0.7 })
   );
   overlay.rotation.x = -Math.PI/2;
@@ -323,7 +325,7 @@ tableGroup.add(felt);
 
 // gold inlay ring
 {
-  const ringGeo = new THREE.RingGeometry(5.85, 5.95, 128);
+  const ringGeo = new THREE.RingGeometry(4.95, 5.05, 128);
   const ringMat = new THREE.MeshStandardMaterial({
     color: 0xc9a35a, metalness: 1.0, roughness: 0.28, emissive: 0x2a1f10, emissiveIntensity: 0.2,
   });
@@ -334,7 +336,7 @@ tableGroup.add(felt);
 
   // second thin inner ring
   const inner = new THREE.Mesh(
-    new THREE.RingGeometry(5.55, 5.58, 128),
+    new THREE.RingGeometry(4.70, 4.73, 128),
     new THREE.MeshStandardMaterial({ color:0x8e6a30, metalness:1, roughness:0.35 })
   );
   inner.rotation.x = -Math.PI/2;
@@ -374,7 +376,8 @@ floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI/2);
 world.addBody(floorBody);
 
 // invisible walls (cylindrical-ish using box walls at edge of round table)
-const WALL_RADIUS = 5.5;
+// NOTE: shrunk from 5.5 → 4.65 to match the smaller table felt
+const WALL_RADIUS = 4.65;
 const WALL_HEIGHT = 3;
 const WALL_SEGMENTS = 16;
 for (let i=0;i<WALL_SEGMENTS;i++){
