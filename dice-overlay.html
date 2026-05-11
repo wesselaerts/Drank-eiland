@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>Aurum — Dice Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --bg-0:#08070a;
+    --bg-1:#15110d;
+    --cream:#ece4d2;
+    --cream-dim:rgba(236,228,210,.55);
+    --gold:#c9a35a;
+    --gold-bright:#e9c97d;
+    --gold-deep:#8e6a30;
+    --line:rgba(201,163,90,.20);
+    --line-soft:rgba(201,163,90,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  body{
+    /* TRANSPARENT — host page (the island) shows through */
+    background: transparent;
+    color:var(--cream);
+    font-family:'Manrope',ui-sans-serif,system-ui,sans-serif;
+    position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* film grain & vignette removed — would block the island behind */
+
+  #stage{position:absolute;inset:0;z-index:0}
+  canvas{display:block;width:100%!important;height:100%!important;touch-action:none}
+
+  .ui{position:relative;z-index:10;pointer-events:none;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(14px,3vw,30px)}
+  .ui > *{pointer-events:auto}
+
+  /* header */
+  header{display:flex;justify-content:center;align-items:flex-start;gap:20px;padding-top:max(env(safe-area-inset-top), 8px)}
+  /* brand is hidden in overlay mode — host page shows whose turn it is */
+  .brand{display:none}
+
+  .results{text-align:center;min-width:160px;
+    background:rgba(15,12,8,0.65);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:14px 22px;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    box-shadow:0 8px 30px rgba(0,0,0,0.5);
+  }
+  .results .label{
+    font-size:10px;letter-spacing:.4em;text-transform:uppercase;
+    color:var(--gold);font-weight:600;
+  }
+  .results .turn-name{
+    font-family:'Manrope',sans-serif;font-size:11px;font-weight:600;
+    letter-spacing:.2em;text-transform:uppercase;
+    color:var(--cream-dim);margin-bottom:6px;
+  }
+  .results .total{
+    font-family:'Cormorant',serif;font-style:italic;font-weight:300;
+    font-size:clamp(56px,9vw,96px);line-height:.95;color:var(--cream);
+    margin-top:6px;
+    background:linear-gradient(180deg,#fff6dc 0%,#ece4d2 45%,#c9a35a 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    transition:transform .35s cubic-bezier(.2,1.4,.4,1), opacity .3s;
+  }
+  .results.flash .total{transform:scale(1.08)}
+  .results .breakdown{
+    font-size:11px;color:var(--cream-dim);
+    margin-top:6px;letter-spacing:.18em;font-variant-numeric:tabular-nums;
+    min-height:14px;
+  }
+
+  /* bottom: a single "Verder" button instead of count/material chips */
+  .controls{display:flex;justify-content:center;width:100%;padding-bottom:max(env(safe-area-inset-bottom), 8px)}
+  .panel, .row, .group, .chips, .roll-btn { display: none !important; }
+  /* corner ornaments hidden so the island shows around the table */
+  .corner { display: none !important; }
+
+  .verder-btn{
+    pointer-events:auto;
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;
+    padding:14px 36px;border-radius:999px;
+    background:linear-gradient(180deg,#ffd54a,#ff9a1a);
+    color:#1a1010;font-weight:900;font-size:17px;letter-spacing:.5px;
+    border:2px solid #fff;
+    box-shadow:0 4px 0 #b86c00, 0 8px 30px rgba(0,0,0,0.5);
+    cursor:pointer;
+    transition:transform .1s ease, box-shadow .1s ease, opacity .25s ease;
+    opacity:0; pointer-events:none;
+  }
+  .verder-btn.show{opacity:1; pointer-events:auto}
+  .verder-btn:active{transform:translateY(3px); box-shadow:0 1px 0 #b86c00, 0 4px 14px rgba(0,0,0,0.5)}
+
+  /* bottom controls */
+  .controls{display:flex;flex-direction:column;gap:12px;max-width:780px;margin:0 auto;width:100%}
+  .panel{
+    backdrop-filter:blur(22px) saturate(140%);
+    -webkit-backdrop-filter:blur(22px) saturate(140%);
+    background:linear-gradient(180deg,rgba(28,22,16,.55),rgba(18,14,11,.65));
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:14px 18px;
+    box-shadow:
+      0 30px 60px -30px rgba(0,0,0,.7),
+      inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .row{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+
+  .group{display:flex;flex-direction:column;gap:8px}
+  .group-label{
+    font-size:9px;letter-spacing:.4em;text-transform:uppercase;
+    color:var(--gold);font-weight:600;
+  }
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+
+  .chip{
+    background:transparent;color:var(--cream);
+    border:1px solid var(--line);
+    padding:9px 14px;border-radius:999px;
+    font-family:'Manrope',sans-serif;font-size:12px;font-weight:500;
+    letter-spacing:.08em;
+    cursor:pointer;transition:all .25s ease;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .chip:hover{border-color:var(--gold);color:var(--gold-bright)}
+  .chip.active{
+    background:linear-gradient(180deg,#1a140e,#0e0a07);
+    border-color:var(--gold);color:var(--gold-bright);
+    box-shadow:inset 0 0 0 1px rgba(201,163,90,.25), 0 0 24px -8px rgba(201,163,90,.5);
+  }
+  .chip .sw{
+    width:14px;height:14px;border-radius:50%;
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.4), inset 0 -2px 3px rgba(0,0,0,.4);
+  }
+  .sw.ivory  {background:radial-gradient(circle at 30% 30%, #fff9e8, #d8caa6 70%)}
+  .sw.bronze {background:radial-gradient(circle at 30% 30%, #e8a96b, #6a3d18 70%)}
+  .sw.silver {background:radial-gradient(circle at 30% 30%, #ffffff, #7f8588 75%)}
+  .sw.gold   {background:radial-gradient(circle at 30% 30%, #fff1b0, #8a6620 75%)}
+  .sw.mixed  {background:conic-gradient(from 220deg,#e8d6a0,#e0a168,#dadada,#f3d76a,#e8d6a0)}
+
+  .roll-btn{
+    margin-left:auto;
+    position:relative;
+    background:linear-gradient(180deg,#f5d684 0%,#d6a94c 45%,#a07527 100%);
+    color:#1a1208;border:0;
+    padding:14px 30px;border-radius:999px;
+    font-family:'Cormorant',serif;font-style:italic;font-weight:500;
+    font-size:18px;letter-spacing:.18em;text-transform:uppercase;
+    cursor:pointer;transition:transform .25s ease, box-shadow .25s ease;
+    box-shadow:
+      0 14px 30px -10px rgba(201,163,90,.55),
+      inset 0 1px 0 rgba(255,255,255,.55),
+      inset 0 -10px 14px -10px rgba(0,0,0,.35);
+  }
+  .roll-btn::before{
+    content:"";position:absolute;inset:1px;border-radius:inherit;
+    background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 35%);
+    pointer-events:none;mix-blend-mode:overlay;
+  }
+  .roll-btn:hover{transform:translateY(-1px)}
+  .roll-btn:active{transform:translateY(1px)}
+  .roll-btn:disabled{opacity:.55;cursor:wait}
+
+  /* corner ornaments */
+  .corner{position:fixed;width:54px;height:54px;pointer-events:none;z-index:30;opacity:.7}
+  .corner svg{width:100%;height:100%;fill:none;stroke:var(--gold);stroke-width:1}
+  .corner.tl{top:10px;left:10px}
+  .corner.tr{top:10px;right:10px;transform:scaleX(-1)}
+  .corner.bl{bottom:10px;left:10px;transform:scaleY(-1)}
+  .corner.br{bottom:10px;right:10px;transform:scale(-1,-1)}
+
+  @media (max-width:680px){
+    header{flex-direction:row}
+    .results{min-width:0}
+    .row{gap:14px}
+    .roll-btn{margin-left:0;width:100%;padding:13px;font-size:16px}
+    .corner{width:38px;height:38px;opacity:.55}
+  }
+</style>
+</head>
+<body>
+
+<div id="stage"></div>
+
+<div class="ui">
+  <header>
+    <div class="results" id="results">
+      <div class="turn-name" id="turn-name"> </div>
+      <div class="label">Worp</div>
+      <div class="total" id="total">—</div>
+      <div class="breakdown" id="breakdown">rolling…</div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <button class="verder-btn" id="verder-btn" type="button">Verder →</button>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+    "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import * as CANNON from 'cannon-es';
+
+/* ---------- config ---------- */
+const PALETTES = {
+  ivory:  { color:'#efe6cf', metalness:0.05, roughness:0.45, clearcoat:0.4, pip:'#1a1410', envInt:0.9 },
+  bronze: { color:'#a36a32', metalness:1.0,  roughness:0.32, clearcoat:0.0, pip:'#160c05', envInt:1.0 },
+  silver: { color:'#d6d6d6', metalness:1.0,  roughness:0.18, clearcoat:0.0, pip:'#111111', envInt:1.0 },
+  gold:   { color:'#d4a93c', metalness:1.0,  roughness:0.22, clearcoat:0.0, pip:'#160c05', envInt:1.0 },
+};
+const MATERIAL_ORDER = ['ivory','bronze','silver','gold'];
+
+// d6 face mapping for BoxGeometry/RoundedBoxGeometry:
+// material slots: [+X, -X, +Y, -Y, +Z, -Z] ⇒ [right,left,top,bottom,front,back]
+// classic die: 1 top, 6 bottom, 2 front, 5 back, 3 right, 4 left
+const FACE_VALUES = [3, 4, 1, 6, 2, 5];
+
+/* ---------- three.js setup ---------- */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = null;
+// fog removed — would block the island view; transparent scene is preferred
+
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+camera.position.set(0, 7.0, 6.8);
+camera.lookAt(0, 0.4, 0);
+
+// environment for PBR reflections
+const pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+const envTex = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+scene.environment = envTex;
+
+/* ---------- lighting ---------- */
+const hemi = new THREE.HemisphereLight(0xfff1cf, 0x0a0806, 0.35);
+scene.add(hemi);
+
+const key = new THREE.DirectionalLight(0xfff1cb, 2.4);
+key.position.set(4.5, 9, 5);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.near = 1;
+key.shadow.camera.far = 30;
+key.shadow.camera.left = -7; key.shadow.camera.right = 7;
+key.shadow.camera.top = 7;   key.shadow.camera.bottom = -7;
+key.shadow.bias = -0.0008;
+key.shadow.radius = 5;
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(0x6b8cff, 0.45);
+fill.position.set(-6, 4, -2);
+scene.add(fill);
+
+const rim = new THREE.SpotLight(0xffcf8c, 1.2, 22, Math.PI/4, 0.6, 1.5);
+rim.position.set(-3, 6, -5);
+scene.add(rim);
+
+/* ---------- table / floor ---------- */
+const tableGroup = new THREE.Group();
+scene.add(tableGroup);
+
+// circular felt table — semi-transparent so the island/board behind shows through
+const feltGeo = new THREE.CircleGeometry(6.2, 96);
+const feltMat = new THREE.MeshStandardMaterial({
+  color: 0x1a1410,
+  roughness: 0.95,
+  metalness: 0.0,
+  transparent: true,
+  opacity: 0.55,           // ~55% — table reads as glass-like, island still visible
+  depthWrite: false,       // avoid z-fighting with overlay decoration ring
+});
+const felt = new THREE.Mesh(feltGeo, feltMat);
+felt.rotation.x = -Math.PI/2;
+felt.receiveShadow = true;
+tableGroup.add(felt);
+
+// soft radial darkening — keep it light so the island remains visible
+{
+  const c = document.createElement('canvas'); c.width=c.height=512;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(256,256,40,256,256,256);
+  g.addColorStop(0,'rgba(80,55,30,0.30)');
+  g.addColorStop(0.55,'rgba(20,15,10,0.15)');
+  g.addColorStop(1,'rgba(0,0,0,0.55)');
+  x.fillStyle = g; x.fillRect(0,0,512,512);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const overlay = new THREE.Mesh(
+    new THREE.CircleGeometry(6.15, 96),
+    new THREE.MeshBasicMaterial({ map: tex, transparent:true, depthWrite:false, opacity: 0.7 })
+  );
+  overlay.rotation.x = -Math.PI/2;
+  overlay.position.y = 0.001;
+  tableGroup.add(overlay);
+}
+
+// gold inlay ring
+{
+  const ringGeo = new THREE.RingGeometry(5.85, 5.95, 128);
+  const ringMat = new THREE.MeshStandardMaterial({
+    color: 0xc9a35a, metalness: 1.0, roughness: 0.28, emissive: 0x2a1f10, emissiveIntensity: 0.2,
+  });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = -Math.PI/2;
+  ring.position.y = 0.003;
+  tableGroup.add(ring);
+
+  // second thin inner ring
+  const inner = new THREE.Mesh(
+    new THREE.RingGeometry(5.55, 5.58, 128),
+    new THREE.MeshStandardMaterial({ color:0x8e6a30, metalness:1, roughness:0.35 })
+  );
+  inner.rotation.x = -Math.PI/2;
+  inner.position.y = 0.003;
+  tableGroup.add(inner);
+}
+
+// outer wood/dark surround — disabled in overlay mode so the island
+// remains visible around the table. (Original kept commented for reference.)
+/* {
+  const outerGeo = new THREE.RingGeometry(6.2, 9, 64);
+  const outerMat = new THREE.MeshStandardMaterial({ color:0x0a0807, roughness:0.9, metalness:0.0 });
+  const outer = new THREE.Mesh(outerGeo, outerMat);
+  outer.rotation.x = -Math.PI/2;
+  outer.position.y = -0.001;
+  outer.receiveShadow = true;
+  tableGroup.add(outer);
+} */
+
+/* ---------- physics world ---------- */
+const world = new CANNON.World({ gravity:new CANNON.Vec3(0, -38, 0) });
+world.broadphase = new CANNON.SAPBroadphase(world);
+world.allowSleep = true;
+world.defaultContactMaterial.restitution = 0.25;
+
+const matFloor = new CANNON.Material('floor');
+const matDice  = new CANNON.Material('dice');
+const matWall  = new CANNON.Material('wall');
+
+world.addContactMaterial(new CANNON.ContactMaterial(matDice, matFloor, { friction: 0.35, restitution: 0.32 }));
+world.addContactMaterial(new CANNON.ContactMaterial(matDice, matDice,  { friction: 0.10, restitution: 0.45 }));
+world.addContactMaterial(new CANNON.ContactMaterial(matDice, matWall,  { friction: 0.05, restitution: 0.55 }));
+
+// floor body
+const floorBody = new CANNON.Body({ type:CANNON.Body.STATIC, shape:new CANNON.Plane(), material:matFloor });
+floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI/2);
+world.addBody(floorBody);
+
+// invisible walls (cylindrical-ish using box walls at edge of round table)
+const WALL_RADIUS = 5.5;
+const WALL_HEIGHT = 3;
+const WALL_SEGMENTS = 16;
+for (let i=0;i<WALL_SEGMENTS;i++){
+  const a = (i / WALL_SEGMENTS) * Math.PI * 2;
+  const wx = Math.cos(a) * WALL_RADIUS;
+  const wz = Math.sin(a) * WALL_RADIUS;
+  const seg = (2 * Math.PI * WALL_RADIUS) / WALL_SEGMENTS;
+  const body = new CANNON.Body({
+    type: CANNON.Body.STATIC,
+    shape: new CANNON.Box(new CANNON.Vec3(seg/2 + 0.05, WALL_HEIGHT/2, 0.15)),
+    material: matWall,
+  });
+  body.position.set(wx, WALL_HEIGHT/2, wz);
+  // face inward
+  body.quaternion.setFromEuler(0, -a + Math.PI/2, 0);
+  world.addBody(body);
+}
+
+// ceiling (so dice can't fly out)
+const ceil = new CANNON.Body({ type:CANNON.Body.STATIC, shape:new CANNON.Plane(), material:matWall });
+ceil.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0), Math.PI/2);
+ceil.position.y = 7;
+world.addBody(ceil);
+
+/* ---------- pip texture generation ---------- */
+const PIP_LAYOUTS = {
+  1: [[.5,.5]],
+  2: [[.28,.28],[.72,.72]],
+  3: [[.25,.25],[.5,.5],[.75,.75]],
+  4: [[.27,.27],[.73,.27],[.27,.73],[.73,.73]],
+  5: [[.25,.25],[.75,.25],[.5,.5],[.25,.75],[.75,.75]],
+  6: [[.27,.22],[.73,.22],[.27,.5],[.73,.5],[.27,.78],[.73,.78]],
+};
+
+function makeFaceTexture(value, palette){
+  const S = 512;
+  const c = document.createElement('canvas'); c.width=c.height=S;
+  const x = c.getContext('2d');
+
+  // base
+  x.fillStyle = palette.color;
+  x.fillRect(0,0,S,S);
+
+  // subtle gradient sheen for depth
+  const sheen = x.createLinearGradient(0,0,S,S);
+  sheen.addColorStop(0,'rgba(255,255,255,0.10)');
+  sheen.addColorStop(0.5,'rgba(255,255,255,0.0)');
+  sheen.addColorStop(1,'rgba(0,0,0,0.18)');
+  x.fillStyle = sheen; x.fillRect(0,0,S,S);
+
+  // inner bevel hint
+  const inset = 26;
+  const grad = x.createLinearGradient(inset,inset,S-inset,S-inset);
+  grad.addColorStop(0,'rgba(255,255,255,0.06)');
+  grad.addColorStop(1,'rgba(0,0,0,0.10)');
+  x.strokeStyle = grad; x.lineWidth = 2;
+  x.strokeRect(inset, inset, S-2*inset, S-2*inset);
+
+  // pips
+  const pips = PIP_LAYOUTS[value];
+  const r = S * 0.075;
+  for (const [px,py] of pips){
+    const cx = px * S, cy = py * S;
+    // outer recess shadow
+    const ring = x.createRadialGradient(cx, cy, r*0.2, cx, cy, r*1.35);
+    ring.addColorStop(0, palette.pip);
+    ring.addColorStop(0.7, palette.pip);
+    ring.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = ring;
+    x.beginPath(); x.arc(cx, cy, r*1.35, 0, Math.PI*2); x.fill();
+    // pip body
+    x.fillStyle = palette.pip;
+    x.beginPath(); x.arc(cx, cy, r, 0, Math.PI*2); x.fill();
+    // tiny highlight
+    const hi = x.createRadialGradient(cx-r*0.35, cy-r*0.35, 0, cx-r*0.35, cy-r*0.35, r*0.6);
+    hi.addColorStop(0,'rgba(255,235,200,0.45)');
+    hi.addColorStop(1,'rgba(255,235,200,0)');
+    x.fillStyle = hi;
+    x.beginPath(); x.arc(cx-r*0.3, cy-r*0.3, r*0.55, 0, Math.PI*2); x.fill();
+  }
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
+
+// roughness map: pips are slightly more rough than face (looks recessed on metals)
+function makeRoughnessTexture(value, baseRough){
+  const S = 256;
+  const c = document.createElement('canvas'); c.width=c.height=S;
+  const x = c.getContext('2d');
+  // base roughness gray
+  const base = Math.round(baseRough * 255);
+  x.fillStyle = `rgb(${base},${base},${base})`;
+  x.fillRect(0,0,S,S);
+
+  const pips = PIP_LAYOUTS[value];
+  const r = S * 0.075;
+  const pipR = Math.min(255, base + 80);
+  x.fillStyle = `rgb(${pipR},${pipR},${pipR})`;
+  for (const [px,py] of pips){
+    x.beginPath(); x.arc(px*S, py*S, r, 0, Math.PI*2); x.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  return tex;
+}
+
+/* simple normal map so pips look slightly indented */
+function makeNormalTexture(value){
+  const S = 256;
+  const c = document.createElement('canvas'); c.width=c.height=S;
+  const x = c.getContext('2d');
+  // flat normal = (128,128,255)
+  x.fillStyle = 'rgb(128,128,255)';
+  x.fillRect(0,0,S,S);
+
+  const pips = PIP_LAYOUTS[value];
+  const r = S * 0.075;
+  for (const [px,py] of pips){
+    const cx = px*S, cy = py*S;
+    // create radial gradient that fakes a concave dent
+    // top-left brighter (light from top-left), bottom-right darker
+    const steps = 12;
+    for (let i=0;i<steps;i++){
+      const t = i/steps;
+      const rr = r * (1 - t);
+      // direction the surface "faces" — for concave, normals point outward from center
+      // we approximate by offset color in a radial pattern
+      const ang = Math.PI*0.25; // light direction
+      const dx = Math.cos(ang), dy = Math.sin(ang);
+      const shade = 1 - t;
+      const nx = 128 + Math.round(60 * shade * dx);
+      const ny = 128 + Math.round(60 * shade * dy);
+      const grad = x.createRadialGradient(cx, cy, rr*0.8, cx, cy, rr);
+      grad.addColorStop(0, `rgba(${nx},${ny},255,0)`);
+      grad.addColorStop(1, `rgba(${nx},${ny},255,0.18)`);
+      x.fillStyle = grad;
+      x.beginPath(); x.arc(cx,cy,rr,0,Math.PI*2); x.fill();
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  return tex;
+}
+
+/* ---------- dice ---------- */
+const DIE_SIZE = 0.9;
+
+const textureCache = new Map();
+function getTexturesFor(matKey){
+  if (textureCache.has(matKey)) return textureCache.get(matKey);
+  const palette = PALETTES[matKey];
+  const set = [];
+  for (const v of FACE_VALUES){
+    set.push({
+      map: makeFaceTexture(v, palette),
+      roughnessMap: makeRoughnessTexture(v, palette.roughness),
+      normalMap: makeNormalTexture(v),
+    });
+  }
+  textureCache.set(matKey, set);
+  return set;
+}
+
+function makeDieMaterials(matKey){
+  const palette = PALETTES[matKey];
+  const texSet = getTexturesFor(matKey);
+  return texSet.map(t => new THREE.MeshStandardMaterial({
+    map: t.map,
+    roughnessMap: t.roughnessMap,
+    normalMap: t.normalMap,
+    normalScale: new THREE.Vector2(0.45, 0.45),
+    metalness: palette.metalness,
+    roughness: palette.roughness,
+    envMapIntensity: palette.envInt,
+  }));
+}
+
+class Die {
+  constructor(materialKey){
+    this.materialKey = materialKey;
+    const geo = new RoundedBoxGeometry(DIE_SIZE, DIE_SIZE, DIE_SIZE, 6, DIE_SIZE * 0.14);
+    const mats = makeDieMaterials(materialKey);
+    this.mesh = new THREE.Mesh(geo, mats);
+    this.mesh.castShadow = true;
+    this.mesh.receiveShadow = false;
+    scene.add(this.mesh);
+
+    // physics body — box collider matches dice size
+    const half = DIE_SIZE/2;
+    this.body = new CANNON.Body({
+      mass: 1.0,
+      shape: new CANNON.Box(new CANNON.Vec3(half,half,half)),
+      material: matDice,
+      linearDamping: 0.10,
+      angularDamping: 0.12,
+      allowSleep: true,
+      sleepSpeedLimit: 0.15,
+      sleepTimeLimit: 0.4,
+    });
+    world.addBody(this.body);
+  }
+
+  setMaterial(matKey){
+    if (this.materialKey === matKey) return;
+    this.materialKey = matKey;
+    // dispose old (but keep canvas-textures shared across instances since cached)
+    this.mesh.material.forEach(m => m.dispose());
+    this.mesh.material = makeDieMaterials(matKey);
+  }
+
+  sync(){
+    this.mesh.position.copy(this.body.position);
+    this.mesh.quaternion.copy(this.body.quaternion);
+  }
+
+  getTopValue(){
+    // for each local face direction, find which is most aligned with world up
+    const up = new THREE.Vector3(0,1,0);
+    const dirs = [
+      [new THREE.Vector3( 1, 0, 0), 3],
+      [new THREE.Vector3(-1, 0, 0), 4],
+      [new THREE.Vector3( 0, 1, 0), 1],
+      [new THREE.Vector3( 0,-1, 0), 6],
+      [new THREE.Vector3( 0, 0, 1), 2],
+      [new THREE.Vector3( 0, 0,-1), 5],
+    ];
+    const q = this.mesh.quaternion;
+    let best = -Infinity, val = 0;
+    for (const [d,v] of dirs){
+      const dot = d.clone().applyQuaternion(q).dot(up);
+      if (dot > best){ best = dot; val = v; }
+    }
+    return val;
+  }
+
+  dispose(){
+    scene.remove(this.mesh);
+    this.mesh.material.forEach(m=>m.dispose());
+    this.mesh.geometry.dispose();
+    world.removeBody(this.body);
+  }
+}
+
+/* ---------- state ---------- */
+const state = {
+  count: 1,
+  material: 'ivory',
+  dice: [],
+  rolling: false,
+  settleTimer: 0,
+  useGold: false,  // when true, die index 1 is rendered as gold (bonus die)
+};
+
+function pickMaterialFor(i){
+  // Bonus-die mode: index 0 stays ivory, index 1+ rendered as gold
+  if (state.useGold) return i === 0 ? 'ivory' : 'gold';
+  if (state.material === 'mixed') return MATERIAL_ORDER[i % MATERIAL_ORDER.length];
+  return state.material;
+}
+
+function rebuildDice(){
+  // dispose existing
+  state.rolling = false;
+  for (const d of state.dice) d.dispose();
+  state.dice = [];
+  for (let i=0; i<state.count; i++){
+    const die = new Die(pickMaterialFor(i));
+    state.dice.push(die);
+  }
+  arrangeIdle();
+}
+
+function reskinDice(){
+  for (let i=0; i<state.dice.length; i++){
+    state.dice[i].setMaterial(pickMaterialFor(i));
+  }
+}
+
+/* place dice nicely when not rolling */
+function arrangeIdle(){
+  const n = state.dice.length;
+  const spacing = DIE_SIZE * 1.4;
+  const totalW = (n - 1) * spacing;
+  for (let i=0; i<n; i++){
+    const d = state.dice[i];
+    d.body.velocity.set(0,0,0);
+    d.body.angularVelocity.set(0,0,0);
+    d.body.position.set(-totalW/2 + i*spacing, DIE_SIZE/2 + 0.001, 0);
+    // pleasing slight tilt showing value 1 mostly up
+    d.body.quaternion.setFromEuler(0, (i - (n-1)/2) * 0.25, 0);
+    d.body.wakeUp();
+    d.sync();
+  }
+}
+
+/* ---------- rolling ---------- */
+function roll(){
+  if (state.rolling) return;
+  state.rolling = true;
+  state.settleTimer = 0;
+  document.getElementById('total').textContent = '…';
+  document.getElementById('breakdown').textContent = 'rolling';
+
+  const n = state.dice.length;
+  for (let i=0; i<n; i++){
+    const d = state.dice[i];
+    // start at a random offset on one side of the table
+    const side = Math.random() > 0.5 ? 1 : -1;
+    const startX = side * (3.5 + Math.random() * 1.5);
+    const startZ = -2 + Math.random() * 4;
+    const startY = 3.2 + Math.random() * 1.5 + i * 0.2;
+
+    d.body.position.set(startX, startY, startZ);
+    d.body.quaternion.setFromEuler(
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2
+    );
+    // velocity towards opposite side / centre
+    d.body.velocity.set(
+      -side * (5 + Math.random() * 3),
+      -1 - Math.random() * 1.5,
+      (Math.random() - 0.5) * 5
+    );
+    d.body.angularVelocity.set(
+      (Math.random() - 0.5) * 22,
+      (Math.random() - 0.5) * 22,
+      (Math.random() - 0.5) * 22
+    );
+    d.body.wakeUp();
+  }
+}
+
+function isAllSettled(){
+  for (const d of state.dice){
+    const v = d.body.velocity.length();
+    const a = d.body.angularVelocity.length();
+    if (v > 0.08 || a > 0.08) return false;
+  }
+  return true;
+}
+
+function reportResult(){
+  const values = state.dice.map(d => d.getTopValue());
+  const total = values.reduce((a,b)=>a+b, 0);
+  const totalEl = document.getElementById('total');
+  const breakEl = document.getElementById('breakdown');
+  const resultsEl = document.getElementById('results');
+  totalEl.textContent = total;
+  if (values.length > 1) {
+    // show the breakdown with the bonus die highlighted in gold
+    breakEl.innerHTML = values[0] + ' + <span style="color:#ffd54a">' + values[1] + '</span>';
+  } else {
+    breakEl.textContent = '\u00A0';
+  }
+  resultsEl.classList.remove('flash');
+  void resultsEl.offsetWidth;
+  resultsEl.classList.add('flash');
+
+  // Detect doubles when there's a gold bonus die in play
+  const doubles = state.useGold && values.length >= 2 && values[0] === values[1];
+
+  // Tell the host page about the roll outcome
+  try {
+    window.parent.postMessage({
+      type: 'dice-result',
+      total, values, doubles,
+    }, '*');
+  } catch (e) { /* cross-origin; ignore */ }
+
+  // Show the Verder button so the player can confirm and pass the phone
+  document.getElementById('verder-btn').classList.add('show');
+}
+
+/* ---------- animation loop ---------- */
+const clock = new THREE.Clock();
+function loop(){
+  const dt = Math.min(clock.getDelta(), 1/30);
+  world.step(1/60, dt, 3);
+
+  for (const d of state.dice) d.sync();
+
+  if (state.rolling){
+    if (isAllSettled()){
+      state.settleTimer += dt;
+      if (state.settleTimer > 0.35){
+        state.rolling = false;
+        reportResult();
+      }
+    } else {
+      state.settleTimer = 0;
+    }
+  }
+
+  // subtle idle camera drift
+  const t = performance.now() * 0.0001;
+  camera.position.x = Math.sin(t) * 0.25;
+  camera.position.z = 6.8 + Math.cos(t * 1.3) * 0.15;
+  camera.lookAt(0, 0.4, 0);
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+
+/* ---------- resize ---------- */
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+
+/* ---------- postMessage API ----------
+   Host (index.html) flow:
+     1. iframe loads → posts 'dice-ready'
+     2. host posts  'dice-init' { count, hasGoldDie, playerName }
+     3. host posts  'dice-roll'
+     4. on settle → iframe posts 'dice-result' { total, values, doubles }
+     5. user taps Verder → iframe posts 'dice-dismiss'
+*/
+function setupDice(count, hasGoldDie) {
+  state.count = Math.max(1, Math.min(4, count|0 || 1));
+  state.useGold = !!hasGoldDie;
+  rebuildDice();
+}
+
+window.addEventListener('message', (ev) => {
+  const d = ev && ev.data;
+  if (!d || typeof d !== 'object') return;
+  if (d.type === 'dice-init') {
+    document.getElementById('verder-btn').classList.remove('show');
+    document.getElementById('total').textContent = '—';
+    document.getElementById('breakdown').textContent = 'klaar om te gooien';
+    document.getElementById('turn-name').textContent = d.playerName || ' ';
+    setupDice(d.count || 1, !!d.hasGoldDie);
+  } else if (d.type === 'dice-roll') {
+    if (!state.rolling) {
+      document.getElementById('verder-btn').classList.remove('show');
+      document.getElementById('total').textContent = '…';
+      document.getElementById('breakdown').textContent = 'rolling…';
+      roll();
+    }
+  }
+});
+
+document.getElementById('verder-btn').addEventListener('click', () => {
+  try { window.parent.postMessage({ type: 'dice-dismiss' }, '*'); } catch(e) {}
+});
+
+// also allow tap on canvas/table to roll once initialized (handy during dev,
+// but the host normally posts 'dice-roll' immediately after 'dice-init')
+stage.addEventListener('pointerdown', () => {
+  if (!state.rolling && state.dice.length > 0) {
+    // ask host to trigger; or just roll directly
+    try { window.parent.postMessage({ type: 'dice-tap' }, '*'); } catch(e) {}
+  }
+});
+
+/* ---------- init ---------- */
+state.count = 1;
+state.useGold = false;
+rebuildDice();
+loop();
+
+// announce we're ready
+try { window.parent.postMessage({ type: 'dice-ready' }, '*'); } catch(e) {}
+</script>
+
+</body>
+</html>
