@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bfe6ff"/>
+      <stop offset="100%" stop-color="#7fcaff"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5fc8e8"/>
+      <stop offset="100%" stop-color="#2a8eb3"/>
+    </linearGradient>
+    <linearGradient id="island" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6dcf5a"/>
+      <stop offset="100%" stop-color="#3fa84a"/>
+    </linearGradient>
+    <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8a8590"/>
+      <stop offset="100%" stop-color="#5e5963"/>
+    </linearGradient>
+    <linearGradient id="lava" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd14d"/>
+      <stop offset="100%" stop-color="#ff4400"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#fff6c0"/>
+      <stop offset="100%" stop-color="#fff6c0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- sky -->
+  <rect width="512" height="512" fill="url(#sky)"/>
+
+  <!-- sun glow -->
+  <circle cx="410" cy="110" r="80" fill="url(#sun)"/>
+  <circle cx="410" cy="110" r="30" fill="#fff6c0"/>
+
+  <!-- distant clouds -->
+  <g fill="#ffffff" opacity="0.9">
+    <ellipse cx="80"  cy="130" rx="42" ry="14"/>
+    <ellipse cx="100" cy="125" rx="30" ry="12"/>
+    <ellipse cx="320" cy="80"  rx="38" ry="13"/>
+  </g>
+
+  <!-- water -->
+  <rect x="0" y="340" width="512" height="172" fill="url(#water)"/>
+  <!-- water sparkles -->
+  <g fill="#ffffff" opacity="0.75">
+    <circle cx="60"  cy="380" r="3"/>
+    <circle cx="140" cy="420" r="3"/>
+    <circle cx="220" cy="470" r="3"/>
+    <circle cx="380" cy="395" r="3"/>
+    <circle cx="450" cy="450" r="3"/>
+    <circle cx="90"  cy="490" r="3"/>
+  </g>
+
+  <!-- island (layered terraces) -->
+  <!-- beach base -->
+  <ellipse cx="256" cy="380" rx="200" ry="48" fill="#f4dc95" stroke="#101820" stroke-width="6"/>
+  <!-- lower terrace -->
+  <ellipse cx="256" cy="350" rx="170" ry="42" fill="url(#island)" stroke="#101820" stroke-width="6"/>
+  <!-- middle terrace -->
+  <ellipse cx="256" cy="315" rx="125" ry="32" fill="url(#island)" stroke="#101820" stroke-width="5"/>
+  <!-- upper terrace -->
+  <ellipse cx="256" cy="285" rx="85"  ry="22" fill="#3fa84a" stroke="#101820" stroke-width="5"/>
+
+  <!-- volcano cone -->
+  <path d="M 196 290 L 256 130 L 316 290 Z" fill="url(#cone)" stroke="#101820" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- lava cracks down the side -->
+  <path d="M 248 160 L 232 240 L 222 285" fill="none" stroke="#ff4400" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 268 175 L 280 235 L 290 285" fill="none" stroke="#ff4400" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- gold winner platform on top -->
+  <ellipse cx="256" cy="132" rx="38" ry="11" fill="#ffd54a" stroke="#ffffff" stroke-width="5"/>
+  <ellipse cx="256" cy="125" rx="28" ry="8"  fill="#ffe680"/>
+  <!-- star/trophy -->
+  <polygon points="256,90 264,113 288,113 269,128 277,150 256,136 235,150 243,128 224,113 248,113"
+           fill="#fff5b8" stroke="#ffb000" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- smoke wisp -->
+  <g fill="#d6d6d6" opacity="0.85">
+    <circle cx="240" cy="70" r="14"/>
+    <circle cx="260" cy="55" r="18"/>
+    <circle cx="278" cy="68" r="13"/>
+  </g>
+</svg>
