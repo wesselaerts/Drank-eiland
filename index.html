@@ -376,6 +376,193 @@
       color: #2a1a00; font-weight: 900; font-size: 16px; cursor: pointer;
       box-shadow: 0 4px 0 #b56a00; -webkit-tap-highlight-color: transparent; }
 
+    /* ===== Bowling (bw-) and Connect-Four (cf-) — iframe overlays ===== */
+    .bw-back, .cf-back { position: fixed; inset: 0; z-index: 60;
+      display: flex; flex-direction: column;
+      color: #fff; animation: fadeIn .25s ease; user-select: none; overflow: hidden;
+      padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+    .bw-back { background: linear-gradient(180deg, #082238 0%, #04101e 60%, #020812 100%); }
+    .cf-back { background: linear-gradient(180deg, #0f1830 0%, #100820 60%, #050414 100%); }
+    .bw-header, .cf-header { position: relative; z-index: 2; padding: 10px 14px 6px;
+      display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .bw-header .ttl, .cf-header .ttl { font-size: 17px; font-weight: 900; letter-spacing: 0.8px;
+      text-shadow: 0 2px 0 #000, 0 0 14px rgba(255,200,90,0.45);
+      display: flex; align-items: center; gap: 8px; }
+    .bw-vs, .cf-vs { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 13px; }
+    .bw-vs .chip, .cf-vs .chip { padding: 4px 10px; border-radius: 999px;
+      background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; gap: 6px; }
+    .bw-vs .chip .dot, .cf-vs .chip .dot { width: 10px; height: 10px; border-radius: 50%;
+      background: var(--pcol); box-shadow: 0 0 8px var(--pcol); }
+    .bw-vs .x, .cf-vs .x { opacity: 0.6; }
+    .bw-canvas-wrap, .cf-canvas-wrap { flex: 1; position: relative; z-index: 1;
+      margin: 4px 8px; border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.05); }
+    .bw-canvas-wrap iframe, .cf-canvas-wrap iframe { display: block; position: absolute; inset: 0;
+      width: 100%; height: 100%; border: 0; }
+    .bw-canvas-wrap iframe { background: #082238; }
+    .cf-canvas-wrap iframe { background: #0f1830; }
+    .bw-bar, .cf-bar { position: relative; z-index: 2;
+      padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.75));
+      display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+      border-top: 1px solid rgba(255,255,255,0.1); }
+    .bw-bar .lbl, .cf-bar .lbl { color: #fff; font-weight: 800; align-self: center;
+      font-size: 14px; opacity: 0.9; margin-right: 4px; }
+    .bw-bar .btn-win, .cf-bar .btn-win { padding: 11px 18px; border-radius: 999px;
+      border: 2px solid #fff; color: #fff; font-weight: 900; cursor: pointer;
+      font-size: 14px; -webkit-tap-highlight-color: transparent;
+      background: var(--pcol);
+      box-shadow: 0 4px 0 rgba(0,0,0,0.35), 0 0 14px var(--pcol);
+      transition: transform .1s; }
+    .bw-bar .btn-win:active, .cf-bar .btn-win:active { transform: translateY(2px); }
+    .bw-bar .btn-skip, .cf-bar .btn-skip { padding: 11px 16px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.3); background: rgba(0,0,0,0.45);
+      color: #fff; font-weight: 800; cursor: pointer; font-size: 14px;
+      -webkit-tap-highlight-color: transparent; }
+    .bw-bar .hint, .cf-bar .hint { width: 100%; text-align: center; font-size: 11px;
+      opacity: 0.55; margin-top: 2px; }
+    .bw-ko, .cf-ko { position: absolute; inset: 0; z-index: 5;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; padding: 20px; text-align: center;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.85), rgba(0,0,0,0.95));
+      animation: fadeIn .25s ease; pointer-events: auto; }
+    .bw-ko h2, .cf-ko h2 { margin: 0; font-size: 30px; font-weight: 900;
+      text-shadow: 0 3px 0 #000, 0 0 20px var(--pcol); }
+    .bw-ko p, .cf-ko p  { margin: 0; opacity: 0.9; }
+    .bw-ko .btn-pill, .cf-ko .btn-pill { min-height: 50px; padding: 0 22px; border-radius: 999px;
+      border: 2px solid rgba(255,215,80,0.6); background: linear-gradient(180deg,#ffd54a,#ff9a1a);
+      color: #2a1a00; font-weight: 900; font-size: 16px; cursor: pointer;
+      box-shadow: 0 4px 0 #b56a00; -webkit-tap-highlight-color: transparent; }
+
+    /* =============================================================
+       Schnaps ruft an (sk-) — fake iOS-style incoming-call screen.
+       Ported from schnaps-call.html. Used both as a random in-game
+       event (with penalties) and as a standalone home-screen toy.
+       z-index 9999 → sits OVER everything (dice overlay, minigames,
+       modals — even though in practice we never trigger it during
+       a minigame).
+       ============================================================= */
+    #sk-back { position: fixed; inset: 0;
+      display: none; flex-direction: column; align-items: center;
+      padding-top: max(60px, env(safe-area-inset-top));
+      padding-bottom: max(30px, env(safe-area-inset-bottom));
+      background: rgba(20, 20, 22, 0.55);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      backdrop-filter: blur(22px) saturate(180%);
+      z-index: 9999;
+      color: #fff;
+      user-select: none; -webkit-user-select: none;
+      animation: sk-slideDown 0.4s cubic-bezier(0.2, 0.9, 0.3, 1); }
+    #sk-back.visible { display: flex; }
+    @keyframes sk-slideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to   { transform: translateY(0);     opacity: 1; }
+    }
+    .sk-topInfo { margin-top: 70px; text-align: center; width: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif; }
+    .sk-callType { font-size: 17px; opacity: 0.75; font-weight: 400; margin-bottom: 6px; }
+    .sk-callerName { font-size: 34px; font-weight: 500; letter-spacing: -0.5px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+    .sk-forPlayer { margin-top: 14px; display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: 999px;
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.18);
+      font-size: 13px; font-weight: 600; }
+    .sk-forPlayer .dot { width: 10px; height: 10px; border-radius: 50%;
+      background: var(--pcol); box-shadow: 0 0 8px var(--pcol); }
+    .sk-avatar { width: 110px; height: 110px; margin: 40px auto 0;
+      border-radius: 50%; background: rgba(255,255,255,0.18);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 64px; box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      animation: sk-pulse 1.2s ease-in-out infinite; }
+    @keyframes sk-pulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.06); }
+    }
+    .sk-actions { margin-top: auto; width: 100%;
+      display: flex; justify-content: space-around;
+      padding: 0 40px 20px; }
+    .sk-action { display: flex; flex-direction: column; align-items: center;
+      gap: 10px; background: none; border: none; color: #fff; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+    .sk-actionBtn { width: 72px; height: 72px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      transition: transform 0.1s; color: #fff; }
+    .sk-action:active .sk-actionBtn { transform: scale(0.92); }
+    .sk-decline { background: #ff3b30; }
+    .sk-accept  { background: #34c759; animation: sk-shake 1.2s infinite; }
+    .sk-actionLabel { font-size: 14px; opacity: 0.9; font-weight: 500;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    @keyframes sk-shake {
+      0%, 100% { transform: rotate(0); }
+      20% { transform: rotate(-12deg); }
+      40% { transform: rotate(12deg); }
+      60% { transform: rotate(-8deg); }
+      80% { transform: rotate(8deg); }
+    }
+    /* result modal — appears after pick/decline */
+    #sk-result { position: fixed; inset: 0;
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 10000;
+      background: rgba(0,0,0,0.4);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      animation: fadeIn 0.3s ease;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    #sk-result.visible { display: flex; }
+    .sk-resultCard { background: rgba(30, 30, 32, 0.92);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 24px;
+      padding: 36px 32px;
+      margin: 0 30px;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      animation: sk-popIn 0.4s cubic-bezier(0.2, 1.4, 0.5, 1);
+      color: #fff; }
+    @keyframes sk-popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    .sk-resultEmoji { font-size: 64px; margin-bottom: 12px; }
+    .sk-resultText  { font-size: 26px; font-weight: 600; line-height: 1.3; margin-bottom: 8px; }
+    .sk-resultSub   { font-size: 18px; opacity: 0.85; margin-bottom: 24px; }
+    .sk-resultSub.bad  { color: #ff453a; }
+    .sk-resultSub.good { color: #34c759; }
+    .sk-resultClose {
+      background: #fff; color: #000;
+      padding: 14px 28px; border-radius: 999px;
+      font-size: 17px; font-weight: 600;
+      border: none; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      font-family: inherit; }
+
+    /* "Schnaps anrufen" button on the home screen — easter-egg style */
+    .sk-home-btn {
+      margin: 24px auto 8px;
+      padding: 14px 24px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.35);
+      color: #fff;
+      font-weight: 700; font-size: 15px;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 10px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+    .sk-home-btn:hover, .sk-home-btn:active {
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-1px);
+    }
+    .sk-home-btn .e { font-size: 22px; filter: drop-shadow(0 0 6px rgba(255,180,80,0.5)); }
+    .sk-home-hint { font-size: 11px; opacity: 0.55; margin: 4px 0 12px; text-align: center; }
+
     /* ===== Home button on top bar ===== */
     #home-btn { position: fixed; top: max(14px, env(safe-area-inset-top));
       left: max(14px, env(safe-area-inset-left)); z-index: 26;
@@ -2781,6 +2968,7 @@ const DIFFICULTY_CONFIGS = {
         redStatueEnabled: false,  // red statue becomes blue statue
         eruptionChance: 0.1,      // 10% on lava
         startBonusDice: 1,        // every player starts with 1 gold die
+        schnapsCalls: 1,          // 🥃 Schnaps belt 1× random tijdens game
     },
     normal: {
         label: 'Standaard',
@@ -2792,6 +2980,7 @@ const DIFFICULTY_CONFIGS = {
         redStatueEnabled: true,
         eruptionChance: 0.2,
         startBonusDice: 0,
+        schnapsCalls: 2,          // 🥃 Schnaps belt 2× random tijdens game
     },
     pittig: {
         label: 'Pittig',
@@ -2804,6 +2993,7 @@ const DIFFICULTY_CONFIGS = {
         eruptionChance: 0.35,
         startBonusDice: 0,
         extraTraps: true,         // re-roll some "plus" tiles to "minus"
+        schnapsCalls: 3,          // 🥃 Schnaps belt 3× random tijdens game
     },
     berserk: {
         label: 'Berserk',
@@ -2817,6 +3007,7 @@ const DIFFICULTY_CONFIGS = {
         startBonusDice: 0,
         extraTraps: true,
         extraSkulls: true,        // every 11th tile-gap also gets a skull
+        schnapsCalls: 4,          // 🥃 Schnaps belt 4× random tijdens game
     },
 };
 
@@ -3296,6 +3487,8 @@ function renderSetup() {
         { id: 'roulette',    emoji: '🎰',  name: 'Vulkaan Roulette',     meta: 'solo',          tag: 'NIEUW', locked: false },
         { id: 'blackjack',   emoji: '🃏',  name: 'Blackjack v/d Goden',  meta: 'vs CPU',        tag: 'NIEUW', locked: false },
         { id: 'hoofdsteden', emoji: '🏙️',  name: 'Hoofdsteden Vuurdoop', meta: 'solo / trivia', tag: 'NIEUW', locked: false },
+        { id: 'bowling',     emoji: '🎳',  name: 'Bowlspel',             meta: 'iedereen',      tag: 'NIEUW', locked: false },
+        { id: 'connect4',    emoji: '🟡',  name: 'Vier op een Rij',      meta: '1v1',           tag: 'NIEUW', locked: false },
         { id: 'mystery',     emoji: '🎡',  name: 'Mystery Wheel',        meta: 'random',        tag: 'NIEUW', locked: false },
     ];
 
@@ -3346,7 +3539,25 @@ function renderSetup() {
     tabMG.addEventListener('click', () => selectTab('mg'));
     selectTab(SETUP_TAB);
 
-    screen.append(title, sub, tabs, gamePanel, mgPanel);
+    // Easter-egg: "Schnaps anrufen" at the very bottom of the home screen.
+    // Calls Schnaps in standalone mode (no penalty), just for the ringtone
+    // and the moment.
+    const schnapsHint = el('div', { className: 'sk-home-hint' }, '— scroll voor extra —');
+    const schnapsBtn = el('button', { className: 'sk-home-btn', type: 'button' });
+    schnapsBtn.append(
+        el('span', { className: 'e' }, '📞'),
+        document.createTextNode('Schnaps anrufen'),
+    );
+    schnapsBtn.addEventListener('click', async () => {
+        await playSchnapsCall({ mode: 'standalone' });
+    });
+    const schnapsWrap = el('div', { style: {
+        width: 'min(420px, 100%)', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', marginTop: '8px',
+    } });
+    schnapsWrap.append(schnapsHint, schnapsBtn);
+
+    screen.append(title, sub, tabs, gamePanel, mgPanel, schnapsWrap);
     ui.append(screen);
 }
 
@@ -3436,6 +3647,19 @@ async function launchStandaloneMinigame(id) {
                 actions: [{ label: 'Klaar', value: true }],
             });
         }
+    } else if (id === 'bowling') {
+        const res = await playBowling({ players: G.players, drinks: 3 });
+        if (res && res.winner) {
+            res.winner.bonusDice = (res.winner.bonusDice || 0) + 1;
+            refreshHUD();
+        }
+    } else if (id === 'connect4' && G.players.length >= 2) {
+        const a = G.players[0], b = G.players[1];
+        const winner = await playConnectFour({ playerA: a, playerB: b, drinks: 4 });
+        if (winner) {
+            winner.bonusDice = (winner.bonusDice || 0) + 1;
+            refreshHUD();
+        }
     } else if (id === 'mystery' && G.players.length >= 1) {
         // Standalone Mystery Wheel: spin it, then dispatch to the same standalone
         // launcher recursively (after un-doing the stash, so the inner call
@@ -3466,6 +3690,7 @@ function goHome() {
     G.phase = 'setup';
     G.volcanoActive = 0;
     G.extraRollPending = false;
+    G.schnapsCallTurns = [];
     // remove banner if present
     const b = document.getElementById('vol-banner'); if (b) b.remove();
     // Re-enable camera idle behavior and re-target the start tile
@@ -3496,6 +3721,28 @@ function startGame(draft) {
     G.round = 1;
     G.phase = 'idle';
     G.volcanoActive = 0;
+
+    // ── Schnaps ruft an: plan random turn numbers up-front ──
+    // We pre-pick the absolute turn-numbers when Schnaps will call so the
+    // distribution is even and well-spread across a typical game. The check
+    // in onLandedOnTile()'s tail compares against the upcoming turn-number.
+    // No two Schnaps calls fire on the same turn.
+    const callCount = cfg.schnapsCalls ?? 2;
+    G.schnapsCallTurns = [];
+    if (callCount > 0) {
+        // Spread across turns 4..(4+ callCount*8). Earliest call after 4 turns
+        // so the game has settled in; final-window scales with count so
+        // berserk's 4 calls actually have room.
+        const startT = 4, span = 8 + callCount * 6;
+        const pool = [];
+        for (let t = startT; t < startT + span; t++) pool.push(t);
+        // Fisher-Yates shuffle and pick first N
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        G.schnapsCallTurns = pool.slice(0, callCount).sort((a, b) => a - b);
+    }
 
     // place all tokens on the start
     G.players.forEach(p => layoutTokensOnTile(p.tileIdx));
@@ -3845,6 +4092,257 @@ function playRaftBattle({ playerA, playerB, drinks = 4 } = {}) {
     });
 }
 
+/* ============================================================
+   playBowling — Bowlspel (iframe)
+   ============================================================
+   Loads bowlspel.html as an iframe and lets every current player
+   throw a single frame. The iframe's setup screen is bypassed via
+   a 'bowl-init' postMessage. When all players have played, the
+   iframe sends 'bowl-result' with the ranked scores. Highest score
+   wins; losers drink.
+   Returns: { winner: <player>, score: <number>, ranking: [...] }
+   ============================================================ */
+function playBowling({ players, drinks = 4 } = {}) {
+    return new Promise(resolve => {
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'bw-back' });
+
+        // Header — show first two player chips, "+N more" if needed
+        const header = el('div', { className: 'bw-header' });
+        const titleEl = el('div', { className: 'ttl' }, '🎳 Bowlspel');
+        const vs = el('div', { className: 'bw-vs' });
+        const showChips = players.slice(0, 3);
+        showChips.forEach((p, i) => {
+            if (i > 0) vs.append(el('span', { className: 'x' }, 'vs'));
+            const chip = el('div', { className: 'chip', style: { '--pcol': p.color.css } });
+            chip.append(el('div', { className: 'dot' }), document.createTextNode(p.name));
+            vs.append(chip);
+        });
+        if (players.length > 3) {
+            vs.append(el('span', { className: 'x' }, `+${players.length - 3}`));
+        }
+        header.append(titleEl, vs);
+
+        const wrap = el('div', { className: 'bw-canvas-wrap' });
+        const iframe = el('iframe', {
+            allow: 'accelerometer; gyroscope; autoplay',
+            scrolling: 'no' });
+        wrap.append(iframe);
+
+        // Manual-winner fallback bar (if the iframe never finishes)
+        const bar = el('div', { className: 'bw-bar' });
+        const lbl = el('div', { className: 'lbl' }, 'Tussentijds afronden:');
+        bar.append(lbl);
+        players.forEach(p => {
+            const btn = el('button', { className: 'btn-win', type: 'button',
+                style: { '--pcol': p.color.css } }, p.name);
+            btn.onclick = () => finish(p, 0);
+            bar.append(btn);
+        });
+        const btnSkip = el('button', { className: 'btn-skip', type: 'button' }, 'Skip');
+        const hint = el('div', { className: 'hint' },
+            'Het spel rondt automatisch af na ieders worp — of tik hierboven.');
+        bar.append(btnSkip, hint);
+
+        back.append(header, wrap, bar);
+
+        let done = false;
+        async function finish(winner, winnerScore) {
+            if (done) return;
+            done = true;
+            window.removeEventListener('message', onMsg);
+            back.remove();
+            if (winner) {
+                const losers = players.filter(p => p !== winner);
+                const loserNames = losers.map(p => p.name).join(', ');
+                await showModal({ emoji: '🎳',
+                    title: `${winner.name} wint Bowlspel!`,
+                    body: [
+                        winnerScore != null ? `Score: ${winnerScore} punten` : '',
+                        `${loserNames} drink${losers.length === 1 ? 't' : 'en'} ${drinks} 🍻`,
+                        `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`,
+                    ].filter(Boolean),
+                    actions: [{ label: 'Klaar', value: true }] });
+            }
+            resolve(winner ? { winner, score: winnerScore || 0 } : null);
+        }
+
+        function showKnockout(winner, score, ranking) {
+            if (done) return;
+            const ko = el('div', { className: 'bw-ko',
+                style: { '--pcol': winner.color.css } });
+            const lines = [
+                el('h2', {}, `🏆 ${winner.name} wint!`),
+                el('p', {}, `${score} punten`),
+            ];
+            // Show top 3 ranking inline
+            if (ranking && ranking.length) {
+                const top = ranking.slice(0, 3).map((r, i) =>
+                    `${['🥇','🥈','🥉'][i]} ${r.name} (${r.score})`).join('   ');
+                lines.push(el('p', { style: { fontSize: '13px', opacity: 0.75 } }, top));
+            }
+            lines.push(el('button', { className: 'btn-pill', type: 'button',
+                on: { click: () => finish(winner, score) } }, 'Verder'));
+            ko.append(...lines);
+            wrap.append(ko);
+            // Auto-advance after 6s if nobody taps
+            setTimeout(() => finish(winner, score), 6000);
+        }
+
+        function sendInit() {
+            try {
+                iframe.contentWindow.postMessage({
+                    type: 'bowl-init',
+                    players: players.map(p => ({ name: p.name, color: p.color.css })),
+                }, '*');
+            } catch (e) { /* cross-origin — ignore */ }
+        }
+
+        function onMsg(ev) {
+            if (ev.source !== iframe.contentWindow) return;
+            const d = ev && ev.data;
+            if (!d || typeof d !== 'object') return;
+            if (d.type === 'bowl-hello') { sendInit(); return; }
+            if (d.type === 'bowl-result') {
+                // Find the matching player object
+                let winner = players.find(p => p.name === d.winner);
+                if (!winner) winner = players[0];
+                setTimeout(() => showKnockout(winner, d.winnerScore || 0, d.ranking), 1500);
+            }
+        }
+        window.addEventListener('message', onMsg);
+        iframe.addEventListener('load', sendInit);
+
+        ui.append(back);
+        iframe.src = 'bowlspel.html';
+
+        btnSkip.onclick = () => {
+            // Ask the iframe for the current leader if anyone has played
+            try { iframe.contentWindow.postMessage({ type: 'bowl-skip' }, '*'); } catch(_){}
+            // Hard timeout — if the iframe doesn't respond, just resolve null
+            setTimeout(() => { if (!done) finish(null, 0); }, 600);
+        };
+    });
+}
+
+/* ============================================================
+   playConnectFour — Vier op een Rij (iframe)
+   ============================================================
+   1v1 turn-based game. Iframe accepts player names + colours via
+   'cf-init' and reports the winner via 'cf-result' (winner = 1 or 2,
+   or 0 for a draw).
+   Returns: <player> (winner) or null (draw / skip)
+   ============================================================ */
+function playConnectFour({ playerA, playerB, drinks = 4 } = {}) {
+    return new Promise(resolve => {
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'cf-back' });
+
+        const header = el('div', { className: 'cf-header' });
+        const titleEl = el('div', { className: 'ttl' }, '🟡 Vier op een Rij');
+        const vs = el('div', { className: 'cf-vs' });
+        const chipA = el('div', { className: 'chip', style: { '--pcol': playerA.color.css } });
+        chipA.append(el('div', { className: 'dot' }), document.createTextNode(playerA.name));
+        const xLbl = el('span', { className: 'x' }, 'vs');
+        const chipB = el('div', { className: 'chip', style: { '--pcol': playerB.color.css } });
+        chipB.append(el('div', { className: 'dot' }), document.createTextNode(playerB.name));
+        vs.append(chipA, xLbl, chipB);
+        header.append(titleEl, vs);
+
+        const wrap = el('div', { className: 'cf-canvas-wrap' });
+        const iframe = el('iframe', { scrolling: 'no' });
+        wrap.append(iframe);
+
+        const bar = el('div', { className: 'cf-bar' });
+        const lbl = el('div', { className: 'lbl' }, 'Forceer winnaar:');
+        const btnA = el('button', { className: 'btn-win', type: 'button',
+            style: { '--pcol': playerA.color.css } }, playerA.name);
+        const btnB = el('button', { className: 'btn-win', type: 'button',
+            style: { '--pcol': playerB.color.css } }, playerB.name);
+        const btnSkip = el('button', { className: 'btn-skip', type: 'button' }, 'Skip');
+        const hint = el('div', { className: 'hint' },
+            'Het spel stopt automatisch bij 4-op-een-rij — of tik hierboven.');
+        bar.append(lbl, btnA, btnB, btnSkip, hint);
+
+        back.append(header, wrap, bar);
+
+        let done = false;
+        async function finish(winner, isDraw = false) {
+            if (done) return;
+            done = true;
+            window.removeEventListener('message', onMsg);
+            back.remove();
+            if (isDraw) {
+                await showModal({ emoji: '🤝', title: 'Gelijkspel!',
+                    body: ['Niemand drinkt — de goden zijn vandaag neutraal.'],
+                    actions: [{ label: 'OK', value: true }] });
+                resolve(null);
+                return;
+            }
+            if (winner) {
+                const loser = winner === playerA ? playerB : playerA;
+                await showModal({ emoji: '🟡',
+                    title: `${winner.name} heeft 4 op een rij!`,
+                    body: [`${loser.name} drinkt ${drinks} 🍻`,
+                        `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
+                    actions: [{ label: 'Klaar', value: true }] });
+            }
+            resolve(winner || null);
+        }
+
+        function showKnockout(winner, isDraw = false) {
+            if (done) return;
+            const ko = el('div', { className: 'cf-ko',
+                style: { '--pcol': isDraw ? '#aaa' : winner.color.css } });
+            ko.append(
+                el('h2', {}, isDraw ? '🤝 Gelijkspel!' : `🟡 ${winner.name} wint!`),
+                el('p', {}, isDraw ? 'Niemand drinkt' : `${(winner === playerA ? playerB : playerA).name} drinkt ${drinks} 🍻`),
+                el('button', { className: 'btn-pill', type: 'button',
+                    on: { click: () => finish(winner, isDraw) } }, 'Verder'),
+            );
+            wrap.append(ko);
+            setTimeout(() => finish(winner, isDraw), 5000);
+        }
+
+        function sendInit() {
+            try {
+                iframe.contentWindow.postMessage({
+                    type: 'cf-init',
+                    playerA: { name: playerA.name, color: playerA.color.css },
+                    playerB: { name: playerB.name, color: playerB.color.css },
+                }, '*');
+            } catch (e) { /* ignore */ }
+        }
+
+        function onMsg(ev) {
+            if (ev.source !== iframe.contentWindow) return;
+            const d = ev && ev.data;
+            if (!d || typeof d !== 'object') return;
+            if (d.type === 'cf-hello') { sendInit(); return; }
+            if (d.type === 'cf-result') {
+                if (d.winner === 0) {
+                    setTimeout(() => showKnockout(null, true), 1200);
+                } else {
+                    const winner = d.winner === 1 ? playerA : playerB;
+                    setTimeout(() => showKnockout(winner), 1500);
+                }
+            }
+        }
+        window.addEventListener('message', onMsg);
+        iframe.addEventListener('load', sendInit);
+
+        ui.append(back);
+        iframe.src = 'vier-op-een-rij.html';
+
+        btnA.onclick = () => finish(playerA);
+        btnB.onclick = () => finish(playerB);
+        btnSkip.onclick = () => {
+            try { iframe.contentWindow.postMessage({ type: 'cf-skip' }, '*'); } catch(_){}
+            setTimeout(() => { if (!done) finish(null); }, 600);
+        };
+    });
+}
+
 // ── Pip layouts for each die face ──
 const PIP_LAYOUTS = {
     1: [[50,50]],
@@ -3904,12 +4402,14 @@ function onRollDice() {
             emoji: '🌋', big: 'IN DE VULKAAN!',
             sub: `${player.name} slaat deze beurt over`,
             palette: 'lava',
-        }).then(() => {
+        }).then(async () => {
             advanceTurn();
             G.phase = 'idle';
+            refreshHUD();
+            // Schnaps could still call after a skip-turn
+            await maybeFireSchnapsCall();
             const btn = document.getElementById('dice-btn');
             if (btn) { btn.disabled = false; btn.textContent = '🎲'; }
-            refreshHUD();
         });
         return;
     }
@@ -4018,6 +4518,31 @@ function onRollDice() {
     }
 
     iframe.src = 'dice-overlay.html';
+}
+
+// ── Schnaps trigger check — called after every turn advance ──
+// Checks whether the current absolute turn-number is in G.schnapsCallTurns
+// and if so opens the Schnaps call screen for the player whose turn is
+// about to start. Returns a Promise that resolves once the call is over
+// (or immediately if no call was scheduled).
+//
+// IMPORTANT: this is never called during a minigame because both call
+// sites guard with `G.phase === 'idle'`. Minigames set phase to 'event'
+// and only return to 'idle' after onLandedOnTile finishes — by which
+// point any tile-event-triggered minigame is already wrapped up.
+async function maybeFireSchnapsCall() {
+    if (G.phase !== 'idle') return;
+    if (!Array.isArray(G.schnapsCallTurns) || !G.schnapsCallTurns.length) return;
+    const turnNum = (G.round - 1) * G.players.length + G.turnIdx;
+    if (!G.schnapsCallTurns.includes(turnNum)) return;
+    // remove so it can't re-trigger on the same turn
+    G.schnapsCallTurns = G.schnapsCallTurns.filter(t => t !== turnNum);
+    const target = G.players[G.turnIdx];
+    if (!target) return;
+    G.phase = 'event';
+    await playSchnapsCall({ player: target, mode: 'game' });
+    G.phase = 'idle';
+    refreshHUD();
 }
 
 // Helper used by skip-turn path and end of onLandedOnTile
@@ -4982,6 +5507,205 @@ function playKrokodil({ playerA, playerB, drinks = 4, teethCount = 18 } = {}) {
 }
 
 /* ============================================================
+   Schnaps ruft an — "Schnaps is calling"
+   ============================================================
+   Fake iOS-style incoming call screen with the Nokia 3310
+   ringtone (Gran Vals, Tárrega 1902). Used as:
+     - a RANDOM in-game event (1-4× per game depending on difficulty),
+       where accepting forces the player to drink and declining is
+       called out as a "laffe Schnapsaffe" with a tile-knockback;
+     - a STANDALONE home-screen toy (just for fun, no penalty).
+
+   Ringer audio context, tune loop and vibrate are encapsulated
+   inside the function so multiple calls don't clobber each other.
+   ============================================================ */
+function playSchnapsCall({ player = null, mode = 'standalone' } = {}) {
+    return new Promise(resolve => {
+        const inGame = mode === 'game';
+        const ui = document.getElementById('game-ui');
+
+        // ── Audio: Nokia tune (Gran Vals) ──
+        let audioCtx = null;
+        let tuneInterval = null;
+        let vibLoop = null;
+
+        function ensureAudio() {
+            if (!audioCtx) {
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) { audioCtx = null; }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(() => {});
+            }
+        }
+        function playNokiaTune() {
+            ensureAudio();
+            if (!audioCtx) return;
+            // tempo: ~160 BPM → 1/16 = 0.094s, 1/8 = 0.188s
+            const s = 0.094, e = 0.188, L = 0.75;
+            // Gran Vals — original 13-note phrase Nokia chose for their ringtone
+            const seq = [
+                [659.25, s], [587.33, s], [369.99, e], [415.30, e],
+                [554.37, s], [493.88, s], [293.66, e], [329.63, e],
+                [493.88, s], [440.00, s], [277.18, e], [329.63, e],
+                [440.00, L],
+            ];
+            let t = audioCtx.currentTime;
+            seq.forEach(([freq, dur]) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';      // classic 8-bit Nokia bleep
+                osc.frequency.value = freq;
+                const peak = 0.18;
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(peak, t + 0.005);
+                gain.gain.setValueAtTime(peak, t + dur - 0.015);
+                gain.gain.linearRampToValueAtTime(0, t + dur);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(t); osc.stop(t + dur);
+                t += dur;
+            });
+        }
+        function tryVibrate() {
+            if (!navigator.vibrate) return;
+            const pattern = [400, 180, 400, 2000];
+            try { navigator.vibrate(pattern); } catch(_){}
+            vibLoop = setInterval(() => {
+                if (!tuneInterval) { clearInterval(vibLoop); vibLoop = null; return; }
+                try { navigator.vibrate(pattern); } catch(_){}
+            }, 3000);
+        }
+        function startRinging() {
+            playNokiaTune();
+            // whole melody ≈ 2.3s, repeat every 3s
+            tuneInterval = setInterval(playNokiaTune, 3000);
+            tryVibrate();
+        }
+        function stopRinging() {
+            if (tuneInterval) { clearInterval(tuneInterval); tuneInterval = null; }
+            if (vibLoop)      { clearInterval(vibLoop);      vibLoop = null; }
+            if (audioCtx) {
+                try { audioCtx.close(); } catch(_){}
+                audioCtx = null;
+            }
+            if (navigator.vibrate) { try { navigator.vibrate(0); } catch(_){} }
+        }
+
+        // ── DOM ──
+        const back = el('div', { id: 'sk-back', className: 'visible' });
+        if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
+
+        const topInfo = el('div', { className: 'sk-topInfo' });
+        topInfo.append(
+            el('div', { className: 'sk-callType' }, 'mobiel'),
+            el('div', { className: 'sk-callerName' }, 'Schnaps ruft an!!'),
+        );
+        if (inGame && player) {
+            const chip = el('div', { className: 'sk-forPlayer' });
+            chip.append(
+                el('span', { className: 'dot' }),
+                document.createTextNode(`voor ${player.name}`),
+            );
+            topInfo.append(chip);
+        }
+        const avatar = el('div', { className: 'sk-avatar' }, '🥃');
+        const actions = el('div', { className: 'sk-actions' });
+
+        const declineBtn = el('button', { className: 'sk-action', type: 'button' });
+        declineBtn.append(
+            el('div', { className: 'sk-actionBtn sk-decline' }, '✕'),
+            el('div', { className: 'sk-actionLabel' }, 'ablehnen'),
+        );
+        const acceptBtn = el('button', { className: 'sk-action', type: 'button' });
+        acceptBtn.append(
+            el('div', { className: 'sk-actionBtn sk-accept' }, '📞'),
+            el('div', { className: 'sk-actionLabel' }, 'annehmen'),
+        );
+        actions.append(declineBtn, acceptBtn);
+
+        back.append(topInfo, avatar, actions);
+
+        // Strip any previous schnaps overlay from a previous run
+        document.getElementById('sk-back')?.remove();
+        document.getElementById('sk-result')?.remove();
+        ui.append(back);
+
+        startRinging();
+
+        let settled = false;
+        function showResult({ emoji, text, sub, subClass }) {
+            const wrap = el('div', { id: 'sk-result', className: 'visible' });
+            const card = el('div', { className: 'sk-resultCard' });
+            card.append(
+                el('div', { className: 'sk-resultEmoji' }, emoji),
+                el('div', { className: 'sk-resultText' }, text),
+            );
+            if (sub) card.append(
+                el('div', { className: 'sk-resultSub ' + (subClass || '') }, sub),
+            );
+            const closeBtn = el('button', { className: 'sk-resultClose', type: 'button' },
+                'verder spelen');
+            card.append(closeBtn);
+            wrap.append(card);
+            ui.append(wrap);
+
+            return new Promise(r => {
+                closeBtn.addEventListener('click', () => {
+                    wrap.remove();
+                    r();
+                });
+            });
+        }
+
+        async function finish(accepted) {
+            if (settled) return;
+            settled = true;
+            stopRinging();
+            back.remove();
+
+            if (!inGame) {
+                // Standalone — no penalties, no result modal needed.
+                // (User asked specifically: no strafpunten displayed here.)
+                resolve({ accepted });
+                return;
+            }
+
+            // ── In-game outcome ──
+            if (accepted) {
+                // Felicitatie — the joke: you "win" by being a good German
+                // drinker, but the prize is having to drink schnaps.
+                const drinks = slokken(3);
+                await showResult({
+                    emoji: '🥃',
+                    text:  'Schnapsen, ma!!',
+                    sub:   `PROST! ${player.name} trinkt ${drinks} Schluck 🍻`,
+                    subClass: 'good',
+                });
+                resolve({ accepted: true, drinks, knockback: 0 });
+            } else {
+                // Decline — shame + tegel knockback
+                const stepsBack = knockBy(5);
+                screenShake(400);
+                await new Promise(r => moveTokenBy(player, -stepsBack, r));
+                layoutTokensOnTile(player.tileIdx);
+                refreshHUD();
+                await showResult({
+                    emoji: '🐒',
+                    text:  'Du bist eine laffe Schnapsaffe!',
+                    sub:   `−${stepsBack} Tegels für ${player.name}`,
+                    subClass: 'bad',
+                });
+                resolve({ accepted: false, drinks: 0, knockback: stepsBack });
+            }
+        }
+
+        acceptBtn.addEventListener('click', () => finish(true));
+        declineBtn.addEventListener('click', () => finish(false));
+    });
+}
+
+/* ============================================================
    Universal Minigame Picker — the "Mystery Wheel"
    ============================================================
    Used by the universal 'mystery' tile (which replaces all the
@@ -4998,6 +5722,8 @@ const MYSTERY_OPTIONS = [
     { id: 'roulette',    emoji: '🎰', label: 'Roulette',     color: '#ff3a3a' },
     { id: 'blackjack',   emoji: '🃏', label: 'Blackjack',    color: '#2a8a3a' },
     { id: 'hoofdsteden', emoji: '🏙️', label: 'Hoofdsteden',  color: '#5aaaff' },
+    { id: 'bowling',     emoji: '🎳', label: 'Bowlspel',     color: '#1a7adb' },
+    { id: 'connect4',    emoji: '🟡', label: '4 op een Rij', color: '#ffcc1a' },
 ];
 
 function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Wheel', subtitle = 'Welke minigame wordt het?' } = {}) {
@@ -5937,6 +6663,37 @@ async function runMinigameOnTile(id, player) {
         }
         refreshHUD();
     }
+    else if (id === 'bowling') {
+        const d = slokken(3);
+        const go = await showModal({
+            emoji: '🎳', title: 'Bowlspel!',
+            body: ['Iedereen gooit één frame. Hoogste score wint.',
+                   `Verliezers drinken ${d} 🍻 — winnaar krijgt een bonus-dobbelsteen.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        const res = await playBowling({ players: G.players, drinks: d });
+        if (res && res.winner) {
+            res.winner.bonusDice = (res.winner.bonusDice || 0) + 1;
+            refreshHUD();
+        }
+    }
+    else if (id === 'connect4' && G.players.length >= 2) {
+        const opp = pickOpp();
+        const d = slokken(4);
+        const go = await showModal({
+            emoji: '🟡', title: 'Vier op een Rij!',
+            body: [`${player.name} tegen ${opp.name}.`,
+                   `Tik op een kolom om je schijf te laten vallen. Eerste met 4 op een rij wint, verliezer drinkt ${d}.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        const winner = await playConnectFour({ playerA: player, playerB: opp, drinks: d });
+        if (winner) {
+            winner.bonusDice = (winner.bonusDice || 0) + 1;
+            refreshHUD();
+        }
+    }
 }
 
 // ── Landing logic ──
@@ -6280,6 +7037,14 @@ async function onLandedOnTile(player) {
     }
     G.phase = 'idle';
     refreshHUD();
+
+    // ── Schnaps ruft an: random in-game call ──
+    // Fires AFTER advanceTurn (so the player it targets is the one whose
+    // turn is about to start) and AFTER phase is reset to 'idle' (so the
+    // dice button stays disabled while the call screen is open). Never
+    // fires during a minigame because we're past that already.
+    await maybeFireSchnapsCall();
+
     // un-disable dice
     const btn = document.getElementById('dice-btn');
     if (btn) { btn.disabled = false; btn.textContent = '🎲'; }

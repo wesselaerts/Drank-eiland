@@ -248,8 +248,13 @@ const scene = new THREE.Scene();
 scene.background = null;
 // fog removed — would block the island view; transparent scene is preferred
 
-const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-camera.position.set(0, 7.2, 7.4);
+// Camera tuned for iPhone portrait (aspect ≈ 0.5). The bottleneck on a
+// portrait phone is the horizontal FOV (since Three's FOV is vertical),
+// so we pull the camera generously far back AND keep a moderate FOV.
+// Distance ≈ 13.7 with FOV 52 → visible horizontal half-width ≈ 3.4,
+// which comfortably covers WALL_RADIUS 2.9 + a safety margin.
+const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 100);
+camera.position.set(0, 9.5, 9.8);
 camera.lookAt(0, 0.3, 0);
 
 // environment for PBR reflections
@@ -376,8 +381,10 @@ floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI/2);
 world.addBody(floorBody);
 
 // invisible walls (cylindrical-ish using box walls at edge of round table)
-// NOTE: shrunk from 5.5 → 4.65 to match the smaller table felt
-const WALL_RADIUS = 3.08;
+// NOTE: Shrunk again — was 3.08, now 2.9. With camera at (0,9.5,9.8) + FOV 52
+// in portrait, the visible horizontal half-width at the felt is ~3.4. Wall
+// radius 2.9 keeps dice well inside the visible area on iPhone SE / 13 mini.
+const WALL_RADIUS = 2.9;
 const WALL_HEIGHT = 3;
 const WALL_SEGMENTS = 16;
 for (let i=0;i<WALL_SEGMENTS;i++){
@@ -776,7 +783,7 @@ function loop(){
   // subtle idle camera drift
   const t = performance.now() * 0.0001;
   camera.position.x = Math.sin(t) * 0.20;
-  camera.position.z = 7.4 + Math.cos(t * 1.3) * 0.12;
+  camera.position.z = 9.8 + Math.cos(t * 1.3) * 0.12;
   camera.lookAt(0, 0.3, 0);
 
   renderer.render(scene, camera);
