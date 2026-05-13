@@ -6359,12 +6359,26 @@ function makeMinigameSkip({ onSkip, winners }) {
     return skip;
 }
 
-// LEGACY: 2D iframe Raft Battle. Niet meer aangeroepen door het spel; de
-// 3D versie hieronder (playRaftBattle) vervangt 'm. Bewaard voor het geval
-// we toch terug willen, en omdat raftwar.html standalone nog werkt.
-function playRaftBattle2D({ playerA, playerB, drinks = 4 } = {}) {
+// MAIN: iframe-based Raft Battle met transparante achtergrond zodat het
+// 3D-eiland uit de bordspel-scene als achtergrond zichtbaar is. De
+// gameplay zelf (aim, hit, water-bounce, avatars op de boten) draait
+// in raftwar.html — bewezen werkende code. De ouder zorgt alleen voor
+// een nette overlay-frame en het doorgeven van speler-info via postMessage.
+function playRaftBattle({ playerA, playerB, drinks = 4 } = {}) {
     return new Promise(resolve => {
         const ui = document.getElementById('game-ui');
+
+        // ── Home-scherm overlay verbergen ──────────────────────
+        // De minigame-tab zet een semi-transparante .screen-overlay
+        // over de 3D scene. Tijdens de battle willen we 'm verstoppen
+        // zodat het eiland duidelijk zichtbaar is achter de transparante
+        // iframe. In finish() weer terugzetten.
+        const hiddenScreens = [];
+        document.querySelectorAll('#game-ui > .screen').forEach(s => {
+            hiddenScreens.push({ el: s, prevDisplay: s.style.display });
+            s.style.display = 'none';
+        });
+
         const back = el('div', { className: 'rb-back' });
 
         // Floating header overlay with title + VS chips matching player colors
@@ -6395,6 +6409,10 @@ function playRaftBattle2D({ playerA, playerB, drinks = 4 } = {}) {
             done = true;
             window.removeEventListener('message', onMsg);
             back.remove();
+            // Home-scherm overlay weer tonen
+            for (const h of hiddenScreens) {
+                h.el.style.display = h.prevDisplay;
+            }
             if (winner) {
                 const loser = winner === playerA ? playerB : playerA;
                 await showModal({ emoji: '🏴‍☠️',
@@ -6507,21 +6525,16 @@ function playRaftBattle2D({ playerA, playerB, drinks = 4 } = {}) {
 }
 
 /* ============================================================
-   playRaftBattle — 3D in-scene Raft Battle
+   playRaftBattle3D — 3D in-scene Raft Battle (EXPERIMENTAL)
    ============================================================
-   Speelt zich af IN dezelfde Three.js bord-game scene. We
-   bevriezen de camera op een vaste positie, parkeren twee 3D
-   vlotten ver uit elkaar op de zee (zelfde water/eiland als het
-   bordspel) en zetten de in-game 3D speler-tokens als opvarenden
-   op de boten. Spelers tikken op het scherm, slepen om te mikken
-   (richting + power) en laten los om te schieten. Kogels volgen
-   3D-projectiel-fysica (gravity + wind) en mogen tot 3× over het
-   water skippen om bank-shots mogelijk te maken.
-
-   Geen iframe meer — alles draait via window.__deGameHook in de
-   bestaande animate()-loop.
+   Eerste poging om de raft-battle volledig in de Three.js scene
+   te bouwen. De camera/eiland/water look-and-feel werkt, maar de
+   gameplay zelf (aim, hit-detection) had issues. Bewaard voor
+   later — de hoofdfunctie `playRaftBattle` gebruikt nu weer de
+   iframe-versie hieronder, met transparante achtergrond zodat
+   het 3D eiland wel zichtbaar blijft als backdrop.
    ============================================================ */
-function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
+function playRaftBattle3D({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
     return new Promise(resolve => {
         // ── 0. HOME-SCHERM OVERLAY VERBERGEN ───────────────────
         // De minigame-tab op het home-scherm zet een semi-trans-
