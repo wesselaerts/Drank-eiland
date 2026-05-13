@@ -6523,6 +6523,18 @@ function playRaftBattle2D({ playerA, playerB, drinks = 4 } = {}) {
    ============================================================ */
 function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
     return new Promise(resolve => {
+        // ── 0. HOME-SCHERM OVERLAY VERBERGEN ───────────────────
+        // De minigame-tab op het home-scherm zet een semi-trans-
+        // parante .screen-overlay over de 3D scene. Tijdens de
+        // raft battle willen we die NIET zien (het eiland moet
+        // zichtbaar zijn). We onthouden welke we hebben verstopt
+        // en zetten ze later in finish() weer terug.
+        const hiddenScreens = [];
+        document.querySelectorAll('#game-ui > .screen').forEach(s => {
+            hiddenScreens.push({ el: s, prevDisplay: s.style.display });
+            s.style.display = 'none';
+        });
+
         // ── 1. STATE SAVE ──────────────────────────────────────
         const savedCam = {
             pos: camera.position.clone(),
@@ -7165,6 +7177,10 @@ function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
             // Verwijder HUD
             back.remove();
             renderer.domElement.classList.remove('shake');
+            // Home-scherm overlay weer tonen (als die er was)
+            for (const h of hiddenScreens) {
+                h.el.style.display = h.prevDisplay;
+            }
             // Resolve (wachten met modal tot HUD weg is voor een rustig
             // visueel verloop)
             if (winner) {
