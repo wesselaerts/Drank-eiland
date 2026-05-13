@@ -3547,17 +3547,24 @@ const AVATAR_OUTFIT_COLORS = [
 const AVATAR_BROW_COLORS = AVATAR_HAIR_COLORS;
 
 // ── Part option lists (for the carousels) ──
-const AVATAR_FACE_OPTIONS    = ['round','oval','square','heart','long','chubby','pointed','diamond'];
-const AVATAR_EYE_OPTIONS     = ['normal','big','sleepy','wink','star','dot','closed','square','sparkle','tired'];
+const AVATAR_FACE_OPTIONS    = ['round','oval','square','heart','long','chubby','pointed','diamond',
+                                  'triangle','narrow','wide_jaw','soft','angular','baby'];
+const AVATAR_EYE_OPTIONS     = ['normal','big','sleepy','wink','star','dot','closed','square','sparkle','tired',
+                                  'lashed','glamour','cute_lashed','eyeliner'];
 const AVATAR_BROW_OPTIONS    = ['flat','arched','angry','surprised','thick','thin','wavy','none'];
 const AVATAR_NOSE_OPTIONS    = ['small','button','wide','long','pointy','none'];
-const AVATAR_MOUTH_OPTIONS   = ['smile','grin','neutral','open','smirk','tongue','o','frown','kiss','tooth'];
+const AVATAR_MOUTH_OPTIONS   = ['smile','grin','neutral','open','smirk','tongue','o','frown','kiss','tooth',
+                                  'lips_red','lips_pink','soft_smile','lips_full'];
 const AVATAR_HAIR_OPTIONS    = [
     'bald','short_messy','short_neat','side_part','long_straight','ponytail',
-    'pigtails','bun','curly','mohawk','bowl','afro','spiky','wavy_long'
+    'pigtails','bun','curly','mohawk','bowl','afro','spiky','wavy_long',
+    // ── feminine additions ──
+    'braids','bob','space_buns','side_swept','messy_bun','half_up'
 ];
-const AVATAR_ACC_OPTIONS     = ['none','glasses','shades','cap','beanie','crown','bandana','headband','helmet','earrings'];
+const AVATAR_ACC_OPTIONS     = ['none','glasses','shades','cap','beanie','crown','bandana','headband','helmet','earrings',
+                                  'bow','flower','pearls','bunny_ears'];
 const AVATAR_BODY_OPTIONS    = ['slim','normal','chunky'];
+const AVATAR_BLUSH_OPTIONS   = ['none','soft_pink','pink','red','freckles','stars'];
 
 // ── Factory: default avatar based on player color ──
 function defaultAvatar(colorIdx = 0) {
@@ -3573,6 +3580,7 @@ function defaultAvatar(colorIdx = 0) {
         accessory: 'none',
         body: 'normal',
         outfit: AVATAR_OUTFIT_COLORS[colorIdx % AVATAR_OUTFIT_COLORS.length],
+        blush: 'none',
     };
 }
 
@@ -3590,6 +3598,7 @@ function randomAvatar() {
         accessory: pick(AVATAR_ACC_OPTIONS),
         body: pick(AVATAR_BODY_OPTIONS),
         outfit: pick(AVATAR_OUTFIT_COLORS),
+        blush: pick(AVATAR_BLUSH_OPTIONS),
     };
 }
 
@@ -3610,6 +3619,13 @@ function renderFace(shape, skin) {
         case 'chubby':  return `<ellipse cx="100" cy="94" rx="64" ry="58" fill="${skin}" ${stroke}/>`;
         case 'pointed': return `<path d="M 100,162 Q 48,148 48,80 Q 48,32 100,32 Q 152,32 152,80 Q 152,148 100,162 Z" fill="${skin}" ${stroke}/>`;
         case 'diamond': return `<path d="M 100,32 L 156,92 L 100,158 L 44,92 Z" fill="${skin}" ${stroke}/>`;
+        // ── nieuwe vormen ──
+        case 'triangle':return `<path d="M 100,158 Q 38,130 42,75 Q 50,32 100,32 Q 150,32 158,75 Q 162,130 100,158 Z" fill="${skin}" ${stroke}/>`;
+        case 'narrow':  return `<ellipse cx="100" cy="92" rx="42" ry="64" fill="${skin}" ${stroke}/>`;
+        case 'wide_jaw':return `<path d="M 56,55 Q 56,38 74,38 L 126,38 Q 144,38 144,55 Q 162,90 154,135 Q 140,160 100,160 Q 60,160 46,135 Q 38,90 56,55 Z" fill="${skin}" ${stroke}/>`;
+        case 'soft':    return `<path d="M 50,72 Q 50,40 80,40 L 120,40 Q 150,40 150,72 L 150,128 Q 150,156 120,156 L 80,156 Q 50,156 50,128 Z" fill="${skin}" ${stroke}/>`;
+        case 'angular': return `<path d="M 100,30 L 156,72 L 152,108 L 132,150 Q 100,162 68,150 L 48,108 L 44,72 Z" fill="${skin}" ${stroke}/>`;
+        case 'baby':    return `<ellipse cx="100" cy="98" rx="58" ry="58" fill="${skin}" ${stroke}/>`;
         default:        return renderFace('round', skin);
     }
 }
@@ -3663,6 +3679,30 @@ function renderEyes(shape, color) {
             case 'tired':
                 return `<g><path d="M ${x-10},${y-2} Q ${x},${y+4} ${x+10},${y-2}" fill="none" stroke="#1a1010" stroke-width="3" stroke-linecap="round"/>
                     <circle cx="${x}" cy="${y+1}" r="2.5" fill="#1a1010"/></g>`;
+            // ── feminine / glamour eyes ──
+            case 'lashed':
+                return `<g><ellipse cx="${x}" cy="${y}" rx="9" ry="11" fill="#fff" ${stk}/>
+                    <circle cx="${x}" cy="${y+1}" r="5.5" fill="${color}"/>
+                    <circle cx="${x}" cy="${y+1}" r="2.5" fill="#1a1010"/>
+                    <circle cx="${x-1.5}" cy="${y-1.5}" r="1.8" fill="#fff"/>
+                    <path d="M ${x-9},${y-10} L ${x-12},${y-15} M ${x-4},${y-11} L ${x-5},${y-17} M ${x+1},${y-11} L ${x+1},${y-17} M ${x+6},${y-11} L ${x+8},${y-16} M ${x+10},${y-9} L ${x+13},${y-13}" stroke="#1a1010" stroke-width="2" stroke-linecap="round"/></g>`;
+            case 'glamour':
+                return `<g><ellipse cx="${x}" cy="${y+1}" rx="12" ry="13" fill="#fff" ${stk}/>
+                    <circle cx="${x}" cy="${y+2}" r="7" fill="${color}"/>
+                    <circle cx="${x}" cy="${y+2}" r="3" fill="#1a1010"/>
+                    <ellipse cx="${x-2}" cy="${y-1}" rx="2.5" ry="2" fill="#fff"/>
+                    <path d="M ${x-11},${y-9} C ${x-13},${y-15} ${x-7},${y-15} ${x-5},${y-12} L ${x-3},${y-15} L ${x+1},${y-15} L ${x+4},${y-13} C ${x+7},${y-15} ${x+11},${y-14} ${x+13},${y-10}" fill="#1a1010" stroke="#1a1010" stroke-width="1.5"/>
+                    <path d="M ${x-10},${y+8} Q ${x-7},${y+13} ${x-3},${y+10} M ${x-1},${y+10} Q ${x+2},${y+13} ${x+5},${y+10}" fill="none" stroke="#1a1010" stroke-width="1.5" stroke-linecap="round"/></g>`;
+            case 'cute_lashed':
+                return `<g><path d="M ${x-9},${y+2} Q ${x},${y-6} ${x+9},${y+2}" fill="none" stroke="#1a1010" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M ${x-9},${y+2} L ${x-12},${y-2} M ${x-2},${y-3} L ${x-3},${y-7} M ${x+3},${y-3} L ${x+4},${y-7} M ${x+9},${y+2} L ${x+12},${y-2}" stroke="#1a1010" stroke-width="1.8" stroke-linecap="round"/>
+                    <circle cx="${x-2}" cy="${y-2}" r="1.8" fill="${color}"/></g>`;
+            case 'eyeliner':
+                return `<g><ellipse cx="${x}" cy="${y}" rx="10" ry="10" fill="#fff" ${stk}/>
+                    <circle cx="${x}" cy="${y+1}" r="6" fill="${color}"/>
+                    <circle cx="${x}" cy="${y+1}" r="2.8" fill="#1a1010"/>
+                    <circle cx="${x-1.5}" cy="${y-1.5}" r="1.8" fill="#fff"/>
+                    <path d="M ${x-11},${y-3} Q ${x-2},${y-11} ${x+11},${y-6} L ${x+15},${y-9} L ${x+11},${y-4} Q ${x-2},${y-9} ${x-10},${y-1} Z" fill="#1a1010"/></g>`;
             default:
                 return renderEyes('normal', color);
         }
@@ -3725,6 +3765,22 @@ function renderMouth(shape) {
                                 <ellipse cx="100" cy="${y}" rx="2.5" ry="1.5" fill="#ff4d70"/></g>`;
         case 'tooth':   return `<path d="M 86,${y} Q 100,${y+12} 114,${y}" ${stk}/>
                                 <rect x="94" y="${y+5}" width="6" height="8" rx="1" fill="#fff" stroke="#1a1010" stroke-width="1.5"/>`;
+        // ── lipstick variants (feminine) ──
+        case 'lips_red':
+            return `<g><path d="M 85,${y+1} Q 92,${y-4} 100,${y-1} Q 108,${y-4} 115,${y+1} Q 115,${y+5} 100,${y+8} Q 85,${y+5} 85,${y+1} Z" fill="#d92e3a" stroke="#1a1010" stroke-width="2"/>
+                <path d="M 92,${y+1} Q 96,${y-2} 100,${y} Q 104,${y-2} 108,${y+1}" fill="none" stroke="#1a1010" stroke-width="1.5"/>
+                <ellipse cx="98" cy="${y-1}" rx="2" ry="1" fill="#ff6e8a" opacity="0.7"/></g>`;
+        case 'lips_pink':
+            return `<g><path d="M 85,${y+1} Q 92,${y-4} 100,${y-1} Q 108,${y-4} 115,${y+1} Q 115,${y+5} 100,${y+8} Q 85,${y+5} 85,${y+1} Z" fill="#ff7a9e" stroke="#1a1010" stroke-width="2"/>
+                <path d="M 92,${y+1} Q 96,${y-2} 100,${y} Q 104,${y-2} 108,${y+1}" fill="none" stroke="#1a1010" stroke-width="1.5"/>
+                <ellipse cx="98" cy="${y-1}" rx="2.5" ry="1.2" fill="#ffb0c4" opacity="0.7"/></g>`;
+        case 'soft_smile':
+            return `<g><path d="M 88,${y+1} Q 100,${y+8} 112,${y+1}" stroke="#c84a6a" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                <path d="M 88,${y+1} Q 100,${y+5} 112,${y+1}" stroke="#1a1010" stroke-width="2" stroke-linecap="round" fill="none"/></g>`;
+        case 'lips_full':
+            return `<g><path d="M 82,${y} Q 90,${y-7} 100,${y-3} Q 110,${y-7} 118,${y} Q 118,${y+6} 100,${y+10} Q 82,${y+6} 82,${y} Z" fill="#c84a6a" stroke="#1a1010" stroke-width="2.5" stroke-linejoin="round"/>
+                <path d="M 90,${y} Q 95,${y-3} 100,${y-1} Q 105,${y-3} 110,${y}" fill="none" stroke="#1a1010" stroke-width="1.5"/>
+                <ellipse cx="98" cy="${y-3}" rx="3" ry="1.5" fill="#ff8aa6" opacity="0.6"/></g>`;
         default:        return renderMouth('smile');
     }
 }
@@ -3810,6 +3866,58 @@ function renderHair(style, color) {
                 back: `<path d="M 40,80 Q 40,30 100,30 Q 160,30 160,80 Q 168,140 160,200 Q 130,210 100,205 Q 70,210 40,200 Q 32,140 40,80 Z" fill="${color}" ${stk}/>`,
                 front: `<path d="M 48,74 Q 60,40 100,38 Q 140,40 152,74 Q 138,56 110,60 Q 100,46 90,60 Q 62,56 48,74 Z" fill="${color}" ${stk}/>`
             };
+        // ── feminine additions ──
+        case 'braids':
+            return {
+                back: `<g fill="${color}" ${stk}>
+                    <path d="M 36,75 Q 36,30 100,30 Q 164,30 164,75 Q 158,86 100,86 Q 42,86 36,75 Z"/>
+                    <path d="M 24,90 Q 22,140 30,200 Q 38,210 50,205 Q 56,180 50,140 Q 46,110 32,90 Z"/>
+                    <ellipse cx="32" cy="120" rx="11" ry="9"/>
+                    <ellipse cx="34" cy="150" rx="11" ry="9"/>
+                    <ellipse cx="38" cy="180" rx="11" ry="9"/>
+                    <path d="M 176,90 Q 178,140 170,200 Q 162,210 150,205 Q 144,180 150,140 Q 154,110 168,90 Z"/>
+                    <ellipse cx="168" cy="120" rx="11" ry="9"/>
+                    <ellipse cx="166" cy="150" rx="11" ry="9"/>
+                    <ellipse cx="162" cy="180" rx="11" ry="9"/>
+                </g>`,
+                front: `<path d="M 50,72 Q 50,32 100,32 Q 150,32 150,72 Q 140,56 100,56 Q 60,56 50,72 Z" fill="${color}" ${stk}/>`
+            };
+        case 'bob':
+            return {
+                back: `<path d="M 38,76 Q 38,28 100,28 Q 162,28 162,76 L 158,140 Q 130,148 100,146 Q 70,148 42,140 Z" fill="${color}" ${stk}/>`,
+                front: `<path d="M 48,74 Q 50,32 100,32 Q 150,32 152,74 Q 140,56 100,56 Q 60,56 48,74 Z" fill="${color}" ${stk}/>`
+            };
+        case 'space_buns':
+            return {
+                back: '',
+                front: `<g fill="${color}" ${stk}>
+                    <path d="M 48,72 Q 48,32 100,32 Q 152,32 152,72 Q 138,54 100,54 Q 62,54 48,72 Z"/>
+                    <circle cx="56" cy="22" r="18"/>
+                    <circle cx="144" cy="22" r="18"/>
+                </g>`
+            };
+        case 'side_swept':
+            return {
+                back: `<path d="M 38,78 Q 38,30 100,30 Q 162,30 162,78 Q 168,140 156,180 Q 130,190 100,188 Q 70,190 44,180 Q 32,140 38,78 Z" fill="${color}" ${stk}/>`,
+                front: `<path d="M 46,68 Q 46,30 100,28 Q 156,28 156,72 Q 130,42 80,50 Q 60,38 46,68 Z M 60,46 Q 80,76 130,68 Q 110,90 70,84 Q 56,72 60,46 Z" fill="${color}" ${stk}/>`
+            };
+        case 'messy_bun':
+            return {
+                back: `<g fill="${color}" ${stk}>
+                    <circle cx="100" cy="22" r="22"/>
+                    <ellipse cx="86" cy="14" rx="6" ry="9" transform="rotate(-20 86 14)"/>
+                    <ellipse cx="116" cy="16" rx="5" ry="8" transform="rotate(20 116 16)"/>
+                    <ellipse cx="78" cy="30" rx="4" ry="7" transform="rotate(-30 78 30)"/>
+                </g>`,
+                front: `<path d="M 48,76 Q 48,32 100,32 Q 152,32 152,76 Q 140,58 100,58 Q 60,58 48,76 Z" fill="${color}" ${stk}/>
+                    <path d="M 46,82 Q 42,98 48,108 Q 54,96 50,82 Z M 154,82 Q 158,98 152,108 Q 146,96 150,82 Z" fill="${color}" ${stk}/>`
+            };
+        case 'half_up':
+            return {
+                back: `<path d="M 42,80 Q 42,32 100,32 Q 158,32 158,80 Q 162,130 158,170 Q 130,180 100,178 Q 70,180 42,170 Q 38,130 42,80 Z" fill="${color}" ${stk}/>
+                    <ellipse cx="100" cy="28" rx="18" ry="14" fill="${color}" ${stk}/>`,
+                front: `<path d="M 50,74 Q 50,32 100,32 Q 150,32 150,74 Q 138,56 100,56 Q 62,56 50,74 Z" fill="${color}" ${stk}/>`
+            };
         default:
             return { back: '', front: '' };
     }
@@ -3872,6 +3980,92 @@ function renderAccessory(kind) {
                 <circle cx="40" cy="100" r="5" fill="#ffd54a"/>
                 <circle cx="160" cy="100" r="5" fill="#ffd54a"/>
             </g>`;
+        // ── feminine additions ──
+        case 'bow':
+            return `<g ${stk}>
+                <path d="M 76,32 Q 60,18 56,30 Q 54,42 76,42 Z" fill="#ff4d8e"/>
+                <path d="M 100,32 Q 116,18 120,30 Q 122,42 100,42 Z" fill="#ff4d8e"/>
+                <rect x="84" y="32" width="14" height="12" rx="2" fill="#ff4d8e"/>
+                <line x1="91" y1="32" x2="91" y2="44" stroke="#1a1010" stroke-width="1.5"/>
+            </g>`;
+        case 'flower':
+            return `<g ${stk}>
+                <circle cx="60" cy="36" r="6" fill="#ff5a9e"/>
+                <circle cx="68" cy="32" r="6" fill="#ff5a9e"/>
+                <circle cx="68" cy="40" r="6" fill="#ff5a9e"/>
+                <circle cx="52" cy="32" r="6" fill="#ff5a9e"/>
+                <circle cx="52" cy="40" r="6" fill="#ff5a9e"/>
+                <circle cx="60" cy="36" r="3" fill="#ffd54a" stroke="#1a1010" stroke-width="1.5"/>
+            </g>`;
+        case 'pearls':
+            return `<g ${stk}>
+                <circle cx="36" cy="98" r="4" fill="#fff"/>
+                <circle cx="34" cy="108" r="3.5" fill="#fff"/>
+                <circle cx="164" cy="98" r="4" fill="#fff"/>
+                <circle cx="166" cy="108" r="3.5" fill="#fff"/>
+                <circle cx="35" cy="102" r="1.2" fill="#fde0ff" stroke="none"/>
+                <circle cx="165" cy="102" r="1.2" fill="#fde0ff" stroke="none"/>
+            </g>`;
+        case 'bunny_ears':
+            return `<g ${stk}>
+                <ellipse cx="76" cy="14" rx="9" ry="22" fill="#fff"/>
+                <ellipse cx="124" cy="14" rx="9" ry="22" fill="#fff"/>
+                <ellipse cx="76" cy="16" rx="4" ry="14" fill="#ff9ec0" stroke="none"/>
+                <ellipse cx="124" cy="16" rx="4" ry="14" fill="#ff9ec0" stroke="none"/>
+            </g>`;
+        default: return '';
+    }
+}
+
+// ── BLUSH / CHEEKS / FRECKLES ──────────────────────────────────────────
+function renderBlush(kind) {
+    if (!kind || kind === 'none') return '';
+    const xL = 70, xR = 130, y = 112;   // cheek positions
+    switch (kind) {
+        case 'soft_pink':
+            return `<g>
+                <ellipse cx="${xL}" cy="${y}" rx="9" ry="5" fill="#ff9ec0" opacity="0.55"/>
+                <ellipse cx="${xR}" cy="${y}" rx="9" ry="5" fill="#ff9ec0" opacity="0.55"/>
+            </g>`;
+        case 'pink':
+            return `<g>
+                <ellipse cx="${xL}" cy="${y}" rx="10" ry="6" fill="#ff7ab0" opacity="0.7"/>
+                <ellipse cx="${xR}" cy="${y}" rx="10" ry="6" fill="#ff7ab0" opacity="0.7"/>
+            </g>`;
+        case 'red':
+            return `<g>
+                <circle cx="${xL}" cy="${y}" r="7" fill="#ff5a5a" opacity="0.78"/>
+                <circle cx="${xR}" cy="${y}" r="7" fill="#ff5a5a" opacity="0.78"/>
+            </g>`;
+        case 'freckles':
+            return `<g fill="#8a4a20">
+                <circle cx="${xL-6}" cy="${y-4}" r="1.4"/>
+                <circle cx="${xL+2}" cy="${y-2}" r="1.2"/>
+                <circle cx="${xL-2}" cy="${y+3}" r="1.3"/>
+                <circle cx="${xL+5}" cy="${y+5}" r="1.1"/>
+                <circle cx="${xR+4}" cy="${y-4}" r="1.4"/>
+                <circle cx="${xR-3}" cy="${y-1}" r="1.2"/>
+                <circle cx="${xR+1}" cy="${y+4}" r="1.3"/>
+                <circle cx="${xR-5}" cy="${y+5}" r="1.1"/>
+                <circle cx="100" cy="${y-4}" r="1.2"/>
+                <circle cx="96" cy="${y+2}" r="1"/>
+                <circle cx="104" cy="${y+3}" r="1"/>
+            </g>`;
+        case 'stars':
+            const star = (x, y, s = 1) => {
+                const p = (a, r) => {
+                    const ax = x + Math.cos(a) * r * s;
+                    const ay = y + Math.sin(a) * r * s;
+                    return `${ax.toFixed(1)},${ay.toFixed(1)}`;
+                };
+                const pts = [];
+                for (let i = 0; i < 5; i++) {
+                    pts.push(p(-Math.PI/2 + i * Math.PI * 0.4, 4));
+                    pts.push(p(-Math.PI/2 + i * Math.PI * 0.4 + Math.PI*0.2, 1.7));
+                }
+                return `<polygon points="${pts.join(' ')}" fill="#ffd54a" stroke="#1a1010" stroke-width="1"/>`;
+            };
+            return `<g>${star(xL, y)}${star(xR, y)}</g>`;
         default: return '';
     }
 }
@@ -3921,6 +4115,7 @@ function renderAvatarSVG(avatar, mode = 'full', extraAttrs = '') {
         ${bodyLayer}
         ${hair.back}
         ${renderFace(a.face, a.skin)}
+        ${renderBlush(a.blush)}
         ${renderBrows(a.brows.shape, a.brows.color)}
         ${renderEyes(a.eyes.shape, a.eyes.color)}
         ${renderNose(a.nose, a.skin)}
@@ -4031,6 +4226,12 @@ const AVATAR_CATEGORIES = [
         get: a => a.accessory,                set: (a, v) => a.accessory = v,
     },
     {
+        id: 'blush', label: 'Wangen', emoji: '☺',
+        options: AVATAR_BLUSH_OPTIONS.map(v => ({ value: v, label: v })),
+        palette: null,
+        get: a => a.blush || 'none',          set: (a, v) => a.blush = v,
+    },
+    {
         id: 'body', label: 'Lichaam', emoji: '💪',
         options: AVATAR_BODY_OPTIONS.map(v => ({ value: v, label: v })),
         palette: null,
@@ -4050,9 +4251,12 @@ const AVATAR_LABELS = {
     // face
     round:'Rond', oval:'Ovaal', square:'Vierkant', heart:'Hartvorm',
     long:'Lang', chubby:'Bol', pointed:'Spits', diamond:'Diamant',
+    triangle:'Driehoek', narrow:'Smal', wide_jaw:'Brede kaak', soft:'Zacht',
+    angular:'Hoekig', baby:'Babyface',
     // eyes
     normal:'Normaal', big:'Groot', sleepy:'Slaperig', wink:'Knipoog',
     star:'Ster', dot:'Stip', closed:'Dicht', sparkle:'Glinster', tired:'Moe',
+    lashed:'Wimpers', glamour:'Glamour', cute_lashed:'Schattig', eyeliner:'Eyeliner',
     // brows
     flat:'Plat', arched:'Gebogen', angry:'Boos', surprised:'Verbaasd',
     thick:'Dik', thin:'Dun', wavy:'Golvend', none:'Geen',
@@ -4061,19 +4265,26 @@ const AVATAR_LABELS = {
     // mouth
     smile:'Glimlach', grin:'Brede grijns', open:'Open', smirk:'Scheef',
     tongue:'Tong uit', o:'Verbaasd', frown:'Frons', kiss:'Kus', tooth:'Tand',
+    lips_red:'Rode lippen', lips_pink:'Roze lippen',
+    soft_smile:'Zachte lach', lips_full:'Volle lippen',
     // hair
     bald:'Kaal', short_messy:'Slordig kort', short_neat:'Net kort',
     side_part:'Zijscheiding', long_straight:'Lang stijl', ponytail:'Paardenstaart',
     pigtails:'Vlechtjes', bun:'Knot', curly:'Krullen', mohawk:'Hanenkam',
     bowl:'Pottenkop', afro:'Afro', spiky:'Stekels', wavy_long:'Golvend lang',
+    braids:'Lange vlechten', bob:'Bob', space_buns:'Space buns',
+    side_swept:'Side swept', messy_bun:'Slordige knot', half_up:'Halve knot',
     // accessory
     glasses:'Bril', shades:'Zonnebril', cap:'Pet', beanie:'Muts',
     crown:'Kroon', bandana:'Bandana', headband:'Hoofdband',
     helmet:'Helm', earrings:'Oorbellen',
+    bow:'Strikje', flower:'Bloem', pearls:'Parels', bunny_ears:'Konijnenoren',
     // body
     slim:'Slank', chunky:'Stevig',
     // outfit
     tee: 'Shirt',
+    // blush
+    soft_pink:'Zacht roze', pink:'Roze', red:'Rood', freckles:'Sproeten', stars:'Sterren',
 };
 function avlbl(key) { return AVATAR_LABELS[key] || key; }
 
@@ -4223,70 +4434,875 @@ function openAvatarCreator(initial, title = 'Avatar Creator') {
    classic look if `avatar` is null/undefined.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const _avatarTextureCache = new Map();    // avatar-hash → THREE.CanvasTexture
+/* ═══════════════════════════════════════════════════════════════════════════
+   3D AVATAR HEAD — built from THREE.js primitives
+   ───────────────────────────────────────────────────────────────────────────
+   Geen platte sprite meer. Het hoofd is een 3D bol in huidskleur met dark
+   outlines, en alle features (ogen, mond, neus, brauwen, blush, haar,
+   accessoires) zijn echte 3D meshes. Past visueel beter in de 3D-scene en
+   lost het "vierkante achtergrond" probleem op. Hair-styles zijn gegroepeerd
+   in archetypes (short/long/ponytail/buns/etc) zodat we niet voor elke van
+   de 20 SVG-stijlen een aparte 3D-build nodig hebben.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-function avatarHashKey(avatar) {
-    if (!avatar) return 'default';
-    return JSON.stringify(avatar);
+// Hex string → THREE color int
+function parseHexColor(hex, fallback = 0xffffff) {
+    if (!hex || typeof hex !== 'string') return fallback;
+    const h = hex.replace('#', '');
+    const n = parseInt(h, 16);
+    return Number.isNaN(n) ? fallback : n;
 }
 
-async function getAvatarTexture(avatar) {
-    const key = avatarHashKey(avatar);
-    if (_avatarTextureCache.has(key)) return _avatarTextureCache.get(key);
-    const canvas = await avatarToCanvas(avatar, 256);
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.magFilter = THREE.LinearFilter;
-    tex.minFilter = THREE.LinearMipMapLinearFilter;
-    tex.needsUpdate = true;
-    _avatarTextureCache.set(key, tex);
-    return tex;
+// Cached materials per color/type. Otherwise we'd make tons of duplicates.
+const _avMatCache = new Map();
+function avMat(type, color) {
+    const key = type + ':' + color;
+    if (_avMatCache.has(key)) return _avMatCache.get(key);
+    let m;
+    if (type === 'skin') {
+        m = new THREE.MeshToonMaterial({ color, gradientMap: toon, emissive: color, emissiveIntensity: 0.10 });
+    } else if (type === 'hair') {
+        m = new THREE.MeshToonMaterial({ color, gradientMap: toon, emissive: color, emissiveIntensity: 0.05 });
+    } else if (type === 'acc') {
+        m = new THREE.MeshToonMaterial({ color, gradientMap: toon, emissive: color, emissiveIntensity: 0.20 });
+    } else if (type === 'dark') {
+        m = new THREE.MeshBasicMaterial({ color: 0x1a1010 });
+    } else if (type === 'white') {
+        m = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    } else if (type === 'outline') {
+        m = new THREE.MeshBasicMaterial({ color: 0x1a1010, side: THREE.BackSide });
+    } else if (type === 'flat') {
+        m = new THREE.MeshBasicMaterial({ color });
+    } else {
+        m = new THREE.MeshToonMaterial({ color, gradientMap: toon });
+    }
+    _avMatCache.set(key, m);
+    return m;
 }
 
-function invalidateAvatarTexture(avatar) {
-    _avatarTextureCache.delete(avatarHashKey(avatar));
+// Add a dark cartoon outline to a mesh (BackSide trick).
+function add3DOutline(mesh, scale = 1.07) {
+    const out = new THREE.Mesh(mesh.geometry, avMat('outline'));
+    out.scale.setScalar(scale);
+    mesh.add(out);
+    return out;
+}
+
+// Non-uniform scale on head sphere for face-shape variety
+function applyFaceShapeScale(head, faceShape) {
+    switch (faceShape) {
+        case 'round':    head.scale.set(1, 1, 1); break;
+        case 'oval':     head.scale.set(0.93, 1.08, 1); break;
+        case 'long':     head.scale.set(0.88, 1.16, 0.96); break;
+        case 'chubby':   head.scale.set(1.14, 0.95, 1.08); break;
+        case 'square':   head.scale.set(1.06, 1.00, 1.02); break;
+        case 'heart':    head.scale.set(1.10, 1.04, 1.00); break;
+        case 'pointed':  head.scale.set(0.96, 1.12, 1.00); break;
+        case 'diamond':  head.scale.set(0.88, 1.08, 1.00); break;
+        case 'triangle': head.scale.set(1.08, 1.04, 1.00); break;
+        case 'narrow':   head.scale.set(0.84, 1.08, 0.94); break;
+        case 'wide_jaw': head.scale.set(1.06, 0.98, 1.04); break;
+        case 'soft':     head.scale.set(1.02, 1.00, 1.02); break;
+        case 'angular':  head.scale.set(1.00, 1.05, 0.94); break;
+        case 'baby':     head.scale.set(0.96, 0.94, 0.98); break;
+        default:         head.scale.set(1, 1, 1);
+    }
+}
+
+// ── EYES (3D) ──────────────────────────────────────────────────────────
+function addEyes3D(parent, eyes, headR) {
+    const shape = eyes?.shape || 'normal';
+    const irisColor = parseHexColor(eyes?.color || '#3a2418');
+    const xOff = headR * 0.32;
+    const y    = headR * 0.15;
+    const z    = headR * 0.93;
+
+    // For "closed-like" eyes, just a dark curved line
+    const isClosed = ['closed', 'wink', 'sleepy', 'tired', 'cute_lashed'].includes(shape);
+
+    for (const side of [-1, 1]) {
+        if (isClosed && (shape !== 'wink' || side === 1)) {
+            // a small dark torus arc as a closed eye
+            const eye = new THREE.Mesh(
+                new THREE.TorusGeometry(0.04, 0.008, 4, 8, Math.PI),
+                avMat('dark')
+            );
+            eye.position.set(side * xOff, y, z);
+            eye.rotation.z = shape === 'tired' ? 0 : Math.PI;
+            parent.add(eye);
+            continue;
+        }
+
+        // Standard 3D eye: small white flat sphere + dark pupil
+        const isBig = ['big', 'glamour', 'star', 'sparkle'].includes(shape);
+        const isDot = shape === 'dot';
+        const isSquare = shape === 'square';
+
+        const whiteR = isBig ? 0.058 : 0.045;
+        let whiteGeo;
+        if (isSquare) {
+            whiteGeo = new THREE.BoxGeometry(whiteR * 2, whiteR * 2, whiteR * 0.6);
+        } else {
+            whiteGeo = new THREE.SphereGeometry(whiteR, 12, 10);
+        }
+        const white = new THREE.Mesh(whiteGeo, avMat('white'));
+        white.position.set(side * xOff, y, z);
+        if (!isSquare) white.scale.set(0.8, 1, 0.5);
+        parent.add(white);
+
+        // Dark outline around eye-white
+        const outline = new THREE.Mesh(whiteGeo, avMat('outline'));
+        outline.scale.setScalar(1.18);
+        white.add(outline);
+
+        // Pupil
+        const pupilR = isBig ? 0.030 : (isDot ? 0.025 : 0.020);
+        const pupil = new THREE.Mesh(
+            new THREE.SphereGeometry(pupilR, 10, 8),
+            avMat('dark')
+        );
+        pupil.position.set(side * xOff, y, z + 0.014);
+        pupil.scale.set(0.7, 1, 0.4);
+        parent.add(pupil);
+
+        // For colored eyes, add an iris ring between white and pupil
+        if (irisColor !== 0x1a1010 && irisColor !== 0x000000 && !isDot && !isSquare) {
+            const iris = new THREE.Mesh(
+                new THREE.SphereGeometry(pupilR * 1.6, 10, 8),
+                avMat('flat', irisColor)
+            );
+            iris.position.set(side * xOff, y, z + 0.010);
+            iris.scale.set(0.75, 1, 0.35);
+            parent.add(iris);
+        }
+
+        // Lashes for relevant shapes
+        if (['lashed', 'glamour', 'eyeliner'].includes(shape)) {
+            const lashGeo = new THREE.BoxGeometry(whiteR * 1.6, 0.008, 0.012);
+            const lash = new THREE.Mesh(lashGeo, avMat('dark'));
+            lash.position.set(side * xOff, y + whiteR * 0.95, z + 0.015);
+            parent.add(lash);
+            if (shape === 'glamour') {
+                // extra outer lashes
+                for (let i = 0; i < 3; i++) {
+                    const small = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.014, 0.006, 0.008),
+                        avMat('dark')
+                    );
+                    small.position.set(side * (xOff + 0.018 + i*0.008), y + whiteR * 0.8 - i*0.005, z + 0.012);
+                    small.rotation.z = side * (0.4 + i*0.2);
+                    parent.add(small);
+                }
+            }
+        }
+    }
+}
+
+// ── BROWS (3D) ─────────────────────────────────────────────────────────
+function addBrows3D(parent, brows, headR) {
+    const shape = brows?.shape || 'arched';
+    if (shape === 'none') return;
+    const color = parseHexColor(brows?.color || '#1a1010');
+    const xOff = headR * 0.32;
+    const y    = headR * 0.42;
+    const z    = headR * 0.91;
+    const mat  = avMat('flat', color);
+
+    for (const side of [-1, 1]) {
+        const len   = (shape === 'thick' || shape === 'surprised') ? 0.13 : 0.11;
+        const thick = (shape === 'thick') ? 0.025 : (shape === 'thin') ? 0.010 : 0.018;
+        const brow  = new THREE.Mesh(
+            new THREE.BoxGeometry(len, thick, 0.012),
+            mat
+        );
+        brow.position.set(side * xOff, y, z);
+        if (shape === 'arched' || shape === 'surprised') {
+            brow.position.y += 0.02;
+            brow.rotation.z = side * -0.1;
+        } else if (shape === 'angry') {
+            brow.rotation.z = side * 0.35;
+        } else if (shape === 'wavy') {
+            brow.rotation.z = side * 0.08;
+        }
+        parent.add(brow);
+    }
+}
+
+// ── NOSE (3D) ─────────────────────────────────────────────────────────
+function addNose3D(parent, noseShape, headR, skinColor) {
+    if (!noseShape || noseShape === 'none') return;
+    const skinMat = avMat('skin', skinColor);
+    const y = headR * -0.05;
+    const z = headR * 1.02;
+    let geo, scale = [1,1,1];
+    switch (noseShape) {
+        case 'small':   geo = new THREE.SphereGeometry(0.018, 8, 6); scale = [1,1,0.7]; break;
+        case 'button':  geo = new THREE.SphereGeometry(0.028, 10, 8); scale = [1,0.9,0.7]; break;
+        case 'wide':    geo = new THREE.SphereGeometry(0.030, 10, 8); scale = [1.4,0.8,0.7]; break;
+        case 'long':    geo = new THREE.SphereGeometry(0.028, 10, 8); scale = [0.65,1.6,0.7]; break;
+        case 'pointy':  geo = new THREE.ConeGeometry(0.022, 0.05, 8); scale = [1,1,0.7]; break;
+        default: return;
+    }
+    const nose = new THREE.Mesh(geo, skinMat);
+    nose.position.set(0, y, z);
+    nose.scale.set(...scale);
+    if (noseShape === 'pointy') nose.rotation.x = Math.PI / 2;
+    parent.add(nose);
+    // Subtle dark outline for definition
+    const out = new THREE.Mesh(geo, avMat('outline'));
+    out.scale.setScalar(1.10);
+    nose.add(out);
+}
+
+// ── MOUTH (3D) ─────────────────────────────────────────────────────────
+function addMouth3D(parent, mouthShape, headR) {
+    const y = headR * -0.38;
+    const z = headR * 0.92;
+    switch (mouthShape) {
+        case 'smile':
+        case 'soft_smile':
+        case 'tooth': {
+            const m = new THREE.Mesh(
+                new THREE.TorusGeometry(0.058, 0.012, 6, 16, Math.PI),
+                avMat('dark')
+            );
+            m.position.set(0, y + 0.025, z);
+            m.rotation.z = Math.PI;
+            parent.add(m);
+            if (mouthShape === 'tooth') {
+                const t = new THREE.Mesh(new THREE.BoxGeometry(0.020, 0.030, 0.010), avMat('white'));
+                t.position.set(0, y, z + 0.005);
+                parent.add(t);
+            }
+            return;
+        }
+        case 'grin': {
+            const m = new THREE.Mesh(
+                new THREE.TorusGeometry(0.070, 0.014, 6, 18, Math.PI),
+                avMat('dark')
+            );
+            m.position.set(0, y + 0.025, z);
+            m.rotation.z = Math.PI;
+            parent.add(m);
+            // teeth strip
+            const t = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.024, 0.012), avMat('white'));
+            t.position.set(0, y, z + 0.003);
+            parent.add(t);
+            return;
+        }
+        case 'neutral': {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.012, 0.010), avMat('dark'));
+            m.position.set(0, y, z);
+            parent.add(m);
+            return;
+        }
+        case 'open':
+        case 'o': {
+            const r = mouthShape === 'o' ? 0.025 : 0.035;
+            const m = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), avMat('flat', 0x5a1822));
+            m.position.set(0, y, z);
+            m.scale.set(1, 1, 0.5);
+            parent.add(m);
+            const out = new THREE.Mesh(m.geometry, avMat('outline'));
+            out.scale.setScalar(1.15);
+            m.add(out);
+            return;
+        }
+        case 'smirk': {
+            const m = new THREE.Mesh(
+                new THREE.TorusGeometry(0.058, 0.012, 6, 16, Math.PI),
+                avMat('dark')
+            );
+            m.position.set(0, y + 0.020, z);
+            m.rotation.z = Math.PI * 0.85;
+            parent.add(m);
+            return;
+        }
+        case 'tongue': {
+            const m = new THREE.Mesh(
+                new THREE.TorusGeometry(0.070, 0.014, 6, 18, Math.PI),
+                avMat('dark')
+            );
+            m.position.set(0, y + 0.025, z);
+            m.rotation.z = Math.PI;
+            parent.add(m);
+            const tongue = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), avMat('flat', 0xff7a90));
+            tongue.position.set(0, y - 0.025, z + 0.012);
+            tongue.scale.set(1.2, 0.6, 0.5);
+            parent.add(tongue);
+            return;
+        }
+        case 'frown': {
+            const m = new THREE.Mesh(
+                new THREE.TorusGeometry(0.055, 0.012, 6, 16, Math.PI),
+                avMat('dark')
+            );
+            m.position.set(0, y - 0.020, z);
+            // No z-rotation = upper half (default), gives a frown
+            parent.add(m);
+            return;
+        }
+        case 'kiss': {
+            const m = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), avMat('flat', 0xff4d70));
+            m.position.set(0, y, z);
+            m.scale.set(0.7, 1.0, 0.5);
+            parent.add(m);
+            const out = new THREE.Mesh(m.geometry, avMat('outline'));
+            out.scale.setScalar(1.15);
+            m.add(out);
+            return;
+        }
+        case 'lips_red':
+        case 'lips_pink':
+        case 'lips_full': {
+            const color = mouthShape === 'lips_red'  ? 0xd92e3a :
+                           mouthShape === 'lips_pink' ? 0xff7a9e :
+                                                        0xc84a6a;
+            const lips = new THREE.Mesh(new THREE.SphereGeometry(0.045, 14, 10), avMat('flat', color));
+            lips.position.set(0, y, z);
+            lips.scale.set(1.4, 0.7, 0.5);
+            parent.add(lips);
+            const out = new THREE.Mesh(lips.geometry, avMat('outline'));
+            out.scale.setScalar(1.10);
+            lips.add(out);
+            // Subtle highlight
+            const hi = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), avMat('flat', 0xffc0d0));
+            hi.position.set(-0.012, y + 0.008, z + 0.020);
+            hi.scale.set(1.3, 0.4, 0.3);
+            parent.add(hi);
+            return;
+        }
+        default: {
+            // Default = smile
+            return addMouth3D(parent, 'smile', headR);
+        }
+    }
+}
+
+// ── BLUSH (3D) ─────────────────────────────────────────────────────────
+function addBlush3D(parent, blush, headR) {
+    const xOff = headR * 0.6;
+    const y    = headR * -0.18;
+    const z    = headR * 0.88;
+    if (blush === 'freckles') {
+        const dotMat = avMat('flat', 0x8a4a20);
+        for (const side of [-1, 1]) {
+            for (let i = 0; i < 5; i++) {
+                const d = new THREE.Mesh(new THREE.SphereGeometry(0.005, 6, 4), dotMat);
+                d.position.set(
+                    side * (xOff + (Math.random()-0.5) * 0.06),
+                    y + (Math.random()-0.5) * 0.08,
+                    z + (Math.random()-0.5) * 0.02
+                );
+                parent.add(d);
+            }
+        }
+        return;
+    }
+    if (blush === 'stars') {
+        const goldMat = avMat('flat', 0xffd54a);
+        for (const side of [-1, 1]) {
+            const star = new THREE.Mesh(
+                new THREE.SphereGeometry(0.018, 8, 6),
+                goldMat
+            );
+            star.position.set(side * xOff, y, z);
+            star.scale.set(1, 1, 0.4);
+            parent.add(star);
+            const out = new THREE.Mesh(star.geometry, avMat('outline'));
+            out.scale.setScalar(1.20);
+            star.add(out);
+        }
+        return;
+    }
+    // Pink/red blush dots
+    const color = blush === 'red' ? 0xff5a5a :
+                  blush === 'pink' ? 0xff7ab0 :
+                                     0xff9ec0;
+    for (const side of [-1, 1]) {
+        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.038, 10, 8), avMat('flat', color));
+        dot.position.set(side * xOff, y, z);
+        dot.scale.set(1.2, 0.7, 0.3);
+        dot.material = dot.material.clone();
+        dot.material.transparent = true;
+        dot.material.opacity = 0.75;
+        parent.add(dot);
+    }
+}
+
+// ── HAIR (3D) — archetype dispatcher ─────────────────────────────────
+function addHair3D(parent, hair, headR) {
+    const style = hair.style;
+    const color = parseHexColor(hair.color, 0x5e3a20);
+    const mat = avMat('hair', color);
+
+    // Helper: make a hemisphere skullcap on top of the head
+    const skullcap = (rScale = 1.08, yOffset = 0.04, thetaLen = Math.PI / 2 + 0.1) => {
+        const geo = new THREE.SphereGeometry(headR, 18, 12, 0, Math.PI * 2, 0, thetaLen);
+        const cap = new THREE.Mesh(geo, mat);
+        cap.scale.setScalar(rScale);
+        cap.position.y = yOffset;
+        cap.castShadow = true;
+        add3DOutline(cap, 1.05);
+        parent.add(cap);
+        return cap;
+    };
+
+    switch (style) {
+        case 'short_messy':
+        case 'short_neat':
+        case 'bowl':
+        case 'half_up':
+            skullcap(1.10);
+            return;
+        case 'side_part':
+            skullcap(1.10);
+            // Asymmetric bump (parting strand)
+            const part = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), mat);
+            part.position.set(-0.06, headR * 0.85, headR * 0.6);
+            part.scale.set(1.2, 0.8, 1);
+            parent.add(part);
+            return;
+        case 'long_straight':
+        case 'wavy_long':
+        case 'side_swept': {
+            skullcap(1.10);
+            // Long curtain down the sides and back
+            const curtain = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.08, headR * 0.95, headR * 1.8, 18, 1, true,
+                                            Math.PI * 0.15, Math.PI * 1.7),
+                mat
+            );
+            curtain.position.y = -headR * 0.6;
+            curtain.material = mat;
+            parent.add(curtain);
+            // Add subtle wave for wavy_long
+            if (style === 'wavy_long') {
+                for (let side of [-1, 1]) {
+                    const wave = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), mat);
+                    wave.position.set(side * headR * 0.85, -headR * 0.4, headR * 0.4);
+                    wave.scale.set(0.8, 1.3, 0.8);
+                    parent.add(wave);
+                }
+            }
+            // Side swept has front strand
+            if (style === 'side_swept') {
+                const strand = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), mat);
+                strand.position.set(0.05, headR * 0.6, headR * 0.7);
+                strand.scale.set(1.4, 0.7, 1.0);
+                strand.rotation.z = -0.4;
+                parent.add(strand);
+            }
+            return;
+        }
+        case 'ponytail': {
+            skullcap(1.10);
+            const tail = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), mat);
+            tail.position.set(0, headR * 0.2, -headR * 1.1);
+            tail.scale.set(0.8, 1.6, 0.8);
+            parent.add(tail);
+            return;
+        }
+        case 'pigtails': {
+            skullcap(1.10);
+            for (const side of [-1, 1]) {
+                const tail = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 10), mat);
+                tail.position.set(side * headR * 1.08, headR * 0.1, -headR * 0.1);
+                tail.scale.set(0.9, 1.5, 0.9);
+                parent.add(tail);
+            }
+            return;
+        }
+        case 'bun': {
+            skullcap(1.10);
+            const bun = new THREE.Mesh(new THREE.SphereGeometry(0.085, 14, 10), mat);
+            bun.position.set(0, headR * 1.15, 0);
+            parent.add(bun);
+            return;
+        }
+        case 'messy_bun': {
+            skullcap(1.10);
+            const bun = new THREE.Mesh(new THREE.SphereGeometry(0.10, 14, 10), mat);
+            bun.position.set(0, headR * 1.15, -headR * 0.1);
+            parent.add(bun);
+            // loose strands
+            for (let i = 0; i < 4; i++) {
+                const strand = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 6), mat);
+                const a = i * Math.PI / 2;
+                strand.position.set(
+                    Math.cos(a) * 0.11,
+                    headR * 1.10 + (i % 2) * 0.02,
+                    Math.sin(a) * 0.11
+                );
+                strand.scale.set(0.7, 1.4, 0.7);
+                parent.add(strand);
+            }
+            return;
+        }
+        case 'space_buns': {
+            skullcap(1.10);
+            for (const side of [-1, 1]) {
+                const bun = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 10), mat);
+                bun.position.set(side * headR * 0.7, headR * 1.10, 0);
+                parent.add(bun);
+            }
+            return;
+        }
+        case 'curly': {
+            // Multiple small spheres clustered
+            for (let i = 0; i < 16; i++) {
+                const ball = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), mat);
+                const a = (i / 16) * Math.PI * 2;
+                const r = headR * (0.92 + Math.random() * 0.15);
+                ball.position.set(
+                    Math.cos(a) * r * 0.7,
+                    headR * 0.6 + Math.cos(a * 1.7) * 0.05,
+                    Math.sin(a) * r * 0.7
+                );
+                parent.add(ball);
+            }
+            return;
+        }
+        case 'afro': {
+            const afro = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.4, 18, 14), mat);
+            afro.position.y = headR * 0.3;
+            add3DOutline(afro, 1.04);
+            parent.add(afro);
+            return;
+        }
+        case 'mohawk': {
+            const strip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.20, headR * 1.7), mat);
+            strip.position.y = headR * 1.05;
+            add3DOutline(strip, 1.10);
+            parent.add(strip);
+            return;
+        }
+        case 'spiky': {
+            skullcap(1.06);
+            // Add cone spikes on top
+            for (let i = 0; i < 7; i++) {
+                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.13, 6), mat);
+                spike.position.set(
+                    (Math.random() - 0.5) * 0.35,
+                    headR * 0.95 + 0.05,
+                    (Math.random() - 0.5) * 0.30
+                );
+                spike.rotation.z = (Math.random() - 0.5) * 0.4;
+                parent.add(spike);
+            }
+            return;
+        }
+        case 'braids': {
+            skullcap(1.10);
+            for (const side of [-1, 1]) {
+                // Long thin braided cylinder on each side
+                const braid = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.025, 0.020, headR * 2.0, 8),
+                    mat
+                );
+                braid.position.set(side * headR * 1.0, -headR * 0.7, 0);
+                parent.add(braid);
+                // 3 bumps on each braid for braid texture
+                for (let i = 0; i < 3; i++) {
+                    const bump = new THREE.Mesh(new THREE.SphereGeometry(0.030, 8, 6), mat);
+                    bump.position.set(side * headR * 1.0, -headR * (0.15 + i * 0.5), 0);
+                    parent.add(bump);
+                }
+            }
+            return;
+        }
+        case 'bob': {
+            skullcap(1.10);
+            // Medium curtain (shorter than long_straight)
+            const curtain = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.08, headR * 0.95, headR * 1.0, 18, 1, true,
+                                            Math.PI * 0.15, Math.PI * 1.7),
+                mat
+            );
+            curtain.position.y = -headR * 0.2;
+            parent.add(curtain);
+            return;
+        }
+        default:
+            // Unknown style → default to short cap
+            skullcap(1.10);
+            return;
+    }
+}
+
+// ── ACCESSORIES (3D) ──────────────────────────────────────────────────
+function addAccessory3D(parent, accessory, headR) {
+    switch (accessory) {
+        case 'glasses': {
+            for (const side of [-1, 1]) {
+                const frame = new THREE.Mesh(
+                    new THREE.TorusGeometry(0.05, 0.008, 6, 16),
+                    avMat('dark')
+                );
+                frame.position.set(side * headR * 0.35, headR * 0.15, headR * 0.98);
+                parent.add(frame);
+            }
+            // Bridge
+            const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.008, 0.008), avMat('dark'));
+            bridge.position.set(0, headR * 0.15, headR * 1.0);
+            parent.add(bridge);
+            return;
+        }
+        case 'shades': {
+            for (const side of [-1, 1]) {
+                const lens = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.07, 0.012), avMat('dark'));
+                lens.position.set(side * headR * 0.32, headR * 0.15, headR * 1.0);
+                parent.add(lens);
+            }
+            const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.012, 0.010), avMat('dark'));
+            bridge.position.set(0, headR * 0.15, headR * 1.0);
+            parent.add(bridge);
+            return;
+        }
+        case 'cap': {
+            const top = new THREE.Mesh(
+                new THREE.SphereGeometry(headR * 1.04, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+                avMat('acc', 0xd92e3a)
+            );
+            top.position.y = headR * 0.45;
+            add3DOutline(top, 1.04);
+            parent.add(top);
+            // Brim
+            const brim = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.025, 0.18), avMat('acc', 0xd92e3a));
+            brim.position.set(0, headR * 0.45, headR * 0.65);
+            add3DOutline(brim, 1.06);
+            parent.add(brim);
+            return;
+        }
+        case 'beanie': {
+            const top = new THREE.Mesh(
+                new THREE.SphereGeometry(headR * 1.12, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+                avMat('acc', 0x3a2a8a)
+            );
+            top.position.y = headR * 0.5;
+            add3DOutline(top, 1.04);
+            parent.add(top);
+            // Pompom
+            const pom = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 10), avMat('acc', 0xffd54a));
+            pom.position.y = headR * 1.5;
+            add3DOutline(pom, 1.10);
+            parent.add(pom);
+            return;
+        }
+        case 'crown': {
+            const baseRing = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.05, headR * 1.05, 0.08, 18, 1, true),
+                avMat('acc', 0xffd54a)
+            );
+            baseRing.position.y = headR * 0.85;
+            parent.add(baseRing);
+            // Spikes
+            for (let i = 0; i < 5; i++) {
+                const a = (i / 5) * Math.PI * 2;
+                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.08, 4), avMat('acc', 0xffd54a));
+                spike.position.set(Math.cos(a) * headR * 1.05, headR * 1.0, Math.sin(a) * headR * 1.05);
+                parent.add(spike);
+            }
+            // Gem in front
+            const gem = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), avMat('flat', 0xd92e3a));
+            gem.position.set(0, headR * 0.88, headR * 1.06);
+            parent.add(gem);
+            return;
+        }
+        case 'bandana': {
+            const band = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.06, headR * 1.06, 0.10, 20, 1, true),
+                avMat('acc', 0xd92e3a)
+            );
+            band.position.y = headR * 0.55;
+            parent.add(band);
+            return;
+        }
+        case 'headband': {
+            const band = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.06, headR * 1.06, 0.05, 20, 1, true),
+                avMat('acc', 0xff4d5c)
+            );
+            band.position.y = headR * 0.65;
+            parent.add(band);
+            return;
+        }
+        case 'helmet': {
+            const top = new THREE.Mesh(
+                new THREE.SphereGeometry(headR * 1.16, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+                avMat('acc', 0x3a4a5a)
+            );
+            top.position.y = headR * 0.25;
+            add3DOutline(top, 1.04);
+            parent.add(top);
+            const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.03, 0.03), avMat('acc', 0xffd54a));
+            stripe.position.set(0, headR * 0.65, headR * 1.1);
+            parent.add(stripe);
+            return;
+        }
+        case 'earrings':
+        case 'pearls': {
+            const isPearl = accessory === 'pearls';
+            const c = isPearl ? 0xffffff : 0xffd54a;
+            for (const side of [-1, 1]) {
+                const ear = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), avMat('flat', c));
+                ear.position.set(side * headR * 1.02, -headR * 0.20, 0);
+                parent.add(ear);
+                if (isPearl) {
+                    const ear2 = new THREE.Mesh(new THREE.SphereGeometry(0.020, 10, 8), avMat('flat', c));
+                    ear2.position.set(side * headR * 1.04, -headR * 0.40, 0);
+                    parent.add(ear2);
+                }
+            }
+            return;
+        }
+        case 'bow': {
+            const xPos = -headR * 0.55;
+            const yPos = headR * 0.90;
+            const zPos = headR * 0.20;
+            // Two side loops
+            for (const side of [-1, 1]) {
+                const loop = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), avMat('acc', 0xff4d8e));
+                loop.position.set(xPos + side * 0.045, yPos, zPos);
+                loop.scale.set(1.2, 0.9, 0.6);
+                parent.add(loop);
+            }
+            // Center knot
+            const knot = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.022), avMat('acc', 0xff4d8e));
+            knot.position.set(xPos, yPos, zPos);
+            parent.add(knot);
+            return;
+        }
+        case 'flower': {
+            const xPos = -headR * 0.55;
+            const yPos = headR * 0.88;
+            const zPos = headR * 0.30;
+            const petalMat = avMat('acc', 0xff5a9e);
+            // 5 petals around a center
+            for (let i = 0; i < 5; i++) {
+                const a = (i / 5) * Math.PI * 2;
+                const petal = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), petalMat);
+                petal.position.set(
+                    xPos + Math.cos(a) * 0.025,
+                    yPos + Math.sin(a) * 0.025,
+                    zPos
+                );
+                parent.add(petal);
+            }
+            const center = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 6), avMat('acc', 0xffd54a));
+            center.position.set(xPos, yPos, zPos + 0.01);
+            parent.add(center);
+            return;
+        }
+        case 'bunny_ears': {
+            for (const side of [-1, 1]) {
+                const ear = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 12), avMat('acc', 0xffffff));
+                ear.position.set(side * headR * 0.35, headR * 1.40, 0);
+                ear.scale.set(0.6, 2.4, 0.5);
+                add3DOutline(ear, 1.06);
+                parent.add(ear);
+                // pink inner
+                const inner = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 10), avMat('flat', 0xff9ec0));
+                inner.position.set(side * headR * 0.35, headR * 1.40, 0.025);
+                inner.scale.set(0.5, 2.2, 0.3);
+                parent.add(inner);
+            }
+            return;
+        }
+        default: return;
+    }
 }
 
 /**
- * Create a 3D pawn. If `avatar` is supplied, replaces the head with a
- * billboard sprite showing the avatar face. The body cone stays in
- * the player's identity color so minimap/HUD stay visually consistent.
+ * Build a complete 3D avatar head as a THREE.Group, ready to be positioned
+ * on top of a body cone. Returns a Group whose children include the head
+ * sphere, eye-meshes, mouth, brows, nose, blush, hair-mesh and any
+ * accessory. All centered at the group's local origin.
+ */
+function build3DAvatarHead(avatar) {
+    const g = new THREE.Group();
+    if (!avatar) return g;
+
+    const skinColor = parseHexColor(avatar.skin, 0xfbcfa6);
+    const headR = 0.34;
+
+    // Main head sphere (with face-shape scaling)
+    const head = new THREE.Mesh(
+        new THREE.SphereGeometry(headR, 22, 18),
+        avMat('skin', skinColor),
+    );
+    head.castShadow = true;
+    applyFaceShapeScale(head, avatar.face);
+    g.add(head);
+
+    // Dark outline matching the SVG aesthetic
+    const outline = new THREE.Mesh(head.geometry, avMat('outline'));
+    outline.scale.copy(head.scale).multiplyScalar(1.06);
+    g.add(outline);
+
+    // Features (sit on the front of the sphere)
+    addBrows3D(g, avatar.brows, headR);
+    addEyes3D(g, avatar.eyes, headR);
+    addNose3D(g, avatar.nose, headR, skinColor);
+    addMouth3D(g, avatar.mouth, headR);
+    addBlush3D(g, avatar.blush, headR);
+
+    // Hair
+    if (avatar.hair && avatar.hair.style !== 'bald') {
+        addHair3D(g, avatar.hair, headR);
+    }
+
+    // Accessory
+    if (avatar.accessory && avatar.accessory !== 'none') {
+        addAccessory3D(g, avatar.accessory, headR);
+    }
+
+    return g;
+}
+
+/**
+ * Create a 3D pawn. If `avatar` is supplied, builds a full 3D head with
+ * separate meshes for eyes/mouth/hair/accessories. Else falls back to the
+ * classic simple sphere head in player color.
+ * The body cone stays in the player's identity color so minimap/HUD stay
+ * visually consistent.
  */
 function makePlayerAvatarToken(colorHex, avatar = null) {
     const g = new THREE.Group();
     const colMat   = new THREE.MeshToonMaterial({ color: colorHex, gradientMap: toon, emissive: colorHex, emissiveIntensity: 0.25 });
     const darkMat  = new THREE.MeshToonMaterial({ color: 0x101820, gradientMap: toon });
 
-    // base disc
+    // Base disc (dark)
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.18, 18), darkMat);
     base.position.y = 0.09; base.castShadow = true; g.add(base);
 
-    // body cone (in player identity color)
+    // Body cone (in player identity color)
     const body = new THREE.Mesh(new THREE.ConeGeometry(0.36, 1.0, 16), colMat);
     body.position.y = 0.68; body.castShadow = true; g.add(body);
 
-    // outline on body
+    // White cartoon outline on body
     const outlineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide });
     const bodyOut = new THREE.Mesh(body.geometry, outlineMat);
     bodyOut.scale.set(1.12, 1.06, 1.12); body.add(bodyOut);
 
     if (avatar) {
-        // Head as a billboard sprite (avatar face texture)
-        // Placeholder white sprite first; texture loads async
-        const placeholderMat = new THREE.SpriteMaterial({ color: 0xffffff });
-        const sprite = new THREE.Sprite(placeholderMat);
-        sprite.scale.set(0.9, 0.9, 1);
-        sprite.position.y = 1.6;
-        g.add(sprite);
-        g.userData.headSprite = sprite;
+        // Skin-colored neck so head connects to body
+        const skinHex = parseHexColor(avatar.skin, 0xfbcfa6);
+        const neck = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.12, 0.16, 0.12, 12),
+            avMat('skin', skinHex),
+        );
+        neck.position.y = 1.20; neck.castShadow = true;
+        g.add(neck);
 
-        getAvatarTexture(avatar).then(tex => {
-            sprite.material = new THREE.SpriteMaterial({ map: tex, transparent: true });
-            sprite.material.needsUpdate = true;
-        }).catch(() => {
-            // On failure: keep the white placeholder
-        });
+        // The actual 3D head, built from primitives
+        const head = build3DAvatarHead(avatar);
+        head.position.y = 1.50;     // sits on top of the body cone
+        head.castShadow = true;
+        g.add(head);
+        g.userData.headGroup = head;
     } else {
-        // Classic fallback: spherical head in player color
+        // Classic fallback: spherical head in player color (legacy behaviour)
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 12), colMat);
         head.position.y = 1.32; head.castShadow = true; g.add(head);
         const headOut = new THREE.Mesh(head.geometry, outlineMat);

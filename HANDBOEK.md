@@ -859,65 +859,122 @@ Wii Party-stijl behouden:
 ---
 
 
-## 18. ⚡ NIEUW: Avatar systeem (mei 2026)
+## 18. ⚡ NIEUW: Avatar systeem (mei 2026, v2)
 
-[#18--nieuw-avatar-systeem-mei-2026](#18--nieuw-avatar-systeem-mei-2026)
+[#18--nieuw-avatar-systeem-mei-2026-v2](#18--nieuw-avatar-systeem-mei-2026-v2)
 
-Elke speler heeft sinds deze update een **chibi avatar** in plaats van een simpele kleurpion. Volledig vector-SVG, geen externe libraries, opslag in `localStorage`. CSS-prefix `av-`.
+Elke speler heeft een **chibi avatar** in plaats van een simpele kleurpion. Twee renderers naast elkaar: **SVG** voor alle 2D-contexten (Creator UI, HUD, scoreboards, Schnaps Call) en **echte 3D-meshes** voor de pion op het bord. Geen externe libraries, opslag in `localStorage`. CSS-prefix `av-`.
+
+### v2 highlights
+
+[#v2-highlights](#v2-highlights)
+
+- **Real 3D heads op het bord** (geen sprite/CanvasTexture meer). Bol-hoofd in huidskleur met dark outline, eye/mouth/brow/nose als losse 3D-meshes, hair als 3D-geometrie per archetype, accessoires als 3D-primitives. Lost het "vierkante achtergrond-fringe" probleem op.
+- **Veel meer vrouwelijke opties**: glamour-ogen, lashed/cute_lashed/eyeliner, rode/roze lippen, soft_smile, lips_full, en 6 nieuwe feminiene haarstijlen (braids, bob, space_buns, side_swept, messy_bun, half_up). 4 nieuwe accessoires (bow, flower, pearls, bunny_ears).
+- **Nieuwe categorie "Wangen"** (☺): none, soft_pink, pink, red blush, sproeten (freckles), gouden sterren.
+- **6 nieuwe gezichten** (triangle, narrow, wide_jaw, soft, angular, baby) → totaal 14 face shapes.
+- **Schema versie nog steeds 1**, met `blush` als optionele extra property. Bestaande v1-saves blijven werken (oude saves zonder `blush` → wordt automatisch `'none'`).
 
 ### Architectuur
 
 [#architectuur-18](#architectuur-18)
 
-Drie lagen, allemaal inline in `index.html`:
+Vier lagen, allemaal inline in `index.html`:
 
-1. **Schema + renderer** (~460 regels). Bovenaan na `function clear()`. Definieert:
-   - `AVATAR_SKIN_TONES`, `AVATAR_HAIR_COLORS`, `AVATAR_EYE_COLORS`, `AVATAR_OUTFIT_COLORS`, `AVATAR_BROW_COLORS`
-   - `AVATAR_FACE_OPTIONS`, `AVATAR_EYE_OPTIONS`, etc. (9 categorieën totaal)
-   - `defaultAvatar(colorIdx)`, `randomAvatar()`
-   - Part-renderers: `renderFace`, `renderEyes`, `renderBrows`, `renderNose`, `renderMouth`, `renderHair` (returns `{back, front}` voor layering), `renderAccessory`, `renderBody`
-   - `renderAvatarSVG(avatar, mode, extraAttrs)` — main composer
-   - `avatarToCanvas(avatar, size)` — async, voor THREE.CanvasTexture
-   - `loadAvatars()`, `saveAvatar(colorIdx, avatar)`, `loadAvatarForColor(colorIdx)` — `localStorage` key `drank-eiland-avatars-v1`
-
-2. **Creator UI** (~330 regels). `openAvatarCreator(initial, title) → Promise<avatar|null>`. Full-screen overlay, Pattern A. Categorieën als horizontale scroll-tabs, opties als swipeable carousel met mini-previews, kleurpalet als swatch-rij, footer met Cancel + Save.
-
-3. **Integratie helpers**:
-   - `makePlayerAvatarToken(colorHex, avatar)` — replaces de oude `makePlayerToken`. Behoudt base-disc + body-cone in `colorHex` (voor minimap-consistency), vervangt de sphere-head door een `THREE.Sprite` met `CanvasTexture` van de avatar SVG.
-   - `getAvatarTexture(avatar)` — async, met cache (`_avatarTextureCache` Map). Verhindert dat dezelfde avatar 60× per seconde opnieuw wordt gerenderd.
+1. **Schema + SVG-renderer** (~660 regels). Bovenaan na `function clear()`. Definieert alle constanten (`AVATAR_FACE_OPTIONS`, etc), `defaultAvatar` / `randomAvatar`, en de SVG part-renderers per categorie + `renderAvatarSVG(avatar, mode, extraAttrs)`.
+2. **3D head builder** (~580 regels, na de Creator-code). De kern is `build3DAvatarHead(avatar) → THREE.Group`. Helpers: `parseHexColor`, `avMat` (cached material factory), `add3DOutline`, `applyFaceShapeScale`, `addEyes3D`, `addBrows3D`, `addNose3D`, `addMouth3D`, `addBlush3D`, `addHair3D`, `addAccessory3D`.
+3. **Creator UI** (~330 regels). `openAvatarCreator(initial, title) → Promise<avatar|null>`. Full-screen overlay, Pattern A. Categorieën als horizontale scroll-tabs, opties als swipeable carousel met SVG mini-previews, kleurpalet als swatch-rij.
+4. **Integratie helpers**:
+   - `makePlayerAvatarToken(colorHex, avatar)` — base disc + body cone + skin-colored neck cylinder + 3D head group.
    - `renderPlayerAvatarDOM(player, size, mode)` — DOM-helper voor minigame-overlays.
 
-### Avatar schema (versie 1)
+### Avatar schema
 
-[#avatar-schema-versie-1](#avatar-schema-versie-1)
+[#avatar-schema](#avatar-schema)
 
 ```
 {
   v: 1,
-  face: 'round'|'oval'|'square'|'heart'|'long'|'chubby'|'pointed'|'diamond',
-  skin: '#hex',
-  eyes:  { shape: 'normal'|'big'|'sleepy'|'wink'|'star'|'dot'|'closed'|'square'|'sparkle'|'tired', color: '#hex' },
-  brows: { shape: 'flat'|'arched'|'angry'|'surprised'|'thick'|'thin'|'wavy'|'none', color: '#hex' },
-  nose: 'small'|'button'|'wide'|'long'|'pointy'|'none',
-  mouth: 'smile'|'grin'|'neutral'|'open'|'smirk'|'tongue'|'o'|'frown'|'kiss'|'tooth',
-  hair: { style: 'bald'|'short_messy'|...|'wavy_long', color: '#hex' },  // 14 styles
-  accessory: 'none'|'glasses'|'shades'|'cap'|'beanie'|'crown'|'bandana'|'headband'|'helmet'|'earrings',
-  body: 'slim'|'normal'|'chunky',
+  face:  'round'|'oval'|'square'|'heart'|'long'|'chubby'|'pointed'|'diamond'
+        |'triangle'|'narrow'|'wide_jaw'|'soft'|'angular'|'baby',        // 14
+  skin:  '#hex',
+  eyes:  { shape: 'normal'|'big'|'sleepy'|'wink'|'star'|'dot'|'closed'|'square'
+                 |'sparkle'|'tired'|'lashed'|'glamour'|'cute_lashed'|'eyeliner',  // 14
+          color: '#hex' },
+  brows: { shape: 'flat'|'arched'|'angry'|'surprised'|'thick'|'thin'|'wavy'|'none',
+          color: '#hex' },
+  nose:  'small'|'button'|'wide'|'long'|'pointy'|'none',
+  mouth: 'smile'|'grin'|'neutral'|'open'|'smirk'|'tongue'|'o'|'frown'|'kiss'|'tooth'
+        |'lips_red'|'lips_pink'|'soft_smile'|'lips_full',                          // 14
+  hair:  { style: 'bald'|'short_messy'|'short_neat'|'side_part'|'long_straight'
+                 |'ponytail'|'pigtails'|'bun'|'curly'|'mohawk'|'bowl'|'afro'
+                 |'spiky'|'wavy_long'|'braids'|'bob'|'space_buns'|'side_swept'
+                 |'messy_bun'|'half_up',                                            // 20
+          color: '#hex' },
+  accessory: 'none'|'glasses'|'shades'|'cap'|'beanie'|'crown'|'bandana'|'headband'
+            |'helmet'|'earrings'|'bow'|'flower'|'pearls'|'bunny_ears',             // 14
+  body:  'slim'|'normal'|'chunky',
   outfit: '#hex',
+  blush: 'none'|'soft_pink'|'pink'|'red'|'freckles'|'stars',                       // 6
 }
 ```
 
-Bij toekomstige uitbreidingen: verhoog `v` en voeg een migratie toe in `loadAvatars()`. Het schema is bewust flat genoeg om met `JSON.parse(JSON.stringify(a))` te clonen.
+Totaal: 14×14×14×20×14×6 = ~14 miljoen feature-combinaties (los van kleuren), dus echt iedereen krijgt een unieke avatar.
 
-### Render-modi
+### Render-modi (SVG)
 
-[#render-modi](#render-modi)
+[#render-modi-svg](#render-modi-svg)
 
 `renderAvatarSVG(avatar, mode)`:
 
 - `'full'` — head + chibi-torso (viewBox `0 0 200 260`). Voor Creator preview, modals, Schnaps-call beller-portret.
 - `'head'` — alleen kop (viewBox `20 0 160 180`). Voor option-thumbs, scoreboards, HUD.
-- `'square'` — kop in 1:1 viewBox (`0 -10 200 200`). Voor de THREE.CanvasTexture op het 3D-token.
+- `'square'` — kop in 1:1 viewBox (`0 -10 200 200`). (Legacy van v1, niet meer gebruikt op het 3D-bord nu we 3D-meshes hebben — wel bruikbaar als avatar-icon op vierkante badges.)
+
+### 3D head — coördinaten en geometrie
+
+[#3d-head--coordinaten-en-geometrie](#3d-head--coordinaten-en-geometrie)
+
+`build3DAvatarHead(avatar) → THREE.Group` bouwt een hoofd dat per default gecentreerd is op `(0, 0, 0)` met `headR = 0.34`. De caller positioneert deze op `y = 1.50` boven de body cone in `makePlayerAvatarToken`.
+
+Vaste posities (relatief tot head-center, units = world units):
+| Feature | x | y | z |
+| --- | --- | --- | --- |
+| Eyes (centers) | `±0.32 × headR` | `+0.15 × headR` | `+0.93 × headR` |
+| Brows (centers) | `±0.32 × headR` | `+0.42 × headR` | `+0.91 × headR` |
+| Nose | `0` | `-0.05 × headR` | `+1.02 × headR` |
+| Mouth | `0` | `-0.38 × headR` | `+0.92 × headR` |
+| Blush dots | `±0.60 × headR` | `-0.18 × headR` | `+0.88 × headR` |
+
+Face-shape variatie via `applyFaceShapeScale(head, faceShape)`: non-uniform scaling van de hoofd-sphere. Bv. oval: `0.93/1.08/1`, long: `0.88/1.16/0.96`, chubby: `1.14/0.95/1.08`. De features zelf staan op vaste posities — wijzigen niet mee met de scale (anders krijg je rare vertekeningen).
+
+Skin/hair/accessory materialen worden gecached via `avMat(type, color)` (key = `type + ':' + color`). Met 8 spelers en ~5 unieke kleuren per avatar zijn dat ~40 materialen, prima.
+
+### Hair archetypes — mapping van SVG-stijl naar 3D-mesh
+
+[#hair-archetypes--mapping-van-svg-stijl-naar-3d-mesh](#hair-archetypes--mapping-van-svg-stijl-naar-3d-mesh)
+
+20 SVG-styles worden in `addHair3D` op simpelere 3D-geometrie gemapt:
+
+| 3D archetype | Geometrie | SVG-styles die het gebruiken |
+| --- | --- | --- |
+| Skullcap | half-sphere boven hoofd | short_messy, short_neat, bowl, half_up |
+| Skullcap + side bump | half-sphere + extra strand | side_part |
+| Skullcap + curtain | half-sphere + open cilinder onder | long_straight, side_swept |
+| Skullcap + wavy curtain | + wave-spheres aan zijden | wavy_long |
+| Skullcap + ponytail sphere | + uitgerekte sphere achter | ponytail |
+| Skullcap + pigtails | + 2 uitgerekte spheres opzij | pigtails |
+| Skullcap + bun | + sphere bovenop | bun |
+| Skullcap + messy bun | + grote sphere + losse strands | messy_bun |
+| Skullcap + 2 buns | + 2 spheres bovenop | space_buns |
+| Cluster small spheres | 16 spheres in cirkel | curly |
+| Big sphere | grote bol met outline | afro |
+| Strip | box op midden-top | mohawk |
+| Skullcap + spikes | + 7 conische spikes | spiky |
+| Skullcap + 2 braids | + 2 cilinders met bumps | braids |
+| Skullcap + medium curtain | korter dan long | bob |
+
+Visueel onderscheidend genoeg om op normale board-camera-afstand verschillen te zien.
 
 ### Integratiepunten in het hoofdspel
 
@@ -927,28 +984,31 @@ Bij toekomstige uitbreidingen: verhoog `v` en voeg een migratie toe in `loadAvat
 | --- | --- | --- |
 | **Setup-scherm player-row** | Klikbare avatar-thumb met edit-pencil (✎) | `renderAvatarSVG(p.avatar, 'head')` in `.av-thumb` div. Click → `openAvatarCreator`. |
 | **Setup standalone tab** | Avatar Creator als "minigame" | Entry in `MINIGAMES` (`id:'avatar'`). Handler bovenaan `launchStandaloneMinigame`. |
-| **Bord (3D)** | Chibi-kop op de pion | `makePlayerAvatarToken(colorHex, avatar)`. Sprite at `position.y = 1.6`, scale 0.9×0.9. |
+| **Bord (3D)** | 3D head op de pion | `makePlayerAvatarToken(colorHex, avatar)`. Head-group at `y = 1.50`, neck cylinder at `y = 1.20`, body cone at `y = 0.68`. |
 | **HUD bottom-card** | Avatar binnen identity-color ring | `refreshHUD` rendert `renderAvatarSVG(cur.avatar, 'head')` in de `.player-card .avatar` div. Glow blijft `cur.color.css`. |
-| **Schnaps Call** | Beller-portret = avatar i.p.v. 🥃 | `playSchnapsCall`: in-game mode rendert `renderAvatarSVG(player.avatar, 'square')` in `.sk-avatar`. |
+| **Schnaps Call** | Beller-portret = avatar i.p.v. 🥃 | `playSchnapsCall`: in-game mode rendert `renderAvatarSVG(player.avatar, 'full')` in `.sk-avatar`. |
 | **Standalone minigames** | Fake spelers krijgen avatar | `launchStandaloneMinigame` zet `avatar: loadAvatarForColor(i)` op de fake players. |
+| **Avatar Creator (standalone)** | Sla op in slot 0 | Speciale `id === 'avatar'` branch in `launchStandaloneMinigame`. |
 
 ### Persistence-gedrag
 
 [#persistence-gedrag](#persistence-gedrag)
 
-- **Per kleurslot, niet per speler-naam**. Slot 0 (Rood) heeft één opgeslagen avatar, slot 1 (Blauw) een andere, etc. Logisch want spelernamen wisselen, kleurslot is stabieler.
-- Wordt automatisch geladen op setup → players kunnen meteen herkend worden zonder elke sessie opnieuw te configureren.
+- **Per kleurslot, niet per speler-naam**. Slot 0 (Rood) heeft één opgeslagen avatar, slot 1 (Blauw) een andere, etc.
+- `localStorage` key `drank-eiland-avatars-v1`. JSON-array `[avatar0, avatar1, ...]`.
+- Wordt automatisch geladen op setup → players kunnen meteen herkend worden.
 - Wordt opgeslagen bij elke `Opslaan`-klik in de Creator.
-- Bij kleurwissel in setup: wordt geprobeerd om saved avatar voor nieuwe kleur te laden; anders blijft huidige avatar behouden.
+- Bestaande v1-saves blijven werken: missing fields (zoals `blush`) → fallback via `defaultAvatar(...)` en property-defaulting in `addBlush3D`.
 
 ### Performance-noten
 
 [#performance-noten](#performance-noten)
 
 - SVG-rendering is goedkoop (gewoon string-concat). Geen `requestAnimationFrame` nodig.
-- THREE.CanvasTexture wordt 1× per unieke avatar gemaakt en gecached in `_avatarTextureCache` (Map met avatar-hash key). Hash is `JSON.stringify(avatar)` — bij elke change wordt een nieuwe texture aangemaakt en de oude blijft in cache. Voor 8 spelers × ~10 customizations per game zijn dat ~80 textures, prima.
-- Bij heel veel customizations zou de cache kunnen groeien. In dat geval: voeg een `invalidateAvatarTexture(avatar)` call toe bij elke save.
-- `avatarToCanvas` gebruikt een SVG-Blob + Image.onload trick (geen `XMLSerializer` of `Canvg`).
+- 3D heads worden 1× gebouwd per pion bij `makePlayerAvatarToken` en blijven in de scene. Wijzigt de avatar tijdens een spel niet → geen rebuild nodig.
+- Materialen gecached in `_avMatCache` (Map). Per avatar ~5 unieke kleuren × ~7 types = ~35 materials max.
+- Hair "curly" gebruikt 16 small spheres → met 8 spelers max 128 spheres voor curly. Acceptabel op moderne iPhones; bij prestatie-issues kan dit naar 8 spheres.
+- Geen `avatarToCanvas` / `getAvatarTexture` meer nodig voor het 3D-bord. Die functies zijn weg samen met `_avatarTextureCache`.
 
 ### Een nieuwe avatar-categorie toevoegen — stappen
 
@@ -956,30 +1016,33 @@ Bij toekomstige uitbreidingen: verhoog `v` en voeg een migratie toe in `loadAvat
 
 1. Definieer nieuwe constanten bovenaan (bv. `AVATAR_PIERCING_OPTIONS = ['none','nose','lip','brow']`).
 2. Voeg property toe in `defaultAvatar` en `randomAvatar`.
-3. Schrijf een part-renderer `renderPiercing(kind)` die een SVG-fragment teruggeeft.
-4. Voeg de renderer-aanroep in `renderAvatarSVG()` in de juiste z-volgorde toe.
+3. Schrijf een SVG part-renderer `renderPiercing(kind)` die een SVG-fragment teruggeeft.
+4. Voeg de renderer-aanroep in `renderAvatarSVG()` toe in de juiste z-volgorde.
 5. Voeg een entry toe aan `AVATAR_CATEGORIES`.
 6. Voeg Dutch labels toe in `AVATAR_LABELS`.
-7. Voeg een check toe in `loadAvatars()` voor migratie als bestaande opgeslagen avatars dit veld missen.
+7. **Voor 3D**: schrijf `addPiercing3D(parent, piercing, headR)` en roep hem aan in `build3DAvatarHead`.
+8. (Optioneel) Migratie-default in `loadAvatars()` als bestaande saves het veld missen.
 
 ### Bekende beperkingen / TODO's
 
 [#bekende-beperkingen--todos](#bekende-beperkingen--todos)
 
-- **Iframes** (Raft Battle, Bowling, Connect 4) zien de avatars nog niet — die ontvangen op dit moment alleen `name + color` via `postMessage`. Toekomstige uitbreiding: stuur `avatar` payload mee en render in iframe-side.
-- Geen "schaduw"-onder-de-token op het 3D-bord (de oude sphere-head had ook geen extra schaduw, maar de sprite is platter, dus kan minder grondig overkomen).
-- Geen positie/grootte-sliders voor fijnafstemming (eyes spacing, mouth size). Was bewust v1-scope.
+- **Iframes** (Raft Battle, Bowling, Connect 4) zien de avatars nog niet — ontvangen alleen `name + color` via `postMessage`. v3-werk: avatar-payload meesturen en in iframe-side renderen.
+- Geen positie/grootte-sliders voor fijnafstemming (eyes spacing, mouth size). Bewust v2-scope.
+- 3D-features (eyes, brows, etc.) staan op vaste posities op de bol — als je extreem niet-uniform face-shape-scaling toepast (bv. `1.5×0.6×1`) kunnen ze van het oppervlak loslaten. Huidige scales blijven binnen ±18% dus geen probleem.
 
 ### Visuele identiteit (style anchor)
 
 [#visuele-identiteit-style-anchor](#visuele-identiteit-style-anchor)
 
 Match met Wii Party / bestaande UI:
-- Chunky outline `stroke="#1a1010" stroke-width="2.5..3"` op ALLE shapes.
+- Chunky outline `stroke="#1a1010" stroke-width="2.5..3"` op ALLE SVG-shapes.
 - Witte highlights in ogen (`circle r="1.8" fill="#fff"`).
 - Felle skin tones, geen gradients (toon-style flat colors).
-- Body-cilinder met halve-cirkel mouwen.
-- Geen schaduwen of gradients in de SVG zelf — diepte komt uit de stroke + filter:drop-shadow op de container.
+- 3D: `MeshToonMaterial` met `gradientMap: toon`, `emissive: color, emissiveIntensity: 0.10-0.25` voor cell-shaded look.
+- 3D outlines: BackSide-trick met `MeshBasicMaterial { color: 0x1a1010 }` op scale ~1.06-1.10 (matches SVG stroke).
+- Body cone behoudt witte outline (color identity), head krijgt dark outline (Wii-Mii style contrast tegen huidskleur).
+- Geen schaduwen of gradients in de SVG zelf — diepte komt uit de stroke + `filter:drop-shadow` op de container.
 
 ---
 
