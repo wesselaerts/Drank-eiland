@@ -1029,7 +1029,13 @@
     .kroko-result .drinks { font-size: 20px; opacity: 0.95; margin-top: 4px; }
 
     /* ===== Paddle Duel — 1v1 split-screen pong ===== */
-    .pd-back { position: fixed; inset: 0; z-index: 60; background: #050810;
+    .pd-back { position: fixed; inset: 0; z-index: 60;
+      /* Transparante background zodat de 3D scene zichtbaar is. Een
+         radiale vignet maakt de game-elementen leesbaar in het midden
+         en geeft toch ruim zicht op de vulkaan eronder. */
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 25%, rgba(0,0,0,0.45) 85%, rgba(0,0,0,0.65) 100%),
+        linear-gradient(180deg, rgba(5,10,25,0.25) 0%, rgba(5,10,25,0.05) 30%, rgba(5,10,25,0.05) 70%, rgba(5,10,25,0.25) 100%);
       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
       user-select: none; overflow: hidden; touch-action: none;
       padding-top: env(safe-area-inset-top);
@@ -8965,8 +8971,13 @@ function playTappyBird({ players = G.players, drinks = 2 } = {}) {
         // ════════════════════════════════════════════════════════
         const GRAVITY  = -24;
         const FLAP     = 9.2;
-        const SPEED    = 7.5;
-        const GAP_H    = 4.2;
+        // SPEED en GAP_H rampen geleidelijk op zodat het begin
+        // makkelijker is en de moeilijkheid pas later toeneemt.
+        const SPEED_MIN = 5.0;       // was 7.5 — rustigere start
+        const SPEED_MAX = 9.5;       // einde — uitdagend
+        const GAP_H_START = 5.2;     // was 4.2 — ruimer begin
+        const GAP_H_END   = 3.7;     // einde — krapper
+        const RAMP_SEC    = 30;      // seconden tot max moeilijkheid
         const PIPE_R   = 0.85;
         const PIPE_GAP = 9.0;
         const SKY_Y    = 16;
@@ -9024,7 +9035,7 @@ function playTappyBird({ players = G.players, drinks = 2 } = {}) {
         // ════════════════════════════════════════════════════════
         //  D. PILAAR-PAAR BOUWEN
         // ════════════════════════════════════════════════════════
-        function makePipePair(gapCenterY) {
+        function makePipePair(gapCenterY, gapH) {
             const grp = new THREE.Group();
             const trunkMat = new THREE.MeshToonMaterial({
                 color: 0x6d4c41, gradientMap: toon,
@@ -9032,8 +9043,8 @@ function playTappyBird({ players = G.players, drinks = 2 } = {}) {
             const capMat = new THREE.MeshToonMaterial({
                 color: 0x4caf50, gradientMap: toon,
                 emissive: 0x2e7d32, emissiveIntensity: 0.18 });
-            const gapTop = gapCenterY + GAP_H / 2;
-            const gapBot = gapCenterY - GAP_H / 2;
+            const gapTop = gapCenterY + gapH / 2;
+            const gapBot = gapCenterY - gapH / 2;
             // Onder-pilaar
             const botH = Math.max(0.4, gapBot - WATER_Y);
             const bot = new THREE.Mesh(
@@ -9081,8 +9092,8 @@ function playTappyBird({ players = G.players, drinks = 2 } = {}) {
         let phase = 'intro';
         let phaseT = 0;
         let pipeSpawnTimer = 0;
-        const PIPE_SPAWN_INTERVAL = PIPE_GAP / SPEED;   // sec tussen pilaren
-        const PIPE_SPAWN_X = 14;                         // spawn pos rechts off-screen
+        let runTime = 0;             // seconden sinds deze speler startte
+        const PIPE_SPAWN_X = 14;
 
         // ════════════════════════════════════════════════════════
         //  F. CAMERA — VAST zij-aanzicht, vogel altijd in het midden
@@ -9198,6 +9209,7 @@ function playTappyBird({ players = G.players, drinks = 2 } = {}) {
             for (const pp of pipes) { scene.remove(pp); disposeGroup(pp); }
             pipes.length = 0;
             pipeSpawnTimer = 0;            // direct eerste pilaar
+            runTime = 0;                   // ramp opnieuw vanaf nul
             bird = makeBird(p.color.hex);
             // Vogel staat altijd op (0, ?, FLY_Z); pilaren komen op
             // de vogel af door zelf naar -X te bewegen.
@@ -9332,6 +9344,14 @@ function playTappyBird({ players = G.players, drinks = 2 } = {}) {
             }
             // Vogel-fysica — alleen verticaal (vogel blijft op x=0)
             if (phase === 'flying' && alive && bird) {
+                runTime += dt;
+                // Difficulty ramp: 0 = makkelijk begin, 1 = max moeilijk.
+                // Smoothstep voor zachte overgang.
+                const k = Math.min(1, runTime / RAMP_SEC);
+                const rampT = k * k * (3 - 2 * k);      // smoothstep
+                const curSpeed = SPEED_MIN + (SPEED_MAX - SPEED_MIN) * rampT;
+                const curGapH  = GAP_H_START + (GAP_H_END - GAP_H_START) * rampT;
+                const spawnInt = PIPE_GAP / curSpeed;
                 vy += GRAVITY * dt;
                 birdY += vy * dt;
                 bird.position.y = birdY;
@@ -9345,14 +9365,14 @@ function playTappyBird({ players = G.players, drinks = 2 } = {}) {
                 }
                 // Pilaren scrollen naar links (richting de vogel)
                 for (const p of pipes) {
-                    p.position.x -= SPEED * dt;
+                    p.position.x -= curSpeed * dt;
                 }
-                // Spawn nieuwe pilaar elke PIPE_SPAWN_INTERVAL seconden
+                // Spawn nieuwe pilaar elke spawnInt seconden
                 pipeSpawnTimer += dt;
-                if (pipeSpawnTimer >= PIPE_SPAWN_INTERVAL) {
-                    pipeSpawnTimer -= PIPE_SPAWN_INTERVAL;
+                if (pipeSpawnTimer >= spawnInt) {
+                    pipeSpawnTimer -= spawnInt;
                     const gapY = 5 + Math.random() * 8;
-                    const pair = makePipePair(gapY);
+                    const pair = makePipePair(gapY, curGapH);
                     pair.position.set(PIPE_SPAWN_X, 0, FLY_Z);
                     scene.add(pair);
                     pipes.push(pair);
@@ -9630,6 +9650,48 @@ function playVolcanoHop({ players = G.players, drinks = 2 } = {}) {
 function playPaddleDuel({ playerA, playerB, targetScore = 3, drinks = 4 } = {}) {
     return new Promise(resolve => {
         const ui = document.getElementById('game-ui');
+        // ── 3D SCENE INTEGRATIE ─────────────────────────────────
+        // Verberg al het bord-game UI rommel + home overlay zodat
+        // de 3D vulkaan-scene puur als achtergrond zichtbaar is.
+        const hiddenChrome = hideMinigameChrome();
+        // Camera-snapshot zodat we 'm na de game terug kunnen zetten.
+        const savedCam = {
+            pos: camera.position.clone(),
+            fov: camera.fov,
+            target: controls.target.clone(),
+            autoRotate: controls.autoRotate,
+            enabled: controls.enabled,
+        };
+        controls.autoRotate = false;
+        controls.enabled = false;
+        camera.fov = 55;
+        camera.updateProjectionMatrix();
+        // Beweeg de camera HOOG boven de vulkaan, lichte hoek voor
+        // perspectief — daardoor ziet het er uit alsof je de paddle-
+        // duel ver boven het eiland speelt. We doen dit met een korte
+        // soepele transitie via __deGameHook zodat het niet schokt.
+        const TOP_CAM_POS = new THREE.Vector3(0, 95, 28);
+        const TOP_CAM_TGT = new THREE.Vector3(0, 0, 0);
+        const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
+        const camTo = { pos: TOP_CAM_POS, tgt: TOP_CAM_TGT };
+        let camLerpT = 0;
+        const camLerpDur = 0.9;
+        const PREV_HOOK = window.__deGameHook;
+        window.__deGameHook = (time) => {
+            if (camLerpT < 1) {
+                const dt = 0.016;     // ~60fps assumed; lerp is robust
+                camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
+                const k = camLerpT;
+                const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
+                camera.position.lerpVectors(camFrom.pos, camTo.pos, e);
+                controls.target.lerpVectors(camFrom.tgt, camTo.tgt, e);
+            } else {
+                camera.position.copy(camTo.pos);
+                controls.target.copy(camTo.tgt);
+            }
+            camera.lookAt(controls.target);
+        };
+
         const back = el('div', { className: 'pd-back' });
         back.style.setProperty('--colA', playerA.color.css);
         back.style.setProperty('--colB', playerB.color.css);
@@ -9686,8 +9748,8 @@ function playPaddleDuel({ playerA, playerB, targetScore = 3, drinks = 4 } = {}) 
         //                 tussen de zijwanden zonder ooit een paddle te halen.
         // MAX_SP_MULT   : harde plafond zodat de bal nooit door een paddle
         //                 heen tunnelt (extra naast sub-stepping hieronder).
-        const INIT_SP_MULT  = 1.05;
-        const PADDLE_BOOST  = 1.20;
+        const INIT_SP_MULT  = 0.78;   // was 1.05 — rustigere start
+        const PADDLE_BOOST  = 1.15;   // was 1.20 — geleidelijkere opbouw
         const WALL_BOOST    = 1.04;
         const STEER_PX      = 200;
         const MIN_VY_RATIO  = 0.5;
@@ -9923,9 +9985,22 @@ function playPaddleDuel({ playerA, playerB, targetScore = 3, drinks = 4 } = {}) 
         function finish(loser) {
             cancelAnimationFrame(rafId);
             window.removeEventListener('resize', resize);
+            // 3D scene herstellen
+            window.__deGameHook = PREV_HOOK;
+            camera.fov = savedCam.fov;
+            camera.position.copy(savedCam.pos);
+            camera.updateProjectionMatrix();
+            controls.target.copy(savedCam.target);
+            controls.autoRotate = savedCam.autoRotate;
+            controls.enabled = savedCam.enabled;
+            camera.lookAt(controls.target);
             back.style.transition = 'opacity 0.3s ease';
             back.style.opacity = '0';
-            setTimeout(() => { back.remove(); resolve(loser); }, 300);
+            setTimeout(() => {
+                back.remove();
+                restoreMinigameChrome(hiddenChrome);
+                resolve(loser);
+            }, 300);
         }
 
         oBtn.addEventListener('click', () => {

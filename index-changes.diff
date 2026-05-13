@@ -1,5 +1,5 @@
 --- /home/claude/drank-eiland/repo/index.html	2026-05-13 11:14:04.239115824 +0000
-+++ /home/claude/work/index.html	2026-05-13 20:17:41.635526011 +0000
++++ /home/claude/work/index.html	2026-05-13 20:32:21.772096766 +0000
 @@ -313,19 +313,200 @@
      /* Brief rolling shake — class is added then removed in next frame as a marker */
      .die3d.rolling { transition: none; }
@@ -206,7 +206,22 @@
      /* Floating header overlay — small, semi-transparent, taps pass through except labels */
      .rb-header { position: absolute; top: 0; left: 0; right: 0; z-index: 3;
        padding: max(8px, env(safe-area-inset-top)) 60px 8px 60px;
-@@ -5456,15 +5637,66 @@
+@@ -848,7 +1029,13 @@
+     .kroko-result .drinks { font-size: 20px; opacity: 0.95; margin-top: 4px; }
+ 
+     /* ===== Paddle Duel — 1v1 split-screen pong ===== */
+-    .pd-back { position: fixed; inset: 0; z-index: 60; background: #050810;
++    .pd-back { position: fixed; inset: 0; z-index: 60;
++      /* Transparante background zodat de 3D scene zichtbaar is. Een
++         radiale vignet maakt de game-elementen leesbaar in het midden
++         en geeft toch ruim zicht op de vulkaan eronder. */
++      background:
++        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 25%, rgba(0,0,0,0.45) 85%, rgba(0,0,0,0.65) 100%),
++        linear-gradient(180deg, rgba(5,10,25,0.25) 0%, rgba(5,10,25,0.05) 30%, rgba(5,10,25,0.05) 70%, rgba(5,10,25,0.25) 100%);
+       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+       user-select: none; overflow: hidden; touch-action: none;
+       padding-top: env(safe-area-inset-top);
+@@ -5456,15 +5643,66 @@
  
  // ── Setup screen ──
  let SETUP_TAB = 'game';
@@ -278,7 +293,7 @@
  
      const screen = el('div', { className: 'screen' });
      const title = el('h1', {}, '🌋 Drank Eiland');
-@@ -5498,6 +5730,7 @@
+@@ -5498,6 +5736,7 @@
                  if (updated) {
                      p.avatar = updated;
                      saveAvatar(p.colorIdx, updated);
@@ -286,7 +301,7 @@
                      renderGame();
                  }
              });
-@@ -5513,14 +5746,15 @@
+@@ -5513,14 +5752,15 @@
                  // OR keep the current avatar but adopt the new slot's default outfit.
                  const saved = loadAvatars()[next];
                  p.avatar = saved || p.avatar || defaultAvatar(next);
@@ -304,7 +319,7 @@
                  row.append(rm);
              }
              card.append(row);
-@@ -5532,6 +5766,7 @@
+@@ -5532,6 +5772,7 @@
                      let c = 0; while (taken.has(c)) c++;
                      draft.push({ name: `Speler ${draft.length + 1}`, colorIdx: c,
                                   avatar: loadAvatarForColor(c) });
@@ -312,7 +327,7 @@
                      renderGame();
                  } } }, '+ Speler toevoegen');
              card.append(addBtn);
-@@ -5608,23 +5843,56 @@
+@@ -5608,23 +5849,56 @@
      }
      mgCard.append(mgIntro, mgGrid);
  
@@ -386,7 +401,7 @@
  
      mgPanel.append(mgCard, quick);
  
-@@ -5682,20 +5950,22 @@
+@@ -5682,20 +5956,22 @@
          return;
      }
  
@@ -417,7 +432,7 @@
              drinks: 3,
          });
          if (winner) {
-@@ -6065,6 +6335,44 @@
+@@ -6065,6 +6341,44 @@
      }
  }
  
@@ -462,7 +477,7 @@
  function refreshHUD() {
      const cur = G.players[G.turnIdx];
      if (!cur) return;
-@@ -6158,9 +6466,25 @@
+@@ -6158,9 +6472,25 @@
      return skip;
  }
  
@@ -489,7 +504,7 @@
          const back = el('div', { className: 'rb-back' });
  
          // Floating header overlay with title + VS chips matching player colors
-@@ -6191,6 +6515,10 @@
+@@ -6191,6 +6521,10 @@
              done = true;
              window.removeEventListener('message', onMsg);
              back.remove();
@@ -500,7 +515,7 @@
              if (winner) {
                  const loser = winner === playerA ? playerB : playerA;
                  await showModal({ emoji: '🏴‍☠️',
-@@ -6232,12 +6560,32 @@
+@@ -6232,12 +6566,32 @@
  
          // Send the player config to the iframe. We do this both on load
          // and whenever the iframe says "hello", so the timing always works.
@@ -535,7 +550,7 @@
                  }, '*');
              } catch (e) { /* cross-origin — ignore */ }
          }
-@@ -6282,6 +6630,832 @@
+@@ -6282,6 +6636,832 @@
      });
  }
  
@@ -1368,7 +1383,7 @@
  /* ============================================================
     playBowling — Bowlspel (iframe)
     ============================================================
-@@ -6295,23 +7469,16 @@
+@@ -6295,23 +7475,16 @@
  function playBowling({ players, drinks = 4 } = {}) {
      return new Promise(resolve => {
          const ui = document.getElementById('game-ui');
@@ -1400,7 +1415,7 @@
  
          const wrap = el('div', { className: 'bw-canvas-wrap' });
          const iframe = el('iframe', {
-@@ -6319,8 +7486,7 @@
+@@ -6319,8 +7492,7 @@
              scrolling: 'no' });
          wrap.append(iframe);
  
@@ -1410,7 +1425,7 @@
  
          let done = false;
          async function finish(winner, winnerScore) {
-@@ -6328,6 +7494,7 @@
+@@ -6328,6 +7500,7 @@
              done = true;
              window.removeEventListener('message', onMsg);
              back.remove();
@@ -1418,7 +1433,7 @@
              if (winner) {
                  const losers = players.filter(p => p !== winner);
                  const loserNames = losers.map(p => p.name).join(', ');
-@@ -6409,16 +7576,18 @@
+@@ -6409,16 +7582,18 @@
  }
  
  /* ============================================================
@@ -1443,7 +1458,7 @@
          const back = el('div', { className: 'cf-back' });
  
          const header = el('div', { className: 'cf-header' });
-@@ -6445,6 +7614,7 @@
+@@ -6445,6 +7620,7 @@
              done = true;
              window.removeEventListener('message', onMsg);
              back.remove();
@@ -1451,7 +1466,7 @@
              if (isDraw) {
                  await showModal({ emoji: '🤝', title: 'Gelijkspel!',
                      body: ['Niemand drinkt — de goden zijn vandaag neutraal.'],
-@@ -6522,6 +7692,641 @@
+@@ -6522,6 +7698,641 @@
      });
  }
  
@@ -2093,7 +2108,7 @@
  // ── Pip layouts for each die face ──
  const PIP_LAYOUTS = {
      1: [[50,50]],
-@@ -6919,7 +8724,10 @@
+@@ -6919,7 +8730,10 @@
  }
  
  // ── Tappy Bird — pass-the-phone; each player plays once; highest score wins ──
@@ -2105,7 +2120,7 @@
      return new Promise(resolve => {
          const ui = document.getElementById('game-ui');
          const back = el('div', { className: 'tb-back' });
-@@ -7116,6 +8924,493 @@
+@@ -7116,6 +8930,507 @@
      });
  }
  
@@ -2150,8 +2165,13 @@
 +        // ════════════════════════════════════════════════════════
 +        const GRAVITY  = -24;
 +        const FLAP     = 9.2;
-+        const SPEED    = 7.5;
-+        const GAP_H    = 4.2;
++        // SPEED en GAP_H rampen geleidelijk op zodat het begin
++        // makkelijker is en de moeilijkheid pas later toeneemt.
++        const SPEED_MIN = 5.0;       // was 7.5 — rustigere start
++        const SPEED_MAX = 9.5;       // einde — uitdagend
++        const GAP_H_START = 5.2;     // was 4.2 — ruimer begin
++        const GAP_H_END   = 3.7;     // einde — krapper
++        const RAMP_SEC    = 30;      // seconden tot max moeilijkheid
 +        const PIPE_R   = 0.85;
 +        const PIPE_GAP = 9.0;
 +        const SKY_Y    = 16;
@@ -2209,7 +2229,7 @@
 +        // ════════════════════════════════════════════════════════
 +        //  D. PILAAR-PAAR BOUWEN
 +        // ════════════════════════════════════════════════════════
-+        function makePipePair(gapCenterY) {
++        function makePipePair(gapCenterY, gapH) {
 +            const grp = new THREE.Group();
 +            const trunkMat = new THREE.MeshToonMaterial({
 +                color: 0x6d4c41, gradientMap: toon,
@@ -2217,8 +2237,8 @@
 +            const capMat = new THREE.MeshToonMaterial({
 +                color: 0x4caf50, gradientMap: toon,
 +                emissive: 0x2e7d32, emissiveIntensity: 0.18 });
-+            const gapTop = gapCenterY + GAP_H / 2;
-+            const gapBot = gapCenterY - GAP_H / 2;
++            const gapTop = gapCenterY + gapH / 2;
++            const gapBot = gapCenterY - gapH / 2;
 +            // Onder-pilaar
 +            const botH = Math.max(0.4, gapBot - WATER_Y);
 +            const bot = new THREE.Mesh(
@@ -2266,8 +2286,8 @@
 +        let phase = 'intro';
 +        let phaseT = 0;
 +        let pipeSpawnTimer = 0;
-+        const PIPE_SPAWN_INTERVAL = PIPE_GAP / SPEED;   // sec tussen pilaren
-+        const PIPE_SPAWN_X = 14;                         // spawn pos rechts off-screen
++        let runTime = 0;             // seconden sinds deze speler startte
++        const PIPE_SPAWN_X = 14;
 +
 +        // ════════════════════════════════════════════════════════
 +        //  F. CAMERA — VAST zij-aanzicht, vogel altijd in het midden
@@ -2383,6 +2403,7 @@
 +            for (const pp of pipes) { scene.remove(pp); disposeGroup(pp); }
 +            pipes.length = 0;
 +            pipeSpawnTimer = 0;            // direct eerste pilaar
++            runTime = 0;                   // ramp opnieuw vanaf nul
 +            bird = makeBird(p.color.hex);
 +            // Vogel staat altijd op (0, ?, FLY_Z); pilaren komen op
 +            // de vogel af door zelf naar -X te bewegen.
@@ -2517,6 +2538,14 @@
 +            }
 +            // Vogel-fysica — alleen verticaal (vogel blijft op x=0)
 +            if (phase === 'flying' && alive && bird) {
++                runTime += dt;
++                // Difficulty ramp: 0 = makkelijk begin, 1 = max moeilijk.
++                // Smoothstep voor zachte overgang.
++                const k = Math.min(1, runTime / RAMP_SEC);
++                const rampT = k * k * (3 - 2 * k);      // smoothstep
++                const curSpeed = SPEED_MIN + (SPEED_MAX - SPEED_MIN) * rampT;
++                const curGapH  = GAP_H_START + (GAP_H_END - GAP_H_START) * rampT;
++                const spawnInt = PIPE_GAP / curSpeed;
 +                vy += GRAVITY * dt;
 +                birdY += vy * dt;
 +                bird.position.y = birdY;
@@ -2530,14 +2559,14 @@
 +                }
 +                // Pilaren scrollen naar links (richting de vogel)
 +                for (const p of pipes) {
-+                    p.position.x -= SPEED * dt;
++                    p.position.x -= curSpeed * dt;
 +                }
-+                // Spawn nieuwe pilaar elke PIPE_SPAWN_INTERVAL seconden
++                // Spawn nieuwe pilaar elke spawnInt seconden
 +                pipeSpawnTimer += dt;
-+                if (pipeSpawnTimer >= PIPE_SPAWN_INTERVAL) {
-+                    pipeSpawnTimer -= PIPE_SPAWN_INTERVAL;
++                if (pipeSpawnTimer >= spawnInt) {
++                    pipeSpawnTimer -= spawnInt;
 +                    const gapY = 5 + Math.random() * 8;
-+                    const pair = makePipePair(gapY);
++                    const pair = makePipePair(gapY, curGapH);
 +                    pair.position.set(PIPE_SPAWN_X, 0, FLY_Z);
 +                    scene.add(pair);
 +                    pipes.push(pair);
@@ -2599,7 +2628,56 @@
  // ── Volcano Hop — secretly pick a platform; wrong = lightning, last standing wins ──
  function playVolcanoHop({ players = G.players, drinks = 2 } = {}) {
      return new Promise(resolve => {
-@@ -7378,6 +9673,25 @@
+@@ -7335,6 +9650,48 @@
+ function playPaddleDuel({ playerA, playerB, targetScore = 3, drinks = 4 } = {}) {
+     return new Promise(resolve => {
+         const ui = document.getElementById('game-ui');
++        // ── 3D SCENE INTEGRATIE ─────────────────────────────────
++        // Verberg al het bord-game UI rommel + home overlay zodat
++        // de 3D vulkaan-scene puur als achtergrond zichtbaar is.
++        const hiddenChrome = hideMinigameChrome();
++        // Camera-snapshot zodat we 'm na de game terug kunnen zetten.
++        const savedCam = {
++            pos: camera.position.clone(),
++            fov: camera.fov,
++            target: controls.target.clone(),
++            autoRotate: controls.autoRotate,
++            enabled: controls.enabled,
++        };
++        controls.autoRotate = false;
++        controls.enabled = false;
++        camera.fov = 55;
++        camera.updateProjectionMatrix();
++        // Beweeg de camera HOOG boven de vulkaan, lichte hoek voor
++        // perspectief — daardoor ziet het er uit alsof je de paddle-
++        // duel ver boven het eiland speelt. We doen dit met een korte
++        // soepele transitie via __deGameHook zodat het niet schokt.
++        const TOP_CAM_POS = new THREE.Vector3(0, 95, 28);
++        const TOP_CAM_TGT = new THREE.Vector3(0, 0, 0);
++        const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
++        const camTo = { pos: TOP_CAM_POS, tgt: TOP_CAM_TGT };
++        let camLerpT = 0;
++        const camLerpDur = 0.9;
++        const PREV_HOOK = window.__deGameHook;
++        window.__deGameHook = (time) => {
++            if (camLerpT < 1) {
++                const dt = 0.016;     // ~60fps assumed; lerp is robust
++                camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
++                const k = camLerpT;
++                const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
++                camera.position.lerpVectors(camFrom.pos, camTo.pos, e);
++                controls.target.lerpVectors(camFrom.tgt, camTo.tgt, e);
++            } else {
++                camera.position.copy(camTo.pos);
++                controls.target.copy(camTo.tgt);
++            }
++            camera.lookAt(controls.target);
++        };
++
+         const back = el('div', { className: 'pd-back' });
+         back.style.setProperty('--colA', playerA.color.css);
+         back.style.setProperty('--colB', playerB.color.css);
+@@ -7378,6 +9735,25 @@
          // Distance from the top/bottom edge of the canvas to the paddles.
          // Larger value = paddle moves away from the iPhone notch / home indicator.
          const PAD_INSET = 70;
@@ -2616,8 +2694,8 @@
 +        //                 tussen de zijwanden zonder ooit een paddle te halen.
 +        // MAX_SP_MULT   : harde plafond zodat de bal nooit door een paddle
 +        //                 heen tunnelt (extra naast sub-stepping hieronder).
-+        const INIT_SP_MULT  = 1.05;
-+        const PADDLE_BOOST  = 1.20;
++        const INIT_SP_MULT  = 0.78;   // was 1.05 — rustigere start
++        const PADDLE_BOOST  = 1.15;   // was 1.20 — geleidelijkere opbouw
 +        const WALL_BOOST    = 1.04;
 +        const STEER_PX      = 200;
 +        const MIN_VY_RATIO  = 0.5;
@@ -2625,7 +2703,7 @@
          const state = {
              padA: 0.5, padB: 0.5, // x positions 0..1
              ballX: 0, ballY: 0, vx: 0, vy: 0,
-@@ -7388,10 +9702,9 @@
+@@ -7388,10 +9764,9 @@
          function resetBall(dir) {
              state.ballX = W / 2;
              state.ballY = H / 2;
@@ -2639,7 +2717,7 @@
              state.vx = Math.cos(ang) * speed;
              state.vy = Math.sin(ang) * speed;
          }
-@@ -7463,11 +9776,35 @@
+@@ -7463,11 +9838,35 @@
              rafId = requestAnimationFrame(tick);
          }
          function update(dt) {
@@ -2678,7 +2756,7 @@
  
              const padAx = state.padA * W;
              const padBx = state.padB * W;
-@@ -7479,16 +9816,24 @@
+@@ -7479,16 +9878,24 @@
              if (state.vy < 0 && state.ballY - BALL_R <= PAD_Y_TOP + PAD_H/2 && state.ballY > PAD_Y_TOP - PAD_H) {
                  if (Math.abs(state.ballX - padAx) <= padHalfW + BALL_R) {
                      state.ballY = PAD_Y_TOP + PAD_H/2 + BALL_R;
@@ -2707,7 +2785,7 @@
                  }
              }
  
-@@ -7498,11 +9843,37 @@
+@@ -7498,11 +9905,37 @@
                  scoreBot.textContent = state.scoreB;
                  if (state.scoreB >= targetScore) endGame(playerB, playerA);
                  else resetBall(1);
@@ -2745,3 +2823,27 @@
              }
          }
          function draw() {
+@@ -7552,9 +9985,22 @@
+         function finish(loser) {
+             cancelAnimationFrame(rafId);
+             window.removeEventListener('resize', resize);
++            // 3D scene herstellen
++            window.__deGameHook = PREV_HOOK;
++            camera.fov = savedCam.fov;
++            camera.position.copy(savedCam.pos);
++            camera.updateProjectionMatrix();
++            controls.target.copy(savedCam.target);
++            controls.autoRotate = savedCam.autoRotate;
++            controls.enabled = savedCam.enabled;
++            camera.lookAt(controls.target);
+             back.style.transition = 'opacity 0.3s ease';
+             back.style.opacity = '0';
+-            setTimeout(() => { back.remove(); resolve(loser); }, 300);
++            setTimeout(() => {
++                back.remove();
++                restoreMinigameChrome(hiddenChrome);
++                resolve(loser);
++            }, 300);
+         }
+ 
+         oBtn.addEventListener('click', () => {
