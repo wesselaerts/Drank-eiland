@@ -1328,6 +1328,252 @@
     .hf-result .sub { font-size: 17px; opacity: 0.95; text-align: center; padding: 0 16px; max-width: 320px; }
     .hf-result .answer { font-size: 14px; opacity: 0.75; margin-top: 2px; }
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AVATAR CREATOR — full-screen overlay (CSS-prefix `av-`)
+   iPhone-first layout: footer carries safe-area-bottom so buttons stay
+   reachable (Krokodil-lesson). Tab strip + carousel are horizontal-scroll.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AVATAR CREATOR — full-screen overlay (CSS-prefix `av-`)
+   iPhone-first layout: footer carries safe-area-bottom so buttons stay
+   reachable (Krokodil-lesson). Tab strip + carousel are horizontal-scroll.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.av-back {
+    position: fixed; inset: 0; z-index: 60;
+    background: linear-gradient(180deg, #1a2848 0%, #1a1828 60%, #0a0a1a 100%);
+    display: flex; flex-direction: column;
+    color: #fff; animation: fadeIn .25s ease; user-select: none;
+    overflow: hidden;
+    padding-top: max(8px, env(safe-area-inset-top));
+}
+.av-back::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255,215,80,0.10), transparent 35%),
+      radial-gradient(circle at 80% 90%, rgba(120,170,255,0.10), transparent 40%);
+    z-index: 0;
+}
+.av-back > * { position: relative; z-index: 1; }
+
+/* Header */
+.av-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 14px 4px; gap: 12px;
+}
+.av-title {
+    font-weight: 900; font-size: 18px; letter-spacing: 0.5px;
+    text-shadow: 0 2px 0 #000, 0 0 14px rgba(255,200,90,0.4);
+    flex: 1; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.av-close {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; font-size: 18px; font-weight: 900; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.av-close:active { transform: scale(0.92); background: rgba(255,80,80,0.4); }
+
+/* Big preview area */
+.av-preview {
+    flex: 1; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 4px 16px 8px;
+    position: relative;
+}
+.av-svg-wrap {
+    width: 80%; max-width: 280px; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
+}
+.av-svg-wrap svg {
+    width: 100%; height: 100%;
+    max-height: 100%;
+}
+.av-bounce {
+    animation: avBounce 0.4s cubic-bezier(.4,1.7,.5,1);
+}
+@keyframes avBounce {
+    0%   { transform: scale(0.92); }
+    60%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
+
+/* Top action row (Random / Reset) */
+.av-top-actions {
+    display: flex; gap: 10px; justify-content: center;
+    padding: 4px 14px 8px;
+}
+.av-action-btn {
+    padding: 8px 16px; border-radius: 999px;
+    background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.18);
+    color: #fff; font-weight: 700; font-size: 14px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    -webkit-tap-highlight-color: transparent; transition: transform .1s ease;
+}
+.av-action-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+.av-action-btn .e { font-size: 16px; }
+
+/* Category tab strip */
+.av-tabs {
+    display: flex; gap: 6px; padding: 4px 12px 4px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+}
+.av-tabs::-webkit-scrollbar { display: none; }
+.av-tab {
+    flex-shrink: 0; min-width: 64px;
+    padding: 6px 12px; border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.8); cursor: pointer;
+    text-align: center; scroll-snap-align: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .1s ease, background .2s ease, border-color .2s ease;
+}
+.av-tab:active { transform: scale(0.95); }
+.av-tab.active {
+    background: rgba(255,215,80,0.18);
+    border-color: rgba(255,215,80,0.7);
+    color: #fff;
+    box-shadow: 0 0 0 1px rgba(255,215,80,0.3), 0 0 14px rgba(255,215,80,0.25);
+}
+.av-tab-emoji { font-size: 22px; line-height: 1; }
+.av-tab-label { font-size: 10.5px; font-weight: 700; margin-top: 2px;
+    letter-spacing: 0.3px; }
+
+/* Options carousel */
+.av-options-wrap {
+    padding: 6px 0 4px;
+    position: relative;
+}
+.av-options {
+    display: flex; gap: 8px; padding: 4px 14px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+}
+.av-options::-webkit-scrollbar { display: none; }
+.av-opt {
+    flex-shrink: 0; width: 84px;
+    padding: 4px 4px 6px; border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.10);
+    color: #fff; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .1s ease, background .2s ease, border-color .2s ease;
+    scroll-snap-align: center;
+    display: flex; flex-direction: column; align-items: center;
+}
+.av-opt:active { transform: scale(0.95); }
+.av-opt.active {
+    background: rgba(255,215,80,0.18);
+    border-color: rgba(255,215,80,0.7);
+    box-shadow: 0 0 0 1px rgba(255,215,80,0.3), 0 0 12px rgba(255,215,80,0.25);
+}
+.av-opt-thumb {
+    width: 74px; height: 74px; border-radius: 10px;
+    background: rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+}
+.av-opt-thumb svg { width: 100%; height: 100%; }
+.av-opt-lbl {
+    font-size: 10.5px; font-weight: 700;
+    margin-top: 3px; opacity: 0.85;
+    text-align: center; line-height: 1.2;
+    max-width: 80px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Palette row */
+.av-palette-wrap {
+    padding: 4px 14px 8px;
+    text-align: center;
+}
+.av-palette-label {
+    font-size: 10.5px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; opacity: 0.65;
+    margin-bottom: 4px;
+}
+.av-palette {
+    display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+}
+.av-sw {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2.5px solid rgba(255,255,255,0.25);
+    cursor: pointer; padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .1s ease, border-color .2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+.av-sw:active { transform: scale(0.88); }
+.av-sw.active {
+    border-color: #ffd54a;
+    box-shadow: 0 0 0 2px rgba(255,215,80,0.4), 0 2px 4px rgba(0,0,0,0.4);
+    transform: scale(1.1);
+}
+
+/* Footer */
+.av-foot {
+    display: flex; gap: 10px; justify-content: center;
+    padding: 8px 14px max(8px, env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.45));
+    border-top: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+}
+.av-btn {
+    min-height: 50px; padding: 0 22px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08);
+    color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .1s ease;
+}
+.av-btn:active { transform: translateY(2px); }
+.av-btn.gold {
+    background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+    color: #2a1a00; border-color: rgba(255,215,80,0.6);
+    box-shadow: 0 4px 0 #b56a00, 0 6px 18px rgba(255,154,26,0.4);
+}
+.av-btn.gold:active { box-shadow: 0 2px 0 #b56a00; }
+.av-btn.ghost { background: rgba(0,0,0,0.4); }
+
+/* Avatar thumb shown next to player rows in the setup screen.
+   Click to open the Avatar Creator for that player.
+   Also used in HUD/scoreboards via renderPlayerAvatarDOM. */
+.av-thumb {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 3px solid #fff;
+    background: rgba(0,0,0,0.4);
+    overflow: hidden; flex-shrink: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4), 0 0 12px currentColor;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .1s ease;
+    position: relative;
+}
+.av-thumb:active { transform: scale(0.92); }
+.av-thumb svg { width: 130%; height: 130%; margin-top: 4px; }
+.av-thumb::after {
+    content: '✎'; position: absolute; bottom: -3px; right: -3px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #ffd54a; color: #2a1a00;
+    font-size: 11px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* Variant used in HUD player-card (no edit pencil) */
+.player-avatar { overflow: hidden; }
+.player-avatar svg { width: 130%; height: 130%; margin-top: 4px; }
+
 </style>
 </head>
 <body>
@@ -3257,6 +3503,818 @@ function el(tag, props={}, children=[]) {
 }
 function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   AVATAR SYSTEM — Drank Eiland (mei 2026)
+   ───────────────────────────────────────────────────────────────────────────
+   Pure-SVG chibi avatar generator + full-screen Creator overlay.
+   Vector-based, no libs. Used for: bord-token (head als billboard-sprite),
+   setup-scherm thumbs, Schnaps-call beller-portret, HUD speler-kaart,
+   en (via renderPlayerAvatarDOM) overal waar een minigame een speler
+   visueel wil identificeren. Zie HANDBOEK §19 voor architectuur details.
+   Schema-versie: 1. Migrations in loadAvatars().
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AVATAR SYSTEM — Drank Eiland v3 (mei 2026)
+   ───────────────────────────────────────────────────────────────────────────
+   Pure-SVG chibi avatar generator. Vector-based, no libs, ~1-2KB per
+   serialized avatar. Used for:
+   - Bordtoken (head als billboard-sprite met canvas-texture)
+   - Setup-scherm preview-thumbs
+   - Schnaps-call beller-portret
+   - Scoreboards, modals, alle inline minigames
+   Schema-versie: 1. Migrations: zie loadAvatars().
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+// ── Color palettes ──
+const AVATAR_SKIN_TONES = [
+    '#fde0c4', '#fbcfa6', '#f1b889', '#deA174', '#c98863',
+    '#a86b48', '#7a4a31', '#4d2d1a',
+];
+const AVATAR_HAIR_COLORS = [
+    '#1a1a1a', '#3a2418', '#5e3a20', '#8a5a30', '#b8814a',
+    '#e6c084', '#f4ddb0', '#c0c0c0', '#ffffff',
+    '#d92e3a', '#ff6b8e', '#5a9dff', '#3ec866', '#b87aff',
+];
+const AVATAR_EYE_COLORS = [
+    '#3a2418', '#1a1a1a', '#5a9dff', '#3ec866', '#8a5a30',
+    '#b87aff', '#d92e3a', '#ffd54a',
+];
+const AVATAR_OUTFIT_COLORS = [
+    '#ff4d5c', '#3aa9ff', '#ffd54a', '#4ce07a', '#b87aff',
+    '#ff8fbe', '#ff8a3a', '#ffffff', '#2a2a2a', '#5a3a20',
+];
+const AVATAR_BROW_COLORS = AVATAR_HAIR_COLORS;
+
+// ── Part option lists (for the carousels) ──
+const AVATAR_FACE_OPTIONS    = ['round','oval','square','heart','long','chubby','pointed','diamond'];
+const AVATAR_EYE_OPTIONS     = ['normal','big','sleepy','wink','star','dot','closed','square','sparkle','tired'];
+const AVATAR_BROW_OPTIONS    = ['flat','arched','angry','surprised','thick','thin','wavy','none'];
+const AVATAR_NOSE_OPTIONS    = ['small','button','wide','long','pointy','none'];
+const AVATAR_MOUTH_OPTIONS   = ['smile','grin','neutral','open','smirk','tongue','o','frown','kiss','tooth'];
+const AVATAR_HAIR_OPTIONS    = [
+    'bald','short_messy','short_neat','side_part','long_straight','ponytail',
+    'pigtails','bun','curly','mohawk','bowl','afro','spiky','wavy_long'
+];
+const AVATAR_ACC_OPTIONS     = ['none','glasses','shades','cap','beanie','crown','bandana','headband','helmet','earrings'];
+const AVATAR_BODY_OPTIONS    = ['slim','normal','chunky'];
+
+// ── Factory: default avatar based on player color ──
+function defaultAvatar(colorIdx = 0) {
+    return {
+        v: 1,
+        face: 'round',
+        skin: AVATAR_SKIN_TONES[1],
+        eyes: { shape: 'normal', color: AVATAR_EYE_COLORS[0] },
+        brows: { shape: 'arched', color: AVATAR_BROW_COLORS[0] },
+        nose: 'button',
+        mouth: 'smile',
+        hair: { style: 'short_messy', color: AVATAR_HAIR_COLORS[2] },
+        accessory: 'none',
+        body: 'normal',
+        outfit: AVATAR_OUTFIT_COLORS[colorIdx % AVATAR_OUTFIT_COLORS.length],
+    };
+}
+
+function randomAvatar() {
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    return {
+        v: 1,
+        face: pick(AVATAR_FACE_OPTIONS),
+        skin: pick(AVATAR_SKIN_TONES),
+        eyes: { shape: pick(AVATAR_EYE_OPTIONS), color: pick(AVATAR_EYE_COLORS) },
+        brows: { shape: pick(AVATAR_BROW_OPTIONS), color: pick(AVATAR_BROW_COLORS) },
+        nose: pick(AVATAR_NOSE_OPTIONS),
+        mouth: pick(AVATAR_MOUTH_OPTIONS),
+        hair: { style: pick(AVATAR_HAIR_OPTIONS), color: pick(AVATAR_HAIR_COLORS) },
+        accessory: pick(AVATAR_ACC_OPTIONS),
+        body: pick(AVATAR_BODY_OPTIONS),
+        outfit: pick(AVATAR_OUTFIT_COLORS),
+    };
+}
+
+// ═══ SVG PART RENDERERS ═══════════════════════════════════════════════════
+// All parts return an SVG fragment string. The viewBox is 200x260, with the
+// head centered at (100, 92) in a ~120px-tall region (y=30..150). Body sits
+// below from y=160..255.
+
+// ── FACE shapes ─────────────────────────────────────────────────────────
+function renderFace(shape, skin) {
+    const stroke = `stroke="#1a1010" stroke-width="3" stroke-linejoin="round"`;
+    switch (shape) {
+        case 'round':   return `<ellipse cx="100" cy="92" rx="56" ry="62" fill="${skin}" ${stroke}/>`;
+        case 'oval':    return `<ellipse cx="100" cy="92" rx="48" ry="66" fill="${skin}" ${stroke}/>`;
+        case 'square':  return `<path d="M 48,60 Q 48,38 70,38 L 130,38 Q 152,38 152,60 L 152,130 Q 152,152 130,152 L 70,152 Q 48,152 48,130 Z" fill="${skin}" ${stroke}/>`;
+        case 'heart':   return `<path d="M 100,158 Q 44,138 44,80 Q 44,38 76,38 Q 92,38 100,55 Q 108,38 124,38 Q 156,38 156,80 Q 156,138 100,158 Z" fill="${skin}" ${stroke}/>`;
+        case 'long':    return `<ellipse cx="100" cy="95" rx="46" ry="70" fill="${skin}" ${stroke}/>`;
+        case 'chubby':  return `<ellipse cx="100" cy="94" rx="64" ry="58" fill="${skin}" ${stroke}/>`;
+        case 'pointed': return `<path d="M 100,162 Q 48,148 48,80 Q 48,32 100,32 Q 152,32 152,80 Q 152,148 100,162 Z" fill="${skin}" ${stroke}/>`;
+        case 'diamond': return `<path d="M 100,32 L 156,92 L 100,158 L 44,92 Z" fill="${skin}" ${stroke}/>`;
+        default:        return renderFace('round', skin);
+    }
+}
+
+// ── EYES (always returns both eyes mirrored around x=100) ──────────────
+function renderEyes(shape, color) {
+    const xL = 76, xR = 124, y = 90;
+    const stk = `stroke="#1a1010" stroke-width="2.5" stroke-linejoin="round"`;
+    const eye = (x) => {
+        switch (shape) {
+            case 'normal':
+                return `<g><ellipse cx="${x}" cy="${y}" rx="9" ry="11" fill="#fff" ${stk}/>
+                    <circle cx="${x}" cy="${y+1}" r="5.5" fill="${color}"/>
+                    <circle cx="${x}" cy="${y+1}" r="2.5" fill="#1a1010"/>
+                    <circle cx="${x-1.5}" cy="${y-1.5}" r="1.8" fill="#fff"/></g>`;
+            case 'big':
+                return `<g><ellipse cx="${x}" cy="${y}" rx="12" ry="14" fill="#fff" ${stk}/>
+                    <circle cx="${x}" cy="${y+2}" r="8" fill="${color}"/>
+                    <circle cx="${x}" cy="${y+2}" r="4" fill="#1a1010"/>
+                    <circle cx="${x-2}" cy="${y-2}" r="2.5" fill="#fff"/>
+                    <circle cx="${x+3}" cy="${y+4}" r="1.2" fill="#fff"/></g>`;
+            case 'sleepy':
+                return `<g><path d="M ${x-10},${y} Q ${x},${y-4} ${x+10},${y} L ${x+10},${y+4} Q ${x},${y+8} ${x-10},${y+4} Z" fill="#fff" ${stk}/>
+                    <path d="M ${x-10},${y} Q ${x},${y-3} ${x+10},${y}" fill="none" stroke="#1a1010" stroke-width="2.5"/>
+                    <circle cx="${x}" cy="${y+4}" r="3.5" fill="${color}"/></g>`;
+            case 'wink':
+                if (x === xL) {
+                    return `<path d="M ${x-10},${y+1} Q ${x},${y-5} ${x+10},${y+1}" fill="none" stroke="#1a1010" stroke-width="3" stroke-linecap="round"/>`;
+                }
+                return `<g><ellipse cx="${x}" cy="${y}" rx="9" ry="11" fill="#fff" ${stk}/>
+                    <circle cx="${x}" cy="${y+1}" r="5.5" fill="${color}"/>
+                    <circle cx="${x}" cy="${y+1}" r="2.5" fill="#1a1010"/>
+                    <circle cx="${x-1.5}" cy="${y-1.5}" r="1.8" fill="#fff"/></g>`;
+            case 'star':
+                return `<g><ellipse cx="${x}" cy="${y}" rx="10" ry="12" fill="#fff" ${stk}/>
+                    <path d="M ${x},${y-6} L ${x+1.7},${y-2} L ${x+6},${y-1} L ${x+2.6},${y+2} L ${x+3.7},${y+6} L ${x},${y+3.5} L ${x-3.7},${y+6} L ${x-2.6},${y+2} L ${x-6},${y-1} L ${x-1.7},${y-2} Z" fill="${color}"/></g>`;
+            case 'dot':
+                return `<circle cx="${x}" cy="${y+2}" r="4.5" fill="#1a1010"/>`;
+            case 'closed':
+                return `<path d="M ${x-9},${y+3} Q ${x},${y-6} ${x+9},${y+3}" fill="none" stroke="#1a1010" stroke-width="3" stroke-linecap="round"/>`;
+            case 'square':
+                return `<g><rect x="${x-9}" y="${y-9}" width="18" height="18" rx="2" fill="#fff" ${stk}/>
+                    <rect x="${x-4}" y="${y-4}" width="8" height="8" fill="${color}"/>
+                    <rect x="${x-1}" y="${y-1}" width="3" height="3" fill="#1a1010"/></g>`;
+            case 'sparkle':
+                return `<g><ellipse cx="${x}" cy="${y}" rx="11" ry="13" fill="#fff" ${stk}/>
+                    <circle cx="${x}" cy="${y+2}" r="6.5" fill="${color}"/>
+                    <circle cx="${x}" cy="${y+2}" r="3" fill="#1a1010"/>
+                    <ellipse cx="${x-2.5}" cy="${y-2}" rx="3" ry="2" fill="#fff" transform="rotate(-30 ${x-2.5} ${y-2})"/>
+                    <circle cx="${x+3}" cy="${y+4}" r="1.5" fill="#fff"/></g>`;
+            case 'tired':
+                return `<g><path d="M ${x-10},${y-2} Q ${x},${y+4} ${x+10},${y-2}" fill="none" stroke="#1a1010" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="${x}" cy="${y+1}" r="2.5" fill="#1a1010"/></g>`;
+            default:
+                return renderEyes('normal', color);
+        }
+    };
+    return eye(xL) + eye(xR);
+}
+
+// ── BROWS ──────────────────────────────────────────────────────────────
+function renderBrows(shape, color) {
+    if (shape === 'none') return '';
+    const xL = 76, xR = 124, y = 70;
+    const stk = `stroke="${color}" stroke-width="4.5" stroke-linecap="round" fill="none"`;
+    const brow = (x, mirrored = false) => {
+        const m = mirrored ? -1 : 1;
+        switch (shape) {
+            case 'flat':      return `<line x1="${x-10}" y1="${y}" x2="${x+10}" y2="${y}" ${stk}/>`;
+            case 'arched':    return `<path d="M ${x-10},${y+2} Q ${x},${y-4} ${x+10},${y+2}" ${stk}/>`;
+            case 'angry':     return `<line x1="${x-10}" y1="${y-2 + m*2}" x2="${x+10}" y2="${y+2 - m*2}" ${stk}/>`;
+            case 'surprised': return `<path d="M ${x-10},${y+4} Q ${x},${y-8} ${x+10},${y+4}" ${stk}/>`;
+            case 'thick':     return `<path d="M ${x-11},${y} Q ${x},${y-3} ${x+11},${y}" stroke="${color}" stroke-width="7" stroke-linecap="round" fill="none"/>`;
+            case 'thin':      return `<line x1="${x-9}" y1="${y}" x2="${x+9}" y2="${y}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`;
+            case 'wavy':      return `<path d="M ${x-10},${y} Q ${x-5},${y-3} ${x},${y} T ${x+10},${y}" ${stk}/>`;
+            default:          return '';
+        }
+    };
+    return brow(xL, false) + brow(xR, true);
+}
+
+// ── NOSE ───────────────────────────────────────────────────────────────
+function renderNose(shape, skin) {
+    if (shape === 'none') return '';
+    const stk = `stroke="#1a1010" stroke-width="2" stroke-linecap="round" fill="none"`;
+    const shadow = `fill="rgba(0,0,0,0.12)"`;
+    switch (shape) {
+        case 'small':   return `<circle cx="100" cy="108" r="2.5" fill="#1a1010"/>`;
+        case 'button':  return `<path d="M 96,108 Q 100,114 104,108" ${stk}/>`;
+        case 'wide':    return `<path d="M 91,108 Q 100,116 109,108" stroke="#1a1010" stroke-width="2.5" stroke-linecap="round" fill="none"/>`;
+        case 'long':    return `<path d="M 100,98 L 99,110 Q 100,116 101,110 Z" ${shadow} stroke="#1a1010" stroke-width="1.5"/>`;
+        case 'pointy':  return `<path d="M 100,98 L 96,112 Q 100,114 104,112 Z" fill="${skin}" stroke="#1a1010" stroke-width="2" stroke-linejoin="round"/>`;
+        default:        return '';
+    }
+}
+
+// ── MOUTH ──────────────────────────────────────────────────────────────
+function renderMouth(shape) {
+    const stk = `stroke="#1a1010" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+    const y = 128;
+    switch (shape) {
+        case 'smile':   return `<path d="M 86,${y} Q 100,${y+12} 114,${y}" ${stk}/>`;
+        case 'grin':    return `<path d="M 82,${y-2} Q 100,${y+14} 118,${y-2} L 116,${y-2} Q 100,${y+8} 84,${y-2} Z" fill="#fff" stroke="#1a1010" stroke-width="3" stroke-linejoin="round"/>
+                                <line x1="100" y1="${y-1}" x2="100" y2="${y+6}" stroke="#1a1010" stroke-width="1.5"/>`;
+        case 'neutral': return `<line x1="88" y1="${y+2}" x2="112" y2="${y+2}" ${stk}/>`;
+        case 'open':    return `<ellipse cx="100" cy="${y+3}" rx="8" ry="9" fill="#5a1822" stroke="#1a1010" stroke-width="2.5"/>`;
+        case 'smirk':   return `<path d="M 88,${y+4} Q 100,${y+10} 112,${y-2}" ${stk}/>`;
+        case 'tongue':  return `<path d="M 84,${y-2} Q 100,${y+14} 116,${y-2}" fill="#5a1822" stroke="#1a1010" stroke-width="2.5" stroke-linejoin="round"/>
+                                <ellipse cx="100" cy="${y+8}" rx="6" ry="4" fill="#ff7a90"/>`;
+        case 'o':       return `<circle cx="100" cy="${y+2}" r="5" fill="#5a1822" stroke="#1a1010" stroke-width="2.5"/>`;
+        case 'frown':   return `<path d="M 86,${y+8} Q 100,${y-4} 114,${y+8}" ${stk}/>`;
+        case 'kiss':    return `<g><ellipse cx="100" cy="${y+2}" rx="4" ry="5" fill="#ff7a90" stroke="#1a1010" stroke-width="2"/>
+                                <ellipse cx="100" cy="${y}" rx="2.5" ry="1.5" fill="#ff4d70"/></g>`;
+        case 'tooth':   return `<path d="M 86,${y} Q 100,${y+12} 114,${y}" ${stk}/>
+                                <rect x="94" y="${y+5}" width="6" height="8" rx="1" fill="#fff" stroke="#1a1010" stroke-width="1.5"/>`;
+        default:        return renderMouth('smile');
+    }
+}
+
+// ── HAIR (drawn behind the face for length, in front for top fringe) ──
+// We return { back, front } so caller can layer them.
+function renderHair(style, color) {
+    const stk = `stroke="#1a1010" stroke-width="3" stroke-linejoin="round"`;
+    const dark = darkenHex(color, 0.7);
+    switch (style) {
+        case 'bald':
+            return { back: '', front: '' };
+        case 'short_messy':
+            return {
+                back: '',
+                front: `<path d="M 50,68 Q 46,28 100,28 Q 154,28 150,68 Q 142,40 124,38 Q 120,52 110,42 Q 100,54 90,42 Q 80,52 76,38 Q 58,40 50,68 Z" fill="${color}" ${stk}/>`
+            };
+        case 'short_neat':
+            return {
+                back: '',
+                front: `<path d="M 48,72 Q 48,32 100,32 Q 152,32 152,72 Q 140,58 100,58 Q 60,58 48,72 Z" fill="${color}" ${stk}/>`
+            };
+        case 'side_part':
+            return {
+                back: '',
+                front: `<path d="M 50,70 Q 50,30 100,30 Q 150,30 150,70 Q 138,52 110,50 Q 95,38 80,52 Q 60,54 50,70 Z" fill="${color}" ${stk}/>
+                        <path d="M 88,32 Q 92,46 78,58 Q 70,52 78,42 Q 82,34 88,32 Z" fill="${dark}" stroke="none"/>`
+            };
+        case 'long_straight':
+            return {
+                back: `<path d="M 42,80 Q 42,30 100,30 Q 158,30 158,80 L 162,225 Q 130,235 100,235 Q 70,235 38,225 Z" fill="${color}" ${stk}/>`,
+                front: `<path d="M 48,72 Q 50,38 100,38 Q 150,38 152,72 Q 140,56 100,56 Q 60,56 48,72 Z" fill="${color}" ${stk}/>`
+            };
+        case 'ponytail':
+            return {
+                back: `<path d="M 142,68 Q 168,90 162,140 Q 155,170 138,165 Q 144,140 140,90 Z" fill="${color}" ${stk}/>`,
+                front: `<path d="M 50,70 Q 50,30 100,30 Q 150,30 150,70 Q 138,52 100,52 Q 62,52 50,70 Z" fill="${color}" ${stk}/>`
+            };
+        case 'pigtails':
+            return {
+                back: `<ellipse cx="40" cy="105" rx="14" ry="22" fill="${color}" ${stk}/>
+                       <ellipse cx="160" cy="105" rx="14" ry="22" fill="${color}" ${stk}/>`,
+                front: `<path d="M 48,72 Q 48,30 100,30 Q 152,30 152,72 Q 140,56 100,56 Q 60,56 48,72 Z" fill="${color}" ${stk}/>`
+            };
+        case 'bun':
+            return {
+                back: `<circle cx="100" cy="28" r="22" fill="${color}" ${stk}/>`,
+                front: `<path d="M 50,70 Q 50,40 100,40 Q 150,40 150,70 Q 138,58 100,58 Q 62,58 50,70 Z" fill="${color}" ${stk}/>`
+            };
+        case 'curly':
+            return {
+                back: `<g fill="${color}" ${stk}>
+                        <circle cx="50" cy="60" r="14"/><circle cx="150" cy="60" r="14"/>
+                        <circle cx="40" cy="90" r="14"/><circle cx="160" cy="90" r="14"/>
+                       </g>`,
+                front: `<g fill="${color}" ${stk}>
+                        <circle cx="70" cy="42" r="16"/><circle cx="100" cy="34" r="18"/><circle cx="130" cy="42" r="16"/>
+                       </g>`
+            };
+        case 'mohawk':
+            return {
+                back: '',
+                front: `<path d="M 88,80 L 88,32 Q 88,20 100,18 Q 112,20 112,32 L 112,80 Z" fill="${color}" ${stk}/>
+                        <path d="M 92,30 L 92,18 M 100,28 L 100,14 M 108,30 L 108,18" stroke="${color}" stroke-width="6" stroke-linecap="round"/>`
+            };
+        case 'bowl':
+            return {
+                back: '',
+                front: `<path d="M 44,86 Q 44,30 100,30 Q 156,30 156,86 Q 150,72 100,72 Q 50,72 44,86 Z" fill="${color}" ${stk}/>`
+            };
+        case 'afro':
+            return {
+                back: `<circle cx="100" cy="60" r="72" fill="${color}" ${stk}/>`,
+                front: ''
+            };
+        case 'spiky':
+            return {
+                back: '',
+                front: `<path d="M 50,70 L 60,30 L 70,60 L 80,22 L 92,55 L 100,18 L 110,55 L 120,22 L 130,60 L 140,30 L 150,70 Q 138,56 100,56 Q 62,56 50,70 Z" fill="${color}" ${stk}/>`
+            };
+        case 'wavy_long':
+            return {
+                back: `<path d="M 40,80 Q 40,30 100,30 Q 160,30 160,80 Q 168,140 160,200 Q 130,210 100,205 Q 70,210 40,200 Q 32,140 40,80 Z" fill="${color}" ${stk}/>`,
+                front: `<path d="M 48,74 Q 60,40 100,38 Q 140,40 152,74 Q 138,56 110,60 Q 100,46 90,60 Q 62,56 48,74 Z" fill="${color}" ${stk}/>`
+            };
+        default:
+            return { back: '', front: '' };
+    }
+}
+
+// ── ACCESSORIES ────────────────────────────────────────────────────────
+function renderAccessory(kind) {
+    const stk = `stroke="#1a1010" stroke-width="3" stroke-linejoin="round"`;
+    switch (kind) {
+        case 'none':       return '';
+        case 'glasses':
+            return `<g fill="none" stroke="#1a1010" stroke-width="3">
+                <circle cx="76" cy="92" r="13"/><circle cx="124" cy="92" r="13"/>
+                <line x1="89" y1="92" x2="111" y2="92"/>
+                <line x1="63" y1="90" x2="50" y2="86"/><line x1="137" y1="90" x2="150" y2="86"/>
+            </g>`;
+        case 'shades':
+            return `<g ${stk} fill="#1a1010">
+                <rect x="62" y="82" width="28" height="20" rx="4"/>
+                <rect x="110" y="82" width="28" height="20" rx="4"/>
+                <line x1="90" y1="92" x2="110" y2="92" stroke="#1a1010" stroke-width="3"/>
+                <ellipse cx="70" cy="88" rx="4" ry="2" fill="#fff" opacity="0.4"/>
+                <ellipse cx="118" cy="88" rx="4" ry="2" fill="#fff" opacity="0.4"/>
+            </g>`;
+        case 'cap':
+            return `<g ${stk}>
+                <path d="M 42,52 Q 42,18 100,18 Q 158,18 158,52 Q 158,60 152,60 L 48,60 Q 42,60 42,52 Z" fill="#d92e3a"/>
+                <path d="M 42,58 L 18,72 Q 14,76 20,80 L 48,68 Z" fill="#d92e3a"/>
+                <circle cx="100" cy="22" r="3" fill="#fff"/>
+            </g>`;
+        case 'beanie':
+            return `<g ${stk}>
+                <path d="M 40,68 Q 40,16 100,16 Q 160,16 160,68 Q 160,76 152,76 L 48,76 Q 40,76 40,68 Z" fill="#3a2a8a"/>
+                <path d="M 40,70 L 160,70 L 160,80 Q 160,86 152,86 L 48,86 Q 40,86 40,80 Z" fill="#2a1a6a"/>
+                <circle cx="100" cy="14" r="8" fill="#ffd54a" stroke="#1a1010" stroke-width="2.5"/>
+            </g>`;
+        case 'crown':
+            return `<g ${stk}>
+                <path d="M 52,52 L 60,22 L 78,42 L 100,12 L 122,42 L 140,22 L 148,52 Z" fill="#ffd54a"/>
+                <circle cx="62" cy="26" r="3" fill="#d92e3a"/>
+                <circle cx="100" cy="18" r="4" fill="#3aa9ff"/>
+                <circle cx="138" cy="26" r="3" fill="#3ec866"/>
+            </g>`;
+        case 'bandana':
+            return `<g ${stk}>
+                <path d="M 40,46 L 160,46 L 160,62 Q 100,72 40,62 Z" fill="#d92e3a"/>
+                <path d="M 160,46 L 178,38 L 180,60 L 162,58 Z" fill="#d92e3a"/>
+                <circle cx="70" cy="54" r="2" fill="#fff"/><circle cx="100" cy="58" r="2" fill="#fff"/><circle cx="130" cy="54" r="2" fill="#fff"/>
+            </g>`;
+        case 'headband':
+            return `<rect x="42" y="48" width="116" height="10" fill="#ff4d5c" ${stk}/>`;
+        case 'helmet':
+            return `<g ${stk}>
+                <path d="M 38,76 Q 38,20 100,20 Q 162,20 162,76 L 158,80 L 42,80 Z" fill="#3a4a5a"/>
+                <rect x="38" y="76" width="124" height="6" fill="#2a2a2a"/>
+                <circle cx="100" cy="38" r="6" fill="#ffd54a" stroke="#1a1010" stroke-width="2"/>
+            </g>`;
+        case 'earrings':
+            return `<g ${stk}>
+                <circle cx="40" cy="100" r="5" fill="#ffd54a"/>
+                <circle cx="160" cy="100" r="5" fill="#ffd54a"/>
+            </g>`;
+        default: return '';
+    }
+}
+
+// ── BODY (chibi torso) ─────────────────────────────────────────────────
+function renderBody(shape, outfit, skin) {
+    const stk = `stroke="#1a1010" stroke-width="3" stroke-linejoin="round"`;
+    const w = shape === 'slim' ? 36 : shape === 'chunky' ? 62 : 48;
+    // Neck
+    const neck = `<path d="M ${100-10},148 L ${100-10},164 L ${100+10},164 L ${100+10},148 Z" fill="${skin}" stroke="#1a1010" stroke-width="2.5"/>`;
+    // Torso (T-shirt shape with shoulders)
+    const torso = `<path d="M ${100-w-8},180 L ${100-w},170 Q ${100-w+2},164 ${100-12},164 L ${100+12},164 Q ${100+w-2},164 ${100+w},170 L ${100+w+8},180 L ${100+w+4},196 L ${100+w-2},196 L ${100+w-2},250 Q ${100+w-2},258 ${100+w-10},258 L ${100-w+10},258 Q ${100-w+2},258 ${100-w+2},250 L ${100-w+2},196 L ${100-w-4},196 Z" fill="${outfit}" ${stk}/>`;
+    // Arms (short stubs)
+    const aL = `<ellipse cx="${100-w-6}" cy="200" rx="9" ry="14" fill="${skin}" stroke="#1a1010" stroke-width="2.5"/>`;
+    const aR = `<ellipse cx="${100+w+6}" cy="200" rx="9" ry="14" fill="${skin}" stroke="#1a1010" stroke-width="2.5"/>`;
+    return neck + torso + aL + aR;
+}
+
+// ── Utility: darken a hex color ───────────────────────────────────────
+function darkenHex(hex, factor = 0.7) {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0,2), 16);
+    const g = parseInt(h.substring(2,4), 16);
+    const b = parseInt(h.substring(4,6), 16);
+    const out = (c) => Math.round(c * factor).toString(16).padStart(2,'0');
+    return '#' + out(r) + out(g) + out(b);
+}
+
+// ═══ MAIN RENDERER ════════════════════════════════════════════════════════
+// mode:
+//   'full'    → head + body (viewBox 200x260)
+//   'head'    → head only, slightly tighter framing (viewBox 200x180)
+//   'square'  → head only, square viewBox 200x200 (good for canvas-texture)
+function renderAvatarSVG(avatar, mode = 'full', extraAttrs = '') {
+    if (!avatar) avatar = defaultAvatar(0);
+    const a = avatar;
+    const hair = renderHair(a.hair.style, a.hair.color);
+
+    let viewBox, height;
+    if (mode === 'head')       { viewBox = '20 0 160 180'; height = 180; }
+    else if (mode === 'square'){ viewBox = '0 -10 200 200'; height = 200; }
+    else                       { viewBox = '0 0 200 260'; height = 260; }
+
+    const bodyLayer = (mode === 'full') ? renderBody(a.body, a.outfit, a.skin) : '';
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet" ${extraAttrs}>
+        ${bodyLayer}
+        ${hair.back}
+        ${renderFace(a.face, a.skin)}
+        ${renderBrows(a.brows.shape, a.brows.color)}
+        ${renderEyes(a.eyes.shape, a.eyes.color)}
+        ${renderNose(a.nose, a.skin)}
+        ${renderMouth(a.mouth)}
+        ${hair.front}
+        ${renderAccessory(a.accessory)}
+    </svg>`.replace(/\s+/g, ' ').trim();
+}
+
+// Render to a canvas (for THREE.CanvasTexture on the 3D board pawn)
+function avatarToCanvas(avatar, size = 256) {
+    return new Promise((resolve, reject) => {
+        const svg = renderAvatarSVG(avatar, 'square', `width="${size}" height="${size}"`);
+        const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.drawImage(img, 0, 0, size, size);
+            URL.revokeObjectURL(url);
+            resolve(canvas);
+        };
+        img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+        img.src = url;
+    });
+}
+
+// ═══ PERSISTENCE ══════════════════════════════════════════════════════════
+const AVATAR_STORAGE_KEY = 'drank-eiland-avatars-v1';
+
+function loadAvatars() {
+    try {
+        const raw = localStorage.getItem(AVATAR_STORAGE_KEY);
+        if (!raw) return {};
+        const data = JSON.parse(raw);
+        if (!data || typeof data !== 'object') return {};
+        return data;
+    } catch (e) {
+        return {};
+    }
+}
+function saveAvatar(colorIdx, avatar) {
+    try {
+        const all = loadAvatars();
+        all[colorIdx] = avatar;
+        localStorage.setItem(AVATAR_STORAGE_KEY, JSON.stringify(all));
+    } catch (e) {}
+}
+function loadAvatarForColor(colorIdx) {
+    const all = loadAvatars();
+    return all[colorIdx] || defaultAvatar(colorIdx);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AVATAR CREATOR UI — full-screen overlay (CSS-prefix `av-`)
+   Pattern A inline overlay, z-index 60. Categories as horizontal tab-strip,
+   options as a swipeable carousel, live SVG preview that updates instantly.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const AVATAR_CATEGORIES = [
+    {
+        id: 'face', label: 'Gezicht', emoji: '😀',
+        options: AVATAR_FACE_OPTIONS.map(v => ({ value: v, label: v })),
+        palette: AVATAR_SKIN_TONES, paletteLabel: 'Huid',
+        get: a => a.face,                     set: (a, v) => a.face = v,
+        getColor: a => a.skin,                setColor: (a, v) => a.skin = v,
+    },
+    {
+        id: 'eyes', label: 'Ogen', emoji: '👁',
+        options: AVATAR_EYE_OPTIONS.map(v => ({ value: v, label: v })),
+        palette: AVATAR_EYE_COLORS, paletteLabel: 'Kleur',
+        get: a => a.eyes.shape,               set: (a, v) => a.eyes.shape = v,
+        getColor: a => a.eyes.color,          setColor: (a, v) => a.eyes.color = v,
+    },
+    {
+        id: 'brows', label: 'Brauwen', emoji: '🤨',
+        options: AVATAR_BROW_OPTIONS.map(v => ({ value: v, label: v })),
+        palette: AVATAR_BROW_COLORS, paletteLabel: 'Kleur',
+        get: a => a.brows.shape,              set: (a, v) => a.brows.shape = v,
+        getColor: a => a.brows.color,         setColor: (a, v) => a.brows.color = v,
+    },
+    {
+        id: 'nose', label: 'Neus', emoji: '👃',
+        options: AVATAR_NOSE_OPTIONS.map(v => ({ value: v, label: v })),
+        palette: null,
+        get: a => a.nose,                     set: (a, v) => a.nose = v,
+    },
+    {
+        id: 'mouth', label: 'Mond', emoji: '👄',
+        options: AVATAR_MOUTH_OPTIONS.map(v => ({ value: v, label: v })),
+        palette: null,
+        get: a => a.mouth,                    set: (a, v) => a.mouth = v,
+    },
+    {
+        id: 'hair', label: 'Haar', emoji: '💇',
+        options: AVATAR_HAIR_OPTIONS.map(v => ({ value: v, label: v })),
+        palette: AVATAR_HAIR_COLORS, paletteLabel: 'Kleur',
+        get: a => a.hair.style,               set: (a, v) => a.hair.style = v,
+        getColor: a => a.hair.color,          setColor: (a, v) => a.hair.color = v,
+    },
+    {
+        id: 'accessory', label: 'Accessoire', emoji: '🕶',
+        options: AVATAR_ACC_OPTIONS.map(v => ({ value: v, label: v })),
+        palette: null,
+        get: a => a.accessory,                set: (a, v) => a.accessory = v,
+    },
+    {
+        id: 'body', label: 'Lichaam', emoji: '💪',
+        options: AVATAR_BODY_OPTIONS.map(v => ({ value: v, label: v })),
+        palette: null,
+        get: a => a.body,                     set: (a, v) => a.body = v,
+    },
+    {
+        id: 'outfit', label: 'Outfit', emoji: '👕',
+        options: [{ value: 'tee', label: 'shirt' }],  // single shape, color = the variable
+        palette: AVATAR_OUTFIT_COLORS, paletteLabel: 'Kleur',
+        get: a => 'tee',                      set: (a, v) => {},
+        getColor: a => a.outfit,              setColor: (a, v) => a.outfit = v,
+    },
+];
+
+// Translate raw option keys → friendly Dutch labels
+const AVATAR_LABELS = {
+    // face
+    round:'Rond', oval:'Ovaal', square:'Vierkant', heart:'Hartvorm',
+    long:'Lang', chubby:'Bol', pointed:'Spits', diamond:'Diamant',
+    // eyes
+    normal:'Normaal', big:'Groot', sleepy:'Slaperig', wink:'Knipoog',
+    star:'Ster', dot:'Stip', closed:'Dicht', sparkle:'Glinster', tired:'Moe',
+    // brows
+    flat:'Plat', arched:'Gebogen', angry:'Boos', surprised:'Verbaasd',
+    thick:'Dik', thin:'Dun', wavy:'Golvend', none:'Geen',
+    // nose
+    small:'Klein', button:'Knopje', wide:'Breed', pointy:'Spits',
+    // mouth
+    smile:'Glimlach', grin:'Brede grijns', open:'Open', smirk:'Scheef',
+    tongue:'Tong uit', o:'Verbaasd', frown:'Frons', kiss:'Kus', tooth:'Tand',
+    // hair
+    bald:'Kaal', short_messy:'Slordig kort', short_neat:'Net kort',
+    side_part:'Zijscheiding', long_straight:'Lang stijl', ponytail:'Paardenstaart',
+    pigtails:'Vlechtjes', bun:'Knot', curly:'Krullen', mohawk:'Hanenkam',
+    bowl:'Pottenkop', afro:'Afro', spiky:'Stekels', wavy_long:'Golvend lang',
+    // accessory
+    glasses:'Bril', shades:'Zonnebril', cap:'Pet', beanie:'Muts',
+    crown:'Kroon', bandana:'Bandana', headband:'Hoofdband',
+    helmet:'Helm', earrings:'Oorbellen',
+    // body
+    slim:'Slank', chunky:'Stevig',
+    // outfit
+    tee: 'Shirt',
+};
+function avlbl(key) { return AVATAR_LABELS[key] || key; }
+
+/**
+ * Open the full-screen Avatar Creator.
+ * @param {object} initial Starting avatar (will be cloned, not mutated)
+ * @param {string} title E.g. "Avatar voor Speler 1"
+ * @returns {Promise<object|null>} The edited avatar, or null if cancelled
+ */
+function openAvatarCreator(initial, title = 'Avatar Creator') {
+    return new Promise(resolve => {
+        // Deep-clone so cancel really discards changes
+        const a = JSON.parse(JSON.stringify(initial || defaultAvatar(0)));
+        let currentCat = AVATAR_CATEGORIES[0];
+
+        const host = document.getElementById('game-ui');
+        const back = el('div', { className: 'av-back' });
+
+        // ── Header
+        const head = el('div', { className: 'av-head' });
+        head.append(
+            el('div', { className: 'av-title' }, title),
+            el('button', { className: 'av-close', type: 'button',
+                on: { click: () => finish(null) } }, '✕'),
+        );
+
+        // ── Big preview
+        const preview = el('div', { className: 'av-preview' });
+        const previewSVG = el('div', { className: 'av-svg-wrap' });
+        preview.append(previewSVG);
+
+        // ── Top-action row: random + reset
+        const topActs = el('div', { className: 'av-top-actions' });
+        const btnRand = el('button', { className: 'av-action-btn', type: 'button',
+            on: { click: () => {
+                const rand = randomAvatar();
+                // keep outfit close to the player's identity if the original had a fixed outfit
+                Object.assign(a, rand);
+                refresh();
+            } } });
+        btnRand.append(el('span', { className: 'e' }, '🎲'), document.createTextNode(' Random'));
+        const btnReset = el('button', { className: 'av-action-btn', type: 'button',
+            on: { click: () => {
+                Object.assign(a, JSON.parse(JSON.stringify(initial || defaultAvatar(0))));
+                refresh();
+            } } });
+        btnReset.append(el('span', { className: 'e' }, '↺'), document.createTextNode(' Reset'));
+        topActs.append(btnRand, btnReset);
+
+        // ── Category tab-strip (horizontal scroll)
+        const catStrip = el('div', { className: 'av-tabs' });
+        for (const cat of AVATAR_CATEGORIES) {
+            const tab = el('button', { className: 'av-tab', type: 'button',
+                on: { click: () => { currentCat = cat; refresh(); } } });
+            tab.append(
+                el('div', { className: 'av-tab-emoji' }, cat.emoji),
+                el('div', { className: 'av-tab-label' }, cat.label),
+            );
+            tab.dataset.cat = cat.id;
+            catStrip.append(tab);
+        }
+
+        // ── Options carousel
+        const optWrap = el('div', { className: 'av-options-wrap' });
+        const optScroll = el('div', { className: 'av-options' });
+        optWrap.append(optScroll);
+
+        // ── Palette (color swatches, shown only when category has palette)
+        const paletteWrap = el('div', { className: 'av-palette-wrap' });
+        const paletteLabel = el('div', { className: 'av-palette-label' });
+        const paletteRow = el('div', { className: 'av-palette' });
+        paletteWrap.append(paletteLabel, paletteRow);
+
+        // ── Footer (Cancel / Save)
+        const foot = el('div', { className: 'av-foot' });
+        const cancel = el('button', { className: 'av-btn ghost', type: 'button',
+            on: { click: () => finish(null) } }, '✕  Annuleren');
+        const save = el('button', { className: 'av-btn gold', type: 'button',
+            on: { click: () => finish(a) } }, '✓  Opslaan');
+        foot.append(cancel, save);
+
+        back.append(head, preview, topActs, catStrip, optWrap, paletteWrap, foot);
+        host.append(back);
+
+        // ── refresh: re-render preview, options, palette
+        function refresh() {
+            // preview
+            previewSVG.innerHTML = renderAvatarSVG(a, 'full');
+            previewSVG.firstChild?.classList?.add('av-bounce');
+
+            // active tab
+            for (const t of catStrip.querySelectorAll('.av-tab')) {
+                t.classList.toggle('active', t.dataset.cat === currentCat.id);
+            }
+            // Scroll active tab into view
+            const activeTab = catStrip.querySelector('.av-tab.active');
+            if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+            // options
+            clear(optScroll);
+            const currentVal = currentCat.get(a);
+            for (const opt of currentCat.options) {
+                const card = el('button', { className: 'av-opt' + (opt.value === currentVal ? ' active' : ''), type: 'button',
+                    on: { click: () => { currentCat.set(a, opt.value); refresh(); } } });
+                // mini preview: clone the avatar and apply just this option
+                const mini = JSON.parse(JSON.stringify(a));
+                currentCat.set(mini, opt.value);
+                card.innerHTML = `<div class="av-opt-thumb">${renderAvatarSVG(mini, 'head')}</div>
+                    <div class="av-opt-lbl">${avlbl(opt.value)}</div>`;
+                optScroll.append(card);
+            }
+            // Scroll active option into view
+            const activeOpt = optScroll.querySelector('.av-opt.active');
+            if (activeOpt) activeOpt.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+            // palette
+            if (currentCat.palette) {
+                paletteWrap.style.display = '';
+                paletteLabel.textContent = currentCat.paletteLabel || 'Kleur';
+                clear(paletteRow);
+                const curColor = currentCat.getColor(a);
+                for (const col of currentCat.palette) {
+                    const sw = el('button', { className: 'av-sw' + (col === curColor ? ' active' : ''), type: 'button',
+                        on: { click: () => { currentCat.setColor(a, col); refresh(); } } });
+                    sw.style.background = col;
+                    paletteRow.append(sw);
+                }
+            } else {
+                paletteWrap.style.display = 'none';
+            }
+        }
+
+        function finish(result) {
+            back.style.transition = 'opacity 0.25s ease';
+            back.style.opacity = '0';
+            setTimeout(() => { back.remove(); resolve(result); }, 250);
+        }
+
+        refresh();
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3D BOARD TOKEN — avatar-aware version
+   Replaces the all-color cone+sphere with: dark base + colored cone body +
+   billboard sprite head rendered from the avatar SVG. Falls back to the
+   classic look if `avatar` is null/undefined.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const _avatarTextureCache = new Map();    // avatar-hash → THREE.CanvasTexture
+
+function avatarHashKey(avatar) {
+    if (!avatar) return 'default';
+    return JSON.stringify(avatar);
+}
+
+async function getAvatarTexture(avatar) {
+    const key = avatarHashKey(avatar);
+    if (_avatarTextureCache.has(key)) return _avatarTextureCache.get(key);
+    const canvas = await avatarToCanvas(avatar, 256);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.magFilter = THREE.LinearFilter;
+    tex.minFilter = THREE.LinearMipMapLinearFilter;
+    tex.needsUpdate = true;
+    _avatarTextureCache.set(key, tex);
+    return tex;
+}
+
+function invalidateAvatarTexture(avatar) {
+    _avatarTextureCache.delete(avatarHashKey(avatar));
+}
+
+/**
+ * Create a 3D pawn. If `avatar` is supplied, replaces the head with a
+ * billboard sprite showing the avatar face. The body cone stays in
+ * the player's identity color so minimap/HUD stay visually consistent.
+ */
+function makePlayerAvatarToken(colorHex, avatar = null) {
+    const g = new THREE.Group();
+    const colMat   = new THREE.MeshToonMaterial({ color: colorHex, gradientMap: toon, emissive: colorHex, emissiveIntensity: 0.25 });
+    const darkMat  = new THREE.MeshToonMaterial({ color: 0x101820, gradientMap: toon });
+
+    // base disc
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.18, 18), darkMat);
+    base.position.y = 0.09; base.castShadow = true; g.add(base);
+
+    // body cone (in player identity color)
+    const body = new THREE.Mesh(new THREE.ConeGeometry(0.36, 1.0, 16), colMat);
+    body.position.y = 0.68; body.castShadow = true; g.add(body);
+
+    // outline on body
+    const outlineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide });
+    const bodyOut = new THREE.Mesh(body.geometry, outlineMat);
+    bodyOut.scale.set(1.12, 1.06, 1.12); body.add(bodyOut);
+
+    if (avatar) {
+        // Head as a billboard sprite (avatar face texture)
+        // Placeholder white sprite first; texture loads async
+        const placeholderMat = new THREE.SpriteMaterial({ color: 0xffffff });
+        const sprite = new THREE.Sprite(placeholderMat);
+        sprite.scale.set(0.9, 0.9, 1);
+        sprite.position.y = 1.6;
+        g.add(sprite);
+        g.userData.headSprite = sprite;
+
+        getAvatarTexture(avatar).then(tex => {
+            sprite.material = new THREE.SpriteMaterial({ map: tex, transparent: true });
+            sprite.material.needsUpdate = true;
+        }).catch(() => {
+            // On failure: keep the white placeholder
+        });
+    } else {
+        // Classic fallback: spherical head in player color
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 12), colMat);
+        head.position.y = 1.32; head.castShadow = true; g.add(head);
+        const headOut = new THREE.Mesh(head.geometry, outlineMat);
+        headOut.scale.setScalar(1.12); head.add(headOut);
+    }
+
+    tokenGroup.add(g);
+    return g;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DOM helper for minigames / HUD: render avatar as an HTML/SVG element
+   ═══════════════════════════════════════════════════════════════════════════ */
+function renderPlayerAvatarDOM(player, size = 64, mode = 'head') {
+    const wrap = document.createElement('div');
+    wrap.className = 'player-avatar';
+    wrap.style.width = wrap.style.height = size + 'px';
+    if (player?.avatar) {
+        wrap.innerHTML = renderAvatarSVG(player.avatar, mode, `width="${size}" height="${size}"`);
+    } else {
+        // Fallback dot
+        wrap.style.background = player?.color?.css || '#888';
+        wrap.style.borderRadius = '50%';
+        wrap.style.border = '3px solid #fff';
+    }
+    return wrap;
+}
+
 // ── Modal helper ──
 function showModal({ emoji='', title='', body='', actions=[] }) {
     return new Promise(resolve => {
@@ -3385,8 +4443,8 @@ function renderSetup() {
     G.phase = 'setup';
     clear(ui);
     const draft = [
-        { name: 'Speler 1', colorIdx: 0 },
-        { name: 'Speler 2', colorIdx: 1 },
+        { name: 'Speler 1', colorIdx: 0, avatar: loadAvatarForColor(0) },
+        { name: 'Speler 2', colorIdx: 1, avatar: loadAvatarForColor(1) },
     ];
 
     const screen = el('div', { className: 'screen' });
@@ -3409,17 +4467,38 @@ function renderSetup() {
         clear(card);
         draft.forEach((p, i) => {
             const row = el('div', { className: 'player-row' });
+            // ── Avatar thumb (tap to open the Avatar Creator) ──
+            const thumb = el('div', { className: 'av-thumb', title: 'Avatar bewerken' });
+            thumb.style.color = PLAYER_COLORS[p.colorIdx].css;     // glow color
+            thumb.innerHTML = renderAvatarSVG(p.avatar, 'head');
+            thumb.addEventListener('click', async () => {
+                const updated = await openAvatarCreator(
+                    p.avatar,
+                    `Avatar voor ${p.name || 'Speler ' + (i+1)}`,
+                );
+                if (updated) {
+                    p.avatar = updated;
+                    saveAvatar(p.colorIdx, updated);
+                    renderGame();
+                }
+            });
+            // ── Identity color swatch (cycles to next free color) ──
             const sw = el('div', { className: 'swatch' });
             sw.style.background = PLAYER_COLORS[p.colorIdx].css;
             sw.addEventListener('click', () => {
                 const taken = new Set(draft.map((q, j) => j !== i ? q.colorIdx : -1));
                 let next = (p.colorIdx + 1) % PLAYER_COLORS.length;
                 while (taken.has(next)) next = (next + 1) % PLAYER_COLORS.length;
-                p.colorIdx = next; renderGame();
+                p.colorIdx = next;
+                // Try to load a previously saved avatar for the new color slot,
+                // OR keep the current avatar but adopt the new slot's default outfit.
+                const saved = loadAvatars()[next];
+                p.avatar = saved || p.avatar || defaultAvatar(next);
+                renderGame();
             });
             const input = el('input', { type: 'text', value: p.name, placeholder: 'Naam',
                 on: { input: e => p.name = e.target.value } });
-            row.append(sw, input);
+            row.append(thumb, sw, input);
             if (draft.length > 2) {
                 const rm = el('button', { className: 'btn-x',
                     on: { click: () => { draft.splice(i, 1); renderGame(); } } }, '×');
@@ -3432,7 +4511,9 @@ function renderSetup() {
                 on: { click: () => {
                     const taken = new Set(draft.map(q => q.colorIdx));
                     let c = 0; while (taken.has(c)) c++;
-                    draft.push({ name: `Speler ${draft.length + 1}`, colorIdx: c }); renderGame();
+                    draft.push({ name: `Speler ${draft.length + 1}`, colorIdx: c,
+                                 avatar: loadAvatarForColor(c) });
+                    renderGame();
                 } } }, '+ Speler toevoegen');
             card.append(addBtn);
         }
@@ -3477,6 +4558,7 @@ function renderSetup() {
     const mgGrid = el('div', { className: 'mg-grid' });
 
     const MINIGAMES = [
+        { id: 'avatar',      emoji: '🧑‍🎨', name: 'Avatar Creator',       meta: 'maker',         tag: 'NIEUW', locked: false },
         { id: 'chwazi',      emoji: '👆',  name: 'Chwazi',              meta: '1 willekeurig', tag: null, locked: false },
         { id: 'krokodil',    emoji: '🐊',  name: 'Krokodil',             meta: '1v1',           tag: null, locked: false },
         { id: 'paddle',      emoji: '🏓',  name: 'Paddle Duel',          meta: '1v1',           tag: null, locked: false },
@@ -3563,6 +4645,24 @@ function renderSetup() {
 
 // ── Standalone minigame launcher (from Minigames tab) ──
 async function launchStandaloneMinigame(id) {
+    // ── Avatar Creator: standalone, geen fake spelers nodig ──
+    // Slot 0 wordt standaard geladen/opgeslagen. Werkt zonder G.players,
+    // dus geen stash-dans.
+    if (id === 'avatar') {
+        const initial = loadAvatarForColor(0);
+        const updated = await openAvatarCreator(initial, 'Avatar Creator');
+        if (updated) {
+            saveAvatar(0, updated);
+            await showModal({
+                emoji: '🧑‍🎨', title: 'Avatar opgeslagen',
+                body: ['Deze avatar wordt automatisch geladen wanneer je kleur 1 kiest in het bordspel.'],
+                actions: [{ label: 'Klaar', value: true }],
+            });
+        }
+        renderSetup();
+        return;
+    }
+
     // Build N fake players from the palette so the minigame can colour them
     const n = MG_QUICK_PLAYERS;
     const stash = G.players;
@@ -3570,6 +4670,7 @@ async function launchStandaloneMinigame(id) {
         name: `Speler ${i + 1}`,
         colorIdx: i,
         color: PLAYER_COLORS[i % PLAYER_COLORS.length],
+        avatar: loadAvatarForColor(i),    // standalone minigames krijgen ook avatars
     }));
 
     if (id === 'chwazi') {
@@ -3705,11 +4806,13 @@ function startGame(draft) {
     const cfg = DIFFICULTY_CONFIGS[G.difficulty] || DIFFICULTY_CONFIGS.normal;
     // build players
     G.players = draft.map(d => {
-        const token = makePlayerToken(PLAYER_COLORS[d.colorIdx].hex);
+        const avatar = d.avatar || loadAvatarForColor(d.colorIdx) || defaultAvatar(d.colorIdx);
+        const token = makePlayerAvatarToken(PLAYER_COLORS[d.colorIdx].hex, avatar);
         return {
             name: d.name || PLAYER_COLORS[d.colorIdx].name,
             colorIdx: d.colorIdx,
             color: PLAYER_COLORS[d.colorIdx],
+            avatar,
             tileIdx: 0,
             token,
             bonusDice: cfg.startBonusDice || 0,
@@ -3948,9 +5051,24 @@ function refreshHUD() {
     if (!cur) return;
     const card = document.getElementById('cur-player');
     clear(card);
+    // The player-card .avatar dot stays as the identity-color ring + glow,
+    // but its inner content is now the chibi avatar face (if any).
     const av = el('div', { className: 'avatar' });
-    av.style.background = cur.color.css;
-    av.style.color = cur.color.css;
+    av.style.color = cur.color.css;       // glow via currentColor
+    if (cur.avatar) {
+        av.style.background = 'rgba(0,0,0,0.25)';
+        av.style.overflow = 'hidden';
+        av.innerHTML = renderAvatarSVG(cur.avatar, 'head', 'width="100%" height="100%"');
+        // Bump the SVG so the head fills the circle nicely
+        const svg = av.firstChild;
+        if (svg && svg.style) {
+            svg.style.width  = '140%';
+            svg.style.height = '140%';
+            svg.style.marginTop = '4px';
+        }
+    } else {
+        av.style.background = cur.color.css;
+    }
     const txt = el('div');
     txt.append(
         el('div', { className: 'name' }, cur.name),
@@ -5609,7 +6727,17 @@ function playSchnapsCall({ player = null, mode = 'standalone' } = {}) {
             );
             topInfo.append(chip);
         }
-        const avatar = el('div', { className: 'sk-avatar' }, '🥃');
+        // ── Beller-portret: in-game = speler's eigen avatar, standalone = 🥃 ──
+        const avatar = el('div', { className: 'sk-avatar' });
+        if (inGame && player?.avatar) {
+            // Render speler avatar als achtergrond, met behoud van pulse-animatie
+            avatar.style.padding = '0';
+            avatar.style.overflow = 'hidden';
+            avatar.innerHTML = renderAvatarSVG(player.avatar, 'square',
+                'width="100%" height="100%"');
+        } else {
+            avatar.textContent = '🥃';
+        }
         const actions = el('div', { className: 'sk-actions' });
 
         const declineBtn = el('button', { className: 'sk-action', type: 'button' });
