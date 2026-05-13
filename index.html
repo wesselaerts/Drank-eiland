@@ -6986,10 +6986,18 @@ function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
             const MIN_P = 8, MAX_P = 32;
             const power = Math.min(MAX_P, Math.max(MIN_P, mag * POWER_PER_PX));
             const sign = current === 'A' ? 1 : -1;
+            // Sleep-richting bepaalt hoek 1-op-1 (geen gekoppelde clamps
+            // meer): pure horizontale sleep = echt platte schot, diagonale
+            // sleep = boog, verticale sleep = recht omhoog. Hierdoor kun
+            // je bij max power gewoon LAAG mikken voor een snelle directe
+            // schot, of bij weinig power HOOG voor een mortier-boog.
             let fwd = (dx * sign) / mag;
             let up  = (-dy) / mag;
-            if (fwd < 0.10) fwd = 0.10;
-            if (up  < 0.12) up  = 0.12;
+            // Niet achteruit en niet de grond in schieten — maar 0 is
+            // toegestaan (echt platte resp. recht-omhoog schot).
+            if (fwd < 0) fwd = 0;
+            if (up  < 0) up  = 0;
+            if (fwd === 0 && up === 0) up = 0.1;   // edge-case
             const len = Math.hypot(fwd, up);
             fwd /= len; up /= len;
             return {
@@ -7030,10 +7038,13 @@ function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
                 preview.visible = false;
                 return;
             }
-            // Simuleer fysica voor preview
-            const pos = cur.raft.position.clone();
-            pos.y += 1.1;
-            pos.x += (current === 'A' ? 1.9 : -1.9);
+            // Simuleer fysica voor preview, vanaf de échte kanon-tip
+            // (zelfde berekening als fireBall) zodat de gestippelde lijn
+            // exact uit het uiteinde van de loop komt — ook bij hoog of
+            // laag mikken.
+            cur.raft.updateMatrixWorld(true);
+            const pos = new THREE.Vector3(0, 0.55, 0)
+                .applyMatrix4(barrel.matrixWorld);
             const vel = new THREE.Vector3(aim.vx, aim.vy, aim.vz);
             const positions = preview.geometry.attributes.position.array;
             const dt = 0.06;
@@ -7145,10 +7156,17 @@ function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
         // ════════════════════════════════════════════════════════
         function fireBall(aim) {
             const cur = players[current];
-            const start = cur.raft.position.clone();
-            start.y += 1.1;
-            start.x += (current === 'A' ? 1.9 : -1.9);
-            ballMesh.position.copy(start);
+            const barrel = cur.raft.userData.barrel;
+            // Bal spawnt op de échte tip van het kanon — niet meer op
+            // een hardcoded offset. De barrel-cylinder heeft lengte 1.1
+            // langs zijn lokale Y-as, dus de tip ligt op (0, 0.55, 0)
+            // in barrel-local. Door dit via barrel.matrixWorld te
+            // transformeren krijgen we de wereld-positie incl. de
+            // huidige aim-rotatie + raft-bob + raft-rotation.
+            cur.raft.updateMatrixWorld(true);
+            const tip = new THREE.Vector3(0, 0.55, 0)
+                .applyMatrix4(barrel.matrixWorld);
+            ballMesh.position.copy(tip);
             ballMesh.visible = true;
             trailPts.length = 0;
             ball = {
@@ -7163,12 +7181,13 @@ function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
             fireCamFrom.tgt.copy(controls.target);
             setBanner('', '');
             setTip('');
-            // Kanon-recoil
-            const barrel = cur.raft.userData.barrel;
+            // Kanon-recoil — beide rafts hebben de loop op raft-local +X
+            // (raft B is gespiegeld via rotation.y=π), dus de recoil moet
+            // ALTIJD raft-local -X richting zijn. De oude code deed dat
+            // voor raft B verkeerd (recoil ging richting de tegenstander).
             if (barrel) {
-                const sgn = current === 'A' ? -0.4 : 0.4;
-                barrel.position.x += sgn;
-                setTimeout(() => barrel.position.x -= sgn, 200);
+                barrel.position.x -= 0.4;
+                setTimeout(() => barrel.position.x += 0.4, 200);
             }
         }
         function checkBallPhysics(dt, time) {

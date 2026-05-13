@@ -1,5 +1,5 @@
 --- /home/claude/drank-eiland/repo/index.html	2026-05-13 11:14:04.239115824 +0000
-+++ /home/claude/work/index.html	2026-05-13 18:39:36.265626255 +0000
++++ /home/claude/work/index.html	2026-05-13 18:57:02.064154747 +0000
 @@ -313,19 +313,200 @@
      /* Brief rolling shake — class is added then removed in next frame as a marker */
      .die3d.rolling { transition: none; }
@@ -535,7 +535,7 @@
                  }, '*');
              } catch (e) { /* cross-origin — ignore */ }
          }
-@@ -6282,6 +6630,813 @@
+@@ -6282,6 +6630,832 @@
      });
  }
  
@@ -895,10 +895,18 @@
 +            const MIN_P = 8, MAX_P = 32;
 +            const power = Math.min(MAX_P, Math.max(MIN_P, mag * POWER_PER_PX));
 +            const sign = current === 'A' ? 1 : -1;
++            // Sleep-richting bepaalt hoek 1-op-1 (geen gekoppelde clamps
++            // meer): pure horizontale sleep = echt platte schot, diagonale
++            // sleep = boog, verticale sleep = recht omhoog. Hierdoor kun
++            // je bij max power gewoon LAAG mikken voor een snelle directe
++            // schot, of bij weinig power HOOG voor een mortier-boog.
 +            let fwd = (dx * sign) / mag;
 +            let up  = (-dy) / mag;
-+            if (fwd < 0.10) fwd = 0.10;
-+            if (up  < 0.12) up  = 0.12;
++            // Niet achteruit en niet de grond in schieten — maar 0 is
++            // toegestaan (echt platte resp. recht-omhoog schot).
++            if (fwd < 0) fwd = 0;
++            if (up  < 0) up  = 0;
++            if (fwd === 0 && up === 0) up = 0.1;   // edge-case
 +            const len = Math.hypot(fwd, up);
 +            fwd /= len; up /= len;
 +            return {
@@ -939,10 +947,13 @@
 +                preview.visible = false;
 +                return;
 +            }
-+            // Simuleer fysica voor preview
-+            const pos = cur.raft.position.clone();
-+            pos.y += 1.1;
-+            pos.x += (current === 'A' ? 1.9 : -1.9);
++            // Simuleer fysica voor preview, vanaf de échte kanon-tip
++            // (zelfde berekening als fireBall) zodat de gestippelde lijn
++            // exact uit het uiteinde van de loop komt — ook bij hoog of
++            // laag mikken.
++            cur.raft.updateMatrixWorld(true);
++            const pos = new THREE.Vector3(0, 0.55, 0)
++                .applyMatrix4(barrel.matrixWorld);
 +            const vel = new THREE.Vector3(aim.vx, aim.vy, aim.vz);
 +            const positions = preview.geometry.attributes.position.array;
 +            const dt = 0.06;
@@ -1054,10 +1065,17 @@
 +        // ════════════════════════════════════════════════════════
 +        function fireBall(aim) {
 +            const cur = players[current];
-+            const start = cur.raft.position.clone();
-+            start.y += 1.1;
-+            start.x += (current === 'A' ? 1.9 : -1.9);
-+            ballMesh.position.copy(start);
++            const barrel = cur.raft.userData.barrel;
++            // Bal spawnt op de échte tip van het kanon — niet meer op
++            // een hardcoded offset. De barrel-cylinder heeft lengte 1.1
++            // langs zijn lokale Y-as, dus de tip ligt op (0, 0.55, 0)
++            // in barrel-local. Door dit via barrel.matrixWorld te
++            // transformeren krijgen we de wereld-positie incl. de
++            // huidige aim-rotatie + raft-bob + raft-rotation.
++            cur.raft.updateMatrixWorld(true);
++            const tip = new THREE.Vector3(0, 0.55, 0)
++                .applyMatrix4(barrel.matrixWorld);
++            ballMesh.position.copy(tip);
 +            ballMesh.visible = true;
 +            trailPts.length = 0;
 +            ball = {
@@ -1072,12 +1090,13 @@
 +            fireCamFrom.tgt.copy(controls.target);
 +            setBanner('', '');
 +            setTip('');
-+            // Kanon-recoil
-+            const barrel = cur.raft.userData.barrel;
++            // Kanon-recoil — beide rafts hebben de loop op raft-local +X
++            // (raft B is gespiegeld via rotation.y=π), dus de recoil moet
++            // ALTIJD raft-local -X richting zijn. De oude code deed dat
++            // voor raft B verkeerd (recoil ging richting de tegenstander).
 +            if (barrel) {
-+                const sgn = current === 'A' ? -0.4 : 0.4;
-+                barrel.position.x += sgn;
-+                setTimeout(() => barrel.position.x -= sgn, 200);
++                barrel.position.x -= 0.4;
++                setTimeout(() => barrel.position.x += 0.4, 200);
 +            }
 +        }
 +        function checkBallPhysics(dt, time) {
@@ -1349,7 +1368,7 @@
  /* ============================================================
     playBowling — Bowlspel (iframe)
     ============================================================
-@@ -6295,23 +7450,16 @@
+@@ -6295,23 +7469,16 @@
  function playBowling({ players, drinks = 4 } = {}) {
      return new Promise(resolve => {
          const ui = document.getElementById('game-ui');
@@ -1381,7 +1400,7 @@
  
          const wrap = el('div', { className: 'bw-canvas-wrap' });
          const iframe = el('iframe', {
-@@ -6319,8 +7467,7 @@
+@@ -6319,8 +7486,7 @@
              scrolling: 'no' });
          wrap.append(iframe);
  
@@ -1391,7 +1410,7 @@
  
          let done = false;
          async function finish(winner, winnerScore) {
-@@ -6328,6 +7475,7 @@
+@@ -6328,6 +7494,7 @@
              done = true;
              window.removeEventListener('message', onMsg);
              back.remove();
@@ -1399,7 +1418,7 @@
              if (winner) {
                  const losers = players.filter(p => p !== winner);
                  const loserNames = losers.map(p => p.name).join(', ');
-@@ -6419,6 +7567,8 @@
+@@ -6419,6 +7586,8 @@
  function playConnectFour({ playerA, playerB, drinks = 4 } = {}) {
      return new Promise(resolve => {
          const ui = document.getElementById('game-ui');
@@ -1408,7 +1427,7 @@
          const back = el('div', { className: 'cf-back' });
  
          const header = el('div', { className: 'cf-header' });
-@@ -6445,6 +7595,7 @@
+@@ -6445,6 +7614,7 @@
              done = true;
              window.removeEventListener('message', onMsg);
              back.remove();
@@ -1416,7 +1435,7 @@
              if (isDraw) {
                  await showModal({ emoji: '🤝', title: 'Gelijkspel!',
                      body: ['Niemand drinkt — de goden zijn vandaag neutraal.'],
-@@ -7378,6 +8529,25 @@
+@@ -7378,6 +8548,25 @@
          // Distance from the top/bottom edge of the canvas to the paddles.
          // Larger value = paddle moves away from the iPhone notch / home indicator.
          const PAD_INSET = 70;
@@ -1442,7 +1461,7 @@
          const state = {
              padA: 0.5, padB: 0.5, // x positions 0..1
              ballX: 0, ballY: 0, vx: 0, vy: 0,
-@@ -7388,10 +8558,9 @@
+@@ -7388,10 +8577,9 @@
          function resetBall(dir) {
              state.ballX = W / 2;
              state.ballY = H / 2;
@@ -1456,7 +1475,7 @@
              state.vx = Math.cos(ang) * speed;
              state.vy = Math.sin(ang) * speed;
          }
-@@ -7463,11 +8632,35 @@
+@@ -7463,11 +8651,35 @@
              rafId = requestAnimationFrame(tick);
          }
          function update(dt) {
@@ -1495,7 +1514,7 @@
  
              const padAx = state.padA * W;
              const padBx = state.padB * W;
-@@ -7479,16 +8672,24 @@
+@@ -7479,16 +8691,24 @@
              if (state.vy < 0 && state.ballY - BALL_R <= PAD_Y_TOP + PAD_H/2 && state.ballY > PAD_Y_TOP - PAD_H) {
                  if (Math.abs(state.ballX - padAx) <= padHalfW + BALL_R) {
                      state.ballY = PAD_Y_TOP + PAD_H/2 + BALL_R;
@@ -1524,7 +1543,7 @@
                  }
              }
  
-@@ -7498,11 +8699,37 @@
+@@ -7498,11 +8718,37 @@
                  scoreBot.textContent = state.scoreB;
                  if (state.scoreB >= targetScore) endGame(playerB, playerA);
                  else resetBall(1);
