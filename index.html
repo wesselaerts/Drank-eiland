@@ -8724,7 +8724,10 @@ function playChwazi({ title = 'Iemand drinkt!', subtitle = 'Alle spelers leggen 
 }
 
 // ── Tappy Bird — pass-the-phone; each player plays once; highest score wins ──
-function playTappyBird({ players = G.players, drinks = 2 } = {}) {
+// LEGACY 2D canvas-versie van Tappy Bird. Niet meer aangeroepen — de
+// nieuwe 3D in-scene variant hieronder neemt de plek over. Behouden
+// als safety-net mocht de 3D versie issues geven.
+function playTappyBirdLegacy({ players = G.players, drinks = 2 } = {}) {
     return new Promise(resolve => {
         const ui = document.getElementById('game-ui');
         const back = el('div', { className: 'tb-back' });
@@ -8920,6 +8923,493 @@ function playTappyBird({ players = G.players, drinks = 2 } = {}) {
         showStartFor(players[curIdx]);
     });
 }
+
+
+/* ════════════════════════════════════════════════════════════════════
+   playTappyBird — 3D in-scene Tappy Bird (PHASED, per-speler)
+   ════════════════════════════════════════════════════════════════════
+   Volledig in de Three.js bord-game scene. Een vogel in de kleur van
+   de huidige speler vliegt door de lucht voor de vulkaan, langs paren
+   van houten pilaren met groene caps. Elke speler krijgt één run;
+   hoogste score wint, rest drinkt.
+
+     INTRO          camera glijdt naar start-positie
+     READY          "Geef telefoon aan [naam] — tap om te starten"
+     FLYING         vogel vliegt, tap = flap, zwaartekracht = val
+                    pilaren spawnen vooruit, score telt per pilaar
+     DEAD           vogel valt met spin het water in
+     RESULT         korte pauze, dan volgende speler of eindscherm
+     GAMEOVER       ranking + drink-opdracht
+   ════════════════════════════════════════════════════════════════════ */
+function playTappyBird({ players = G.players, drinks = 2 } = {}) {
+    return new Promise(resolveOuter => {
+        // ════════════════════════════════════════════════════════
+        //  A. SETUP
+        // ════════════════════════════════════════════════════════
+        const uiRoot = document.getElementById('game-ui');
+        const hiddenChrome = hideMinigameChrome();
+        const savedCam = {
+            pos: camera.position.clone(),
+            fov: camera.fov,
+            target: controls.target.clone(),
+            autoRotate: controls.autoRotate,
+            enabled: controls.enabled,
+        };
+        controls.autoRotate = false;
+        controls.enabled = false;
+        camera.fov = 65;
+        camera.updateProjectionMatrix();
+
+        // ════════════════════════════════════════════════════════
+        //  B. PHYSICS CONSTANTS
+        // ════════════════════════════════════════════════════════
+        const GRAVITY  = -24;
+        const FLAP     = 9.2;
+        const SPEED    = 7.5;
+        const GAP_H    = 4.2;
+        const PIPE_R   = 0.85;
+        const PIPE_GAP = 9.0;
+        const SKY_Y    = 16;
+        const WATER_Y  = 1.0;
+        const FLY_Z    = 28;
+
+        // ════════════════════════════════════════════════════════
+        //  C. VOGEL BOUWEN
+        // ════════════════════════════════════════════════════════
+        function makeBird(colorHex) {
+            const grp = new THREE.Group();
+            const colMat = new THREE.MeshToonMaterial({
+                color: colorHex, gradientMap: toon,
+                emissive: colorHex, emissiveIntensity: 0.25 });
+            const beakMat = new THREE.MeshToonMaterial({
+                color: 0xff9800, gradientMap: toon,
+                emissive: 0xff6f00, emissiveIntensity: 0.15 });
+            const body = new THREE.Mesh(
+                new THREE.SphereGeometry(0.55, 18, 14), colMat);
+            body.castShadow = true;
+            grp.add(body);
+            const belly = new THREE.Mesh(
+                new THREE.SphereGeometry(0.42, 14, 10),
+                new THREE.MeshToonMaterial({ color: 0xfff8e1, gradientMap: toon }));
+            belly.position.set(0.05, -0.15, 0);
+            belly.scale.set(0.85, 0.95, 1.0);
+            grp.add(belly);
+            const beak = new THREE.Mesh(
+                new THREE.ConeGeometry(0.18, 0.38, 8), beakMat);
+            beak.position.set(0.55, 0.02, 0);
+            beak.rotation.z = -Math.PI / 2;
+            beak.castShadow = true;
+            grp.add(beak);
+            for (const zSide of [0.32, -0.32]) {
+                const eye = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.16, 10, 8),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                eye.position.set(0.26, 0.20, zSide);
+                grp.add(eye);
+                const pupil = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.085, 8, 6),
+                    new THREE.MeshBasicMaterial({ color: 0x000000 }));
+                pupil.position.set(0.38, 0.22, zSide * 1.05);
+                grp.add(pupil);
+            }
+            const wing = new THREE.Mesh(
+                new THREE.BoxGeometry(0.50, 0.10, 0.40), colMat);
+            wing.position.set(-0.05, 0.05, 0);
+            wing.castShadow = true;
+            grp.add(wing);
+            grp.userData.wing = wing;
+            return grp;
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  D. PILAAR-PAAR BOUWEN
+        // ════════════════════════════════════════════════════════
+        function makePipePair(gapCenterY) {
+            const grp = new THREE.Group();
+            const trunkMat = new THREE.MeshToonMaterial({
+                color: 0x6d4c41, gradientMap: toon,
+                emissive: 0x3e2723, emissiveIntensity: 0.12 });
+            const capMat = new THREE.MeshToonMaterial({
+                color: 0x4caf50, gradientMap: toon,
+                emissive: 0x2e7d32, emissiveIntensity: 0.18 });
+            const gapTop = gapCenterY + GAP_H / 2;
+            const gapBot = gapCenterY - GAP_H / 2;
+            // Onder-pilaar
+            const botH = Math.max(0.4, gapBot - WATER_Y);
+            const bot = new THREE.Mesh(
+                new THREE.CylinderGeometry(PIPE_R, PIPE_R, botH, 14), trunkMat);
+            bot.position.y = WATER_Y + botH / 2;
+            bot.castShadow = bot.receiveShadow = true;
+            grp.add(bot);
+            // Onder-cap
+            const botCap = new THREE.Mesh(
+                new THREE.CylinderGeometry(PIPE_R + 0.18, PIPE_R + 0.18, 0.35, 14), capMat);
+            botCap.position.y = gapBot - 0.18;
+            botCap.castShadow = true;
+            grp.add(botCap);
+            // Boven-pilaar
+            const topH = Math.max(0.4, SKY_Y - gapTop);
+            const top = new THREE.Mesh(
+                new THREE.CylinderGeometry(PIPE_R, PIPE_R, topH, 14), trunkMat);
+            top.position.y = gapTop + topH / 2;
+            top.castShadow = top.receiveShadow = true;
+            grp.add(top);
+            // Boven-cap
+            const topCap = new THREE.Mesh(
+                new THREE.CylinderGeometry(PIPE_R + 0.18, PIPE_R + 0.18, 0.35, 14), capMat);
+            topCap.position.y = gapTop + 0.18;
+            topCap.castShadow = true;
+            grp.add(topCap);
+            grp.userData.gapCenterY = gapCenterY;
+            grp.userData.gapTop = gapTop;
+            grp.userData.gapBot = gapBot;
+            grp.userData.passed = false;
+            return grp;
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  E. STATE
+        // ════════════════════════════════════════════════════════
+        let curIdx = 0;
+        const scores = [];
+        let bird = null;
+        const pipes = [];
+        let birdX = 0, birdY = 0;
+        let vy = 0;
+        let alive = false;
+        let score = 0;
+        let phase = 'intro';
+        let phaseT = 0;
+        let pipeSpawnTimer = 0;
+        const PIPE_SPAWN_INTERVAL = PIPE_GAP / SPEED;   // sec tussen pilaren
+        const PIPE_SPAWN_X = 14;                         // spawn pos rechts off-screen
+
+        // ════════════════════════════════════════════════════════
+        //  F. CAMERA — VAST zij-aanzicht, vogel altijd in het midden
+        // ════════════════════════════════════════════════════════
+        // De vogel beweegt zelf niet (birdX blijft 0). In plaats daarvan
+        // bewegen de pilaren naar de vogel toe. De camera kijkt vanaf
+        // dezelfde plek (perpendicular zij-aanzicht) — dat geeft een
+        // klassieke Flappy Bird feel met de vogel pal in het midden.
+        const CAM_FIXED = {
+            pos: new THREE.Vector3(0, 7.5, FLY_Z + 22),
+            tgt: new THREE.Vector3(0, 8.0, FLY_Z),
+        };
+        const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
+        const camToObj = { pos: new THREE.Vector3(), tgt: new THREE.Vector3() };
+        let camLerpT = 0;
+        let camLerpDur = 0.8;
+        function setCamTo(pos, tgt, dur) {
+            camFrom.pos.copy(camera.position);
+            camFrom.tgt.copy(controls.target);
+            camToObj.pos.copy(pos);
+            camToObj.tgt.copy(tgt);
+            camLerpDur = dur;
+            camLerpT = 0;
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  G. HUD
+        // ════════════════════════════════════════════════════════
+        const tbBack = el('div', { className: 'rb3-back' });
+        const tbHit  = el('div', { className: 'rb3-hit' });
+        tbBack.append(tbHit);
+        const topBar = el('div', { className: 'rb3-top' });
+        const titleChip = el('div', { className: 'rb3-wind' }, '🐤 Tappy Bird');
+        const playerChip = el('div', { className: 'rb3-chip' });
+        const playerDot = el('div', { className: 'dot' });
+        const playerName = el('div', {}, '');
+        playerChip.append(playerDot, playerName);
+        const scoreChip = el('div', { className: 'rb3-chip',
+            style: { '--pcol': '#ffd54a' } });
+        const scoreLbl = el('div', {}, 'Score');
+        const scoreVal = el('div', {
+            style: { fontSize: '18px', marginLeft: '6px' } }, '0');
+        scoreChip.append(scoreLbl, scoreVal);
+        const rowTop = el('div', {
+            style: { display: 'flex', gap: '10px', alignItems: 'center' }
+        }, [playerChip, titleChip, scoreChip]);
+        topBar.append(rowTop);
+        const banner = el('div', { className: 'rb3-banner',
+            style: { display: 'none' } });
+        const botBar = el('div', { className: 'rb3-bot' });
+        const tip = el('div', { className: 'rb3-tip' }, '');
+        botBar.append(tip);
+        const toast = el('div', { className: 'rb3-toast',
+            style: { display: 'none' } });
+        const skipBtn = makeMinigameSkip({
+            onSkip: () => finish(null),
+            winners: players.map(p => ({
+                label: p.name, color: p.color.css,
+                onPick: () => {
+                    const sorted = players.map(pp => ({
+                        player: pp, score: pp === p ? 999 : 0 }));
+                    finish(sorted);
+                },
+            })),
+        });
+        skipBtn.classList.add('rb3-skip');
+        const flash = el('div', { className: 'rb3-flash' });
+        tbBack.append(topBar, banner, botBar, toast, skipBtn, flash);
+        uiRoot.append(tbBack);
+
+        function updatePlayerChip() {
+            const p = players[curIdx];
+            playerChip.style.setProperty('--pcol', p.color.css);
+            playerDot.style.background = p.color.css;
+            playerDot.style.boxShadow = '0 0 8px ' + p.color.css;
+            playerName.textContent = p.name;
+        }
+        function setBanner(text, color) {
+            if (!text) { banner.style.display = 'none'; return; }
+            banner.style.display = 'block';
+            banner.style.setProperty('--pcol', color || '#ffd54a');
+            banner.innerHTML = text;
+        }
+        function setTip(text) { tip.textContent = text || ''; }
+        function showToast(html, ms = 1400, color = '#ffd54a') {
+            toast.innerHTML = html;
+            toast.style.setProperty('--pcol', color);
+            toast.style.display = 'block';
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => toast.style.display = 'none', ms);
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  H. RUN-LIFECYCLE
+        // ════════════════════════════════════════════════════════
+        function disposeMesh(m) {
+            if (!m) return;
+            m.geometry && m.geometry.dispose && m.geometry.dispose();
+            if (m.material) {
+                const ms = Array.isArray(m.material) ? m.material : [m.material];
+                for (const mat of ms) mat.dispose && mat.dispose();
+            }
+        }
+        function disposeGroup(g) { g.traverse(o => disposeMesh(o)); }
+
+        function startRunFor(playerIdx) {
+            curIdx = playerIdx;
+            const p = players[curIdx];
+            updatePlayerChip();
+            scoreVal.textContent = '0';
+            score = 0;
+            if (bird) { scene.remove(bird); disposeGroup(bird); bird = null; }
+            for (const pp of pipes) { scene.remove(pp); disposeGroup(pp); }
+            pipes.length = 0;
+            pipeSpawnTimer = 0;            // direct eerste pilaar
+            bird = makeBird(p.color.hex);
+            // Vogel staat altijd op (0, ?, FLY_Z); pilaren komen op
+            // de vogel af door zelf naar -X te bewegen.
+            birdX = 0;
+            birdY = 8;
+            vy = 0;
+            bird.position.set(birdX, birdY, FLY_Z);
+            scene.add(bird);
+            setCamTo(CAM_FIXED.pos, CAM_FIXED.tgt, 0.7);
+            phase = 'ready';
+            phaseT = 0;
+            alive = true;
+            setBanner(`<small>BEURT</small><br>${p.name}`, p.color.css);
+            setTip('Tik op het scherm om te vliegen — ontwijk de pilaren');
+        }
+        function flap() {
+            if (!alive) return;
+            if (phase === 'ready') {
+                phase = 'flying';
+                phaseT = 0;
+                setBanner('', '');
+                setTip('');
+            }
+            if (phase === 'flying') {
+                vy = FLAP;
+                if (bird && bird.userData.wing) {
+                    bird.userData.wing.userData.flapT = 0;
+                }
+            }
+        }
+        function die() {
+            if (!alive) return;
+            alive = false;
+            phase = 'dead';
+            phaseT = 0;
+            flash.classList.add('show');
+            setTimeout(() => flash.classList.remove('show'), 300);
+            showToast(`Score: ${score}`, 1600, players[curIdx].color.css);
+            scores.push({ player: players[curIdx], score });
+            setTimeout(() => {
+                if (curIdx < players.length - 1) {
+                    startRunFor(curIdx + 1);
+                } else {
+                    showFinal();
+                }
+            }, 1800);
+        }
+        function showFinal() {
+            phase = 'gameover';
+            const sorted = [...scores].sort((a, b) => b.score - a.score);
+            const topScore = sorted[0].score;
+            const losers = sorted.filter(s => s.score < topScore);
+            const winnerName = sorted[0].player.name;
+            setBanner(`🏆 ${winnerName} wint!`, sorted[0].player.color.css);
+            const ko = el('div', { className: 'rb3-ko',
+                style: { '--pcol': sorted[0].player.color.css } });
+            ko.append(el('h2', {}, '🐤 Eindstand'));
+            const list = el('div', {
+                style: { display: 'flex', flexDirection: 'column', gap: '8px',
+                    margin: '12px 0', width: '100%', maxWidth: '320px' } });
+            sorted.forEach((s, i) => {
+                const row = el('div', {
+                    style: { display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '8px 12px', borderRadius: '12px',
+                        background: 'rgba(255,255,255,0.10)',
+                        border: '2px solid ' + s.player.color.css,
+                        opacity: s.score === topScore ? '1' : '0.7' } });
+                row.append(
+                    el('div', { style: { width: '12px', height: '12px',
+                        borderRadius: '50%', background: s.player.color.css } }),
+                    el('div', { style: { flex: '1', fontWeight: '800' } },
+                        `${i+1}. ${s.player.name}`),
+                    el('div', { style: { fontSize: '20px', fontWeight: '900',
+                        color: s.player.color.css } }, String(s.score)),
+                );
+                list.append(row);
+            });
+            ko.append(list);
+            const drinkMsg = losers.length === 0 ? 'Iedereen gelijk — proost!' :
+                `${losers.map(l => l.player.name).join(', ')} drinkt elk ${drinks} 🍻`;
+            ko.append(el('p', {}, drinkMsg));
+            ko.append(el('button', { className: 'btn-pill', type: 'button',
+                on: { click: () => finish(sorted) } }, 'Verder'));
+            tbBack.append(ko);
+            setTimeout(() => finish(sorted), 8000);
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  I. INPUT
+        // ════════════════════════════════════════════════════════
+        tbHit.addEventListener('touchstart', e => {
+            e.preventDefault();
+            flap();
+        }, { passive: false });
+        tbHit.addEventListener('click', () => flap());
+
+        // ════════════════════════════════════════════════════════
+        //  J. COLLISION
+        // ════════════════════════════════════════════════════════
+        function checkCollision() {
+            if (birdY <= WATER_Y || birdY >= SKY_Y) return true;
+            const BIRD_R = 0.55;
+            for (const p of pipes) {
+                const dx = birdX - p.position.x;
+                if (Math.abs(dx) < PIPE_R + BIRD_R) {
+                    if (birdY > p.userData.gapTop - BIRD_R ||
+                        birdY < p.userData.gapBot + BIRD_R) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  K. ANIMATIE-HOOK
+        // ════════════════════════════════════════════════════════
+        const PREV_HOOK = window.__deGameHook;
+        let lastT = 0;
+        window.__deGameHook = (time) => {
+            const dt = lastT ? Math.min(0.05, time - lastT) : 0;
+            lastT = time;
+            phaseT += dt;
+            // Camera lerp (alleen tussen runs)
+            if (camLerpT < 1) {
+                camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
+                const k = camLerpT;
+                const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
+                camera.position.lerpVectors(camFrom.pos, camToObj.pos, e);
+                controls.target.lerpVectors(camFrom.tgt, camToObj.tgt, e);
+                camera.lookAt(controls.target);
+            }
+            // Vogel-fysica — alleen verticaal (vogel blijft op x=0)
+            if (phase === 'flying' && alive && bird) {
+                vy += GRAVITY * dt;
+                birdY += vy * dt;
+                bird.position.y = birdY;
+                bird.rotation.z = Math.max(-1.0, Math.min(0.5, vy * 0.10));
+                // Wing-flap animatie
+                if (bird.userData.wing) {
+                    const w = bird.userData.wing;
+                    if (w.userData.flapT == null) w.userData.flapT = 0.5;
+                    w.userData.flapT = Math.min(0.5, w.userData.flapT + dt);
+                    w.rotation.x = -Math.sin(w.userData.flapT * 18) * 0.8;
+                }
+                // Pilaren scrollen naar links (richting de vogel)
+                for (const p of pipes) {
+                    p.position.x -= SPEED * dt;
+                }
+                // Spawn nieuwe pilaar elke PIPE_SPAWN_INTERVAL seconden
+                pipeSpawnTimer += dt;
+                if (pipeSpawnTimer >= PIPE_SPAWN_INTERVAL) {
+                    pipeSpawnTimer -= PIPE_SPAWN_INTERVAL;
+                    const gapY = 5 + Math.random() * 8;
+                    const pair = makePipePair(gapY);
+                    pair.position.set(PIPE_SPAWN_X, 0, FLY_Z);
+                    scene.add(pair);
+                    pipes.push(pair);
+                }
+                // Score: pilaar die voorbij vogel komt
+                for (const p of pipes) {
+                    if (!p.userData.passed && p.position.x < birdX - PIPE_R) {
+                        p.userData.passed = true;
+                        score++;
+                        scoreVal.textContent = String(score);
+                    }
+                }
+                // Despawn pilaren ver achter de vogel
+                for (let i = pipes.length - 1; i >= 0; i--) {
+                    if (pipes[i].position.x < birdX - 12) {
+                        scene.remove(pipes[i]); disposeGroup(pipes[i]);
+                        pipes.splice(i, 1);
+                    }
+                }
+                if (checkCollision()) die();
+            }
+            // Dood: vogel valt
+            if (phase === 'dead' && bird) {
+                vy += GRAVITY * dt * 0.7;
+                birdY = Math.max(WATER_Y - 2, birdY + vy * dt);
+                bird.position.y = birdY;
+                bird.rotation.z += dt * 5;
+            }
+        };
+
+        // ════════════════════════════════════════════════════════
+        //  L. CLEANUP
+        // ════════════════════════════════════════════════════════
+        async function finish(sorted) {
+            if (phase === 'done') return;
+            phase = 'done';
+            window.__deGameHook = PREV_HOOK;
+            if (bird) { scene.remove(bird); disposeGroup(bird); bird = null; }
+            for (const p of pipes) { scene.remove(p); disposeGroup(p); }
+            pipes.length = 0;
+            camera.fov = savedCam.fov;
+            camera.position.copy(savedCam.pos);
+            camera.updateProjectionMatrix();
+            controls.target.copy(savedCam.target);
+            controls.autoRotate = savedCam.autoRotate;
+            controls.enabled = savedCam.enabled;
+            camera.lookAt(controls.target);
+            tbBack.remove();
+            restoreMinigameChrome(hiddenChrome);
+            resolveOuter(sorted || null);
+        }
+
+        // Start eerste speler
+        startRunFor(0);
+    });
+}
+
 
 // ── Volcano Hop — secretly pick a platform; wrong = lightning, last standing wins ──
 function playVolcanoHop({ players = G.players, drinks = 2 } = {}) {
