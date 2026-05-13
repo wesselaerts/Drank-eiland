@@ -870,6 +870,7 @@ Elke speler heeft een **chibi avatar** in plaats van een simpele kleurpion. Twee
 [#v2-highlights](#v2-highlights)
 
 - **Real 3D heads op het bord** (geen sprite/CanvasTexture meer). Bol-hoofd in huidskleur met dark outline, eye/mouth/brow/nose als losse 3D-meshes, hair als 3D-geometrie per archetype, accessoires als 3D-primitives. Lost het "vierkante achtergrond-fringe" probleem op.
+- **Pionnen kijken naar de camera**. Het gehele token roteert per frame zodat de voorkant (+Z lokaal = gezicht) richting de camera staat. Tiny sway van ±4° met per-player phase-offset zodat ze niet star ogen en niet creepy-sync sway-en. Vervangt de oude constante `time * 0.6` spin die ervoor zorgde dat je achterhoofden zag. Zit in `_gameHook` onderaan `index.html`.
 - **Veel meer vrouwelijke opties**: glamour-ogen, lashed/cute_lashed/eyeliner, rode/roze lippen, soft_smile, lips_full, en 6 nieuwe feminiene haarstijlen (braids, bob, space_buns, side_swept, messy_bun, half_up). 4 nieuwe accessoires (bow, flower, pearls, bunny_ears).
 - **Nieuwe categorie "Wangen"** (☺): none, soft_pink, pink, red blush, sproeten (freckles), gouden sterren.
 - **6 nieuwe gezichten** (triangle, narrow, wide_jaw, soft, angular, baby) → totaal 14 face shapes.

@@ -9194,8 +9194,14 @@ async function onLandedOnTile(player) {
     if (btn) { btn.disabled = false; btn.textContent = '🎲'; }
 }
 
-// ── Per-frame token idle bob (called from inside animate via hook) ──
+// ── Per-frame token idle bob + camera-facing rotation ──
+// Heads have a front (+Z local) and a back. We rotate each idle pawn so
+// the body — and therefore the face — points roughly at the camera. Plus
+// a tiny sway so the pawn doesn't look frozen. Animated pawns (mid-move)
+// skip this so directional motion-facing isn't overruled.
 const _gameHook = (time) => {
+    const cx = camera.position.x;
+    const cz = camera.position.z;
     for (const p of G.players) {
         if (p._animating) continue;
         const isCurrent = p === G.players[G.turnIdx] && G.phase === 'idle';
@@ -9205,7 +9211,11 @@ const _gameHook = (time) => {
             p.token.position.z = p._restTarget.z;
             p.token.position.y = p._restTarget.y + bob;
         }
-        p.token.rotation.y = time * 0.6 + p.colorIdx;
+        // Face the camera (Y-axis only — no creepy head tilt). Tiny sway
+        // gives it life without "eyes-follow-you" weirdness.
+        const baseAngle = Math.atan2(cx - p.token.position.x, cz - p.token.position.z);
+        const sway = Math.sin(time * 0.8 + p.colorIdx * 1.7) * 0.07;   // ≈ ±4°
+        p.token.rotation.y = baseAngle + sway;
     }
 };
 window.__deGameHook = _gameHook;
