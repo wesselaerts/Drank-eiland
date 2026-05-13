@@ -6726,19 +6726,18 @@ function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
             pos: new THREE.Vector3(0, 22, 68),
             tgt: new THREE.Vector3(0, 2, RAFT_Z),
         };
-        // AIM_A / AIM_B: gepositioneerd zodat je de hele trajectory ziet.
-        // Hoog genoeg om de boog overzichtelijk te zien, en achter +
-        // boven de speler zodat de schoots-lijn (door midden van scherm)
-        // naar de tegenstander wijst. Target ligt RICHTING de
-        // tegenstander zodat de trajectory in het bovenste deel van het
-        // scherm verschijnt — natuurlijker voor portrait iPhone.
-        const CAM_AIM_A = {
-            pos: new THREE.Vector3(-RAFT_DIST - 4, 10, RAFT_Z + 11),
-            tgt: new THREE.Vector3(RAFT_DIST * 0.3, 4, RAFT_Z),
-        };
-        const CAM_AIM_B = {
-            pos: new THREE.Vector3( RAFT_DIST + 4, 10, RAFT_Z + 11),
-            tgt: new THREE.Vector3(-RAFT_DIST * 0.3, 4, RAFT_Z),
+        // SIDE-AIM: klassiek zij-aanzicht à la Pocket Tanks / Worms /
+        // Hills of Steel. Camera staat loodrecht op de schiet-lijn, ver
+        // genoeg achter de boten zodat beide vlotten netjes naast elkaar
+        // in beeld passen op een portrait iPhone (incl. iPhone 17 Pro).
+        // BEIDE spelers gebruiken DEZELFDE camera-positie — speler A
+        // staat altijd links, speler B altijd rechts; trajectory boogt
+        // gewoon van links→rechts of rechts→links over het scherm.
+        // FOV verhoogd naar 72 om de 32-units boat-span met marge te
+        // tonen vanaf een lichte verhoging.
+        const CAM_AIM = {
+            pos: new THREE.Vector3(0, 12, 72),
+            tgt: new THREE.Vector3(0, 5, RAFT_Z),
         };
         const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
         let camTo = CAM_WIDE;
