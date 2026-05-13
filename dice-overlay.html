@@ -689,14 +689,20 @@ function roll(){
   document.getElementById('total').textContent = '…';
   document.getElementById('breakdown').textContent = 'rolling';
 
+  // Spawn dice on a ring INSIDE the wall (radius 2.9) and throw toward the
+  // opposite side. The old code spawned at x = ±[3.5, 5.0] which is OUTSIDE
+  // the wall — dice landed off the table or flew over the wall. New: random
+  // angle around a 1.8–2.3 ring, throw toward the opposite point.
   const n = state.dice.length;
   for (let i=0; i<n; i++){
     const d = state.dice[i];
-    // start at a random offset on one side of the table
-    const side = Math.random() > 0.5 ? 1 : -1;
-    const startX = side * (3.5 + Math.random() * 1.5);
-    const startZ = -2 + Math.random() * 4;
-    const startY = 3.2 + Math.random() * 1.5 + i * 0.2;
+
+    // Pick a random spawn point on a ring well inside the wall
+    const spawnAngle = Math.random() * Math.PI * 2;
+    const spawnR     = 1.7 + Math.random() * 0.6;          // 1.7…2.3 (wall = 2.9)
+    const startX     = Math.cos(spawnAngle) * spawnR;
+    const startZ     = Math.sin(spawnAngle) * spawnR;
+    const startY     = 2.6 + Math.random() * 0.9 + i * 0.18;  // < ceiling at 7
 
     d.body.position.set(startX, startY, startZ);
     d.body.quaternion.setFromEuler(
@@ -704,16 +710,19 @@ function roll(){
       Math.random() * Math.PI * 2,
       Math.random() * Math.PI * 2
     );
-    // velocity towards opposite side / centre
+
+    // Throw roughly toward the opposite point (±35° spread) at moderate speed
+    const throwAngle = spawnAngle + Math.PI + (Math.random() - 0.5) * 0.6;
+    const speed      = 3.6 + Math.random() * 2.4;          // 3.6…6.0 m/s
     d.body.velocity.set(
-      -side * (5 + Math.random() * 3),
-      -1 - Math.random() * 1.5,
-      (Math.random() - 0.5) * 5
+      Math.cos(throwAngle) * speed,
+      -0.8 - Math.random() * 1.2,                          // gentle downward
+      Math.sin(throwAngle) * speed,
     );
     d.body.angularVelocity.set(
-      (Math.random() - 0.5) * 22,
-      (Math.random() - 0.5) * 22,
-      (Math.random() - 0.5) * 22
+      (Math.random() - 0.5) * 16,
+      (Math.random() - 0.5) * 16,
+      (Math.random() - 0.5) * 16,
     );
     d.body.wakeUp();
   }
@@ -765,6 +774,35 @@ const clock = new THREE.Clock();
 function loop(){
   const dt = Math.min(clock.getDelta(), 1/30);
   world.step(1/60, dt, 3);
+
+  // Safety net: if a die's center somehow crosses outside the wall
+  // (rare physics tunnel through corners, stacked impacts, etc.), pull
+  // it back inside and kill its outward velocity. Way better than a
+  // die settling visibly off the felt.
+  const SAFE_R = 2.55;   // a bit inside the WALL_RADIUS = 2.9
+  for (const d of state.dice){
+    const x = d.body.position.x;
+    const z = d.body.position.z;
+    const r = Math.sqrt(x*x + z*z);
+    if (r > SAFE_R){
+      const f = SAFE_R / r;
+      d.body.position.x = x * f;
+      d.body.position.z = z * f;
+      // dampen outward velocity component
+      const vx = d.body.velocity.x;
+      const vz = d.body.velocity.z;
+      const radialVel = (vx*x + vz*z) / r;
+      if (radialVel > 0){
+        d.body.velocity.x = vx - radialVel * (x/r) * 1.2;
+        d.body.velocity.z = vz - radialVel * (z/r) * 1.2;
+      }
+    }
+    // also clamp y above floor (rare floor-tunnel after a high-velocity edge hit)
+    if (d.body.position.y < DIE_SIZE/2 - 0.02){
+      d.body.position.y = DIE_SIZE/2 + 0.05;
+      if (d.body.velocity.y < 0) d.body.velocity.y = 0;
+    }
+  }
 
   for (const d of state.dice) d.sync();
 

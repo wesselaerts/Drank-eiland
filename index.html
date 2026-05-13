@@ -1648,14 +1648,16 @@ document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.08;
+controls.dampingFactor = 0.055;                    // was 0.08 — meer glide, minder stug
 controls.minDistance = 22;
 controls.maxDistance = 70;
-controls.maxPolarAngle = Math.PI / 2.1;  // never below water
+controls.maxPolarAngle = Math.PI / 2.1;            // never below water
 controls.minPolarAngle = Math.PI / 6;
 controls.target.set(0, 8, 0);
 controls.autoRotate = true;
-controls.autoRotateSpeed = 0.35;
+controls.autoRotateSpeed = 0.22;                   // was 0.35 — rustiger panoramic drift
+controls.rotateSpeed = 0.75;                       // iets gevoeliger sleep-respons
+controls.zoomSpeed = 0.85;                         // soepelere zoom
 
 // pause auto-rotate while the user is interacting, resume after idle
 let idleTimer = null;
@@ -1665,7 +1667,7 @@ controls.addEventListener('start', () => {
 });
 controls.addEventListener('end', () => {
     if (idleTimer) clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => controls.autoRotate = true, 4000);
+    idleTimer = setTimeout(() => controls.autoRotate = true, 4500);   // was 4000
 });
 
 
@@ -3342,12 +3344,14 @@ function moveTokenAlong(player, steps, onDone) {
             const easeBackTargetFrom = controls.target.clone();
             const finalTile = tileWorldPos[player.tileIdx].clone();
             const restoreStart = performance.now();
-            const restoreDur = 600;
+            const restoreDur = 820;                            // was 600 — relaxter terug
             const easeBack = (now) => {
                 const k = Math.min(1, (now - restoreStart) / restoreDur);
-                const e = k < 0.5 ? 2*k*k : 1 - Math.pow(-2*k + 2, 2)/2;
+                // cubic-in-out: zachte start én zachte stop
+                const e = k < 0.5
+                    ? 4 * k * k * k
+                    : 1 - Math.pow(-2*k + 2, 3) / 2;
                 camera.position.lerpVectors(easeBackFrom, savedCamPos, e);
-                // target lands on the final tile (more natural than the original)
                 controls.target.lerpVectors(easeBackTargetFrom, finalTile, e);
                 if (k < 1) requestAnimationFrame(easeBack);
                 else {
@@ -3384,12 +3388,16 @@ function moveTokenAlong(player, steps, onDone) {
 
         const isFirstHop = (stepsLeft === steps);
         const startTimestamp = performance.now();
-        const dur = isFirstHop ? 420 : 320;  // first hop slightly longer to ease into POV
+        const dur = isFirstHop ? 540 : 360;   // was 420/320 — iets relaxter
         const arcH = 0.9;
 
         const tick = (now) => {
             const k = Math.min(1, (now - startTimestamp) / dur);
-            const ease = 1 - Math.pow(1 - k, 2.5);
+            // Cubic-in-out voor zachte start én zachte stop op de eerste hop
+            // (entry into POV), simpele ease-out voor de vervolgstappen.
+            const ease = isFirstHop
+                ? (k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k + 2, 3) / 2)
+                : (1 - Math.pow(1 - k, 2.5));
 
             // pawn motion
             player.token.position.lerpVectors(from, target, ease);
@@ -3417,9 +3425,9 @@ function moveTokenAlong(player, steps, onDone) {
                 camera.position.lerpVectors(camStart, desiredCam, ease);
                 controls.target.lerpVectors(tgtStart, desiredTgt, ease);
             } else {
-                // already in POV — smooth chase
-                camera.position.lerp(desiredCam, 0.18);
-                controls.target.lerp(desiredTgt, 0.22);
+                // already in POV — soepele chase (lager = meer trailing/glide)
+                camera.position.lerp(desiredCam, 0.13);   // was 0.18
+                controls.target.lerp(desiredTgt, 0.17);   // was 0.22
             }
 
             if (k < 1) requestAnimationFrame(tick);
@@ -9199,8 +9207,12 @@ async function onLandedOnTile(player) {
 // the body — and therefore the face — points roughly at the camera. Plus
 // a tiny sway so the pawn doesn't look frozen. Animated pawns (mid-move)
 // skip this so directional motion-facing isn't overruled.
+// Camera sits high above the board, so we ALSO tilt the head group up
+// (X-axis on the head only, body stays vertical) to about 70% of the
+// camera's elevation angle. Without this, top-down view shows mostly hair.
 const _gameHook = (time) => {
     const cx = camera.position.x;
+    const cy = camera.position.y;
     const cz = camera.position.z;
     for (const p of G.players) {
         if (p._animating) continue;
@@ -9211,11 +9223,28 @@ const _gameHook = (time) => {
             p.token.position.z = p._restTarget.z;
             p.token.position.y = p._restTarget.y + bob;
         }
-        // Face the camera (Y-axis only — no creepy head tilt). Tiny sway
-        // gives it life without "eyes-follow-you" weirdness.
-        const baseAngle = Math.atan2(cx - p.token.position.x, cz - p.token.position.z);
-        const sway = Math.sin(time * 0.8 + p.colorIdx * 1.7) * 0.07;   // ≈ ±4°
+
+        const dx = cx - p.token.position.x;
+        const dz = cz - p.token.position.z;
+        const horiz = Math.sqrt(dx*dx + dz*dz);
+
+        // Y-axis: face the camera horizontally + tiny sway (≈ ±4°)
+        const baseAngle = Math.atan2(dx, dz);
+        const sway = Math.sin(time * 0.8 + p.colorIdx * 1.7) * 0.07;
         p.token.rotation.y = baseAngle + sway;
+
+        // X-axis on HEAD group only: tilt face up toward elevated camera
+        const headGroup = p.token.userData.headGroup;
+        if (headGroup) {
+            const headWorldY = p.token.position.y + 1.50;       // head sits at y=1.5 above token base
+            const pitch = Math.atan2(cy - headWorldY, horiz);   // positive when cam above head
+            // 70% lookup keeps it expressive without going "eyes on stalks".
+            // Min 8° even at flat camera so face is always slightly readable.
+            const tilt = Math.max(0.14, pitch * 0.70);
+            // Tiny nod for liveliness (≈ ±2°)
+            const nod = Math.sin(time * 0.6 + p.colorIdx * 2.3) * 0.035;
+            headGroup.rotation.x = -(tilt + nod);                // negative = face up
+        }
     }
 };
 window.__deGameHook = _gameHook;
