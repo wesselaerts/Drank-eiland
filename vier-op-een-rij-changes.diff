@@ -1,0 +1,39 @@
+--- /home/claude/drank-eiland/repo/vier-op-een-rij.html	2026-05-13 11:14:04.239115824 +0000
++++ /home/claude/work/vier-op-een-rij.html	2026-05-13 17:08:51.226182425 +0000
+@@ -998,13 +998,24 @@
+     }
+   }
+ 
++  // Detect of we als iframe in Drank Eiland draaien — dan slaat de
++  // parent zijn eigen win-overlay over en hoeven we niet allebei een
++  // "Speel Nog Een Keer" + winnaar-modal te tonen.
++  const IS_EMBEDDED = (() => {
++    try { return window.self !== window.top; } catch (e) { return true; }
++  })();
++
+   function showWin(p){
+     fanfare();
+     winTextEl.textContent = names[p]+' wint!';
+     winSubEl.textContent = '4 op een rij! 🎉';
+     trophyEl.textContent='🏆';
+     makeConfetti();
+-    winOverlay.classList.remove('hidden');
++    // Embedded: laat de ouder de winnaar-modal tonen, géén lokale
++    // "Speel Nog Een Keer" knop hier (zou dubbele berichten geven).
++    if (!IS_EMBEDDED) {
++      winOverlay.classList.remove('hidden');
++    }
+     // Notify parent (when running embedded in Drank Eiland)
+     if (window.parent && window.parent !== window) {
+       try { window.parent.postMessage({ type: 'cf-result', winner: p, winnerName: names[p] }, '*'); } catch(_){}
+@@ -1015,7 +1026,9 @@
+     winSubEl.textContent = 'Het bord is vol';
+     trophyEl.textContent='🤝';
+     confettiEl.innerHTML='';
+-    winOverlay.classList.remove('hidden');
++    if (!IS_EMBEDDED) {
++      winOverlay.classList.remove('hidden');
++    }
+     if (window.parent && window.parent !== window) {
+       try { window.parent.postMessage({ type: 'cf-result', winner: 0, winnerName: 'gelijk' }, '*'); } catch(_){}
+     }

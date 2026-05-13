@@ -1,19 +1,195 @@
 --- /home/claude/drank-eiland/repo/index.html	2026-05-13 11:14:04.239115824 +0000
-+++ /home/claude/work/index.html	2026-05-13 12:02:39.020439594 +0000
-@@ -314,18 +314,25 @@
++++ /home/claude/work/index.html	2026-05-13 17:10:43.744518301 +0000
+@@ -313,19 +313,200 @@
+     /* Brief rolling shake — class is added then removed in next frame as a marker */
      .die3d.rolling { transition: none; }
  
-     /* ===== Raft Battle wrapper — full-screen iframe with floating chrome ===== */
-+    /* In het bordspel wordt de raft-battle bovenop de Three.js eiland-scene
-+       getoond. We willen het eiland duidelijk zichtbaar laten als achter-
-+       grond, dus de wrapper is grotendeels transparant — met een dunne
-+       donkere vignet voor leesbaarheid van de gameplay. */
+-    /* ===== Raft Battle wrapper — full-screen iframe with floating chrome ===== */
++    /* ===== 3D Raft Battle (rb3-*) — overlay HUD on top of the 3D scene =====
++       Het 3D raft-battle gevecht speelt zich af IN de bord-game scene
++       zelf (zelfde camera, water, eiland), dus we hebben geen iframe
++       nodig. We tekenen alleen een HUD-laag over het canvas heen:
++       HP-balken, beurt-indicator, wind, en de touch-drag aim/fire knop. */
++    .rb3-back { position: fixed; inset: 0; z-index: 22;
++        pointer-events: none; /* alleen specifieke kinderen vangen taps */
++        color: #fff; user-select: none;
++        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
++        animation: fadeIn .25s ease; }
++    /* Touch-vang-laag: vult het scherm en geeft drag-events door aan de
++       game-logica. Géén achtergrond — het 3D-eiland blijft zichtbaar. */
++    .rb3-hit { position: absolute; inset: 0; pointer-events: auto;
++        touch-action: none; background: transparent; }
++    /* Top-bar: tegenstander HP + wind + naam */
++    /* Top-bar: HP + naam compact zodat alles met dynamic island past */
++    .rb3-top { position: absolute;
++        left: max(8px, env(safe-area-inset-left));
++        right: max(8px, env(safe-area-inset-right));
++        top: calc(env(safe-area-inset-top) + 10px);
++        display: flex; flex-direction: column; align-items: center; gap: 6px;
++        pointer-events: none; }
++    .rb3-chip { display: flex; align-items: center; gap: 6px;
++        padding: 5px 11px; border-radius: 999px;
++        background: rgba(15,30,50,0.82); border: 2px solid var(--pcol, #fff);
++        box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 16px var(--pcol, transparent);
++        font-weight: 800; font-size: 13px;
++        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
++        pointer-events: none; min-width: 0; }
++    .rb3-chip > div:not(.dot):not(.hp) {
++        max-width: 22vw; overflow: hidden;
++        text-overflow: ellipsis; white-space: nowrap; }
++    .rb3-chip .dot { width: 10px; height: 10px; border-radius: 50%;
++        background: var(--pcol); box-shadow: 0 0 8px var(--pcol);
++        flex-shrink: 0; }
++    .rb3-chip .hp { display: inline-flex; gap: 2px; margin-left: 3px; flex-shrink: 0; }
++    .rb3-chip .hp .heart { font-size: 12px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
++    .rb3-chip .hp .heart.gone { opacity: 0.25; filter: grayscale(1); }
++    .rb3-wind { padding: 4px 11px; border-radius: 999px;
++        background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.22);
++        font-size: 11px; font-weight: 800; letter-spacing: 0.3px;
++        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
++        pointer-events: none; white-space: nowrap; flex-shrink: 0; }
++    .rb3-wind .arrow { display: inline-block; margin: 0 3px; font-size: 14px; }
++    /* Bottom-bar: huidige speler + draginstructie + fire-button */
++    .rb3-bot { position: absolute;
++        left: max(8px, env(safe-area-inset-left));
++        right: max(8px, env(safe-area-inset-right));
++        bottom: calc(env(safe-area-inset-bottom) + 14px);
++        display: flex; flex-direction: column; align-items: center; gap: 8px;
++        pointer-events: none; }
++    .rb3-turn { display: flex; flex-direction: column; align-items: center; gap: 4px;
++        padding: 8px 18px 10px; border-radius: 18px;
++        background: rgba(15,30,50,0.82); border: 2px solid var(--pcol, #fff);
++        box-shadow: 0 6px 20px rgba(0,0,0,0.55), 0 0 22px var(--pcol, transparent);
++        text-align: center;
++        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
++        pointer-events: none; }
++    .rb3-turn .lbl { font-size: 11px; opacity: 0.65; letter-spacing: 1.2px;
++        text-transform: uppercase; }
++    .rb3-turn .nm { font-size: 18px; font-weight: 900; color: var(--pcol);
++        text-shadow: 0 1px 0 rgba(0,0,0,0.6); }
++    .rb3-turn .hp-now { display: inline-flex; gap: 4px; margin-top: 2px; }
++    .rb3-turn .hp-now .heart { font-size: 16px; }
++    .rb3-turn .hp-now .heart.gone { opacity: 0.25; filter: grayscale(1); }
++    .rb3-tip { padding: 4px 12px; border-radius: 999px;
++        background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2);
++        font-size: 11px; opacity: 0.85; letter-spacing: 0.3px;
++        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
++        pointer-events: none; }
++    /* Aim drag-indicator (volgt vinger tijdens slepen) */
++    .rb3-aim { position: absolute; pointer-events: none;
++        width: 70px; height: 70px; margin: -35px 0 0 -35px;
++        border: 3px solid #fff; border-radius: 50%;
++        background: rgba(255,215,80,0.15);
++        box-shadow: 0 0 22px rgba(255,215,80,0.6), inset 0 0 14px rgba(255,215,80,0.4);
++        display: flex; align-items: center; justify-content: center;
++        font-size: 22px; font-weight: 900; color: #fff;
++        text-shadow: 0 1px 0 #000; }
++    .rb3-aim::after { content: ''; position: absolute; inset: -8px;
++        border: 2px dashed rgba(255,255,255,0.45); border-radius: 50%;
++        animation: rb3spin 3s linear infinite; }
++    @keyframes rb3spin { to { transform: rotate(360deg); } }
++    /* Knockout-bevestigingsscherm na een hit */
++    .rb3-flash { position: absolute; inset: 0; pointer-events: none;
++        z-index: 25;
++        background: radial-gradient(ellipse at center, rgba(255,80,40,0.55) 0%, rgba(0,0,0,0) 60%);
++        opacity: 0; transition: opacity 0.25s ease; }
++    .rb3-flash.show { opacity: 1; }
++    /* Skip pill */
++    .rb3-skip { position: absolute; z-index: 26;
++        top: calc(env(safe-area-inset-top) + 12px);
++        right: calc(env(safe-area-inset-right) + 10px);
++        padding: 7px 13px; border-radius: 999px;
++        background: rgba(0,0,0,0.55); color: #fff;
++        font-weight: 800; font-size: 12px; letter-spacing: 0.4px;
++        border: 1px solid rgba(255,255,255,0.22); cursor: pointer;
++        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
++        -webkit-tap-highlight-color: transparent;
++        box-shadow: 0 2px 8px rgba(0,0,0,0.4); pointer-events: auto; }
++    .rb3-skip:active { transform: translateY(1px); }
++    /* KO/winner overlay */
++    .rb3-ko { position: absolute; inset: 0; z-index: 27;
++        display: flex; flex-direction: column; align-items: center; justify-content: center;
++        gap: 14px; padding: 24px; text-align: center;
++        background: radial-gradient(ellipse at center, rgba(0,0,0,0.78), rgba(0,0,0,0.92));
++        animation: fadeIn .25s ease; pointer-events: auto; }
++    .rb3-ko h2 { margin: 0; font-size: 32px; font-weight: 900;
++        text-shadow: 0 3px 0 #000, 0 0 22px var(--pcol); }
++    .rb3-ko p { margin: 0; opacity: 0.9; }
++    .rb3-ko .btn-pill { min-height: 52px; padding: 0 22px; border-radius: 999px;
++        border: 2px solid rgba(255,215,80,0.6); background: linear-gradient(180deg,#ffd54a,#ff9a1a);
++        color: #2a1a00; font-weight: 900; font-size: 16px; cursor: pointer;
++        box-shadow: 0 4px 0 #b56a00; -webkit-tap-highlight-color: transparent; }
++
      .rb-back { position: fixed; inset: 0; z-index: 60;
 -      background: linear-gradient(180deg, #0a1830 0%, #051022 60%, #020812 100%);
 +      background:
 +        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%),
 +        linear-gradient(180deg, rgba(10,24,48,0.40) 0%, rgba(5,16,34,0.55) 60%, rgba(2,8,18,0.65) 100%);
        color: #fff; animation: fadeIn .25s ease; user-select: none; overflow: hidden; }
++    /* ===== Power meter (alleen zichtbaar tijdens AIM-fase) ===== */
++    .rb3-pwr { position: absolute; left: 50%;
++        transform: translateX(-50%);
++        bottom: calc(env(safe-area-inset-bottom) + 110px);
++        display: none; flex-direction: column;
++        align-items: center; gap: 5px;
++        pointer-events: none; z-index: 23; }
++    .rb3-pwr.show { display: flex; }
++    .rb3-pwr .meter {
++        width: min(260px, 60vw); height: 14px;
++        background: rgba(0,0,0,0.6);
++        border: 2px solid rgba(255,255,255,0.25);
++        border-radius: 999px; overflow: hidden;
++        box-shadow: 0 2px 12px rgba(0,0,0,0.45); }
++    .rb3-pwr .bar {
++        height: 100%; width: 100%;
++        background: linear-gradient(90deg, #4ade80 0%, #facc15 50%, #f87171 100%);
++        transform: scaleX(0); transform-origin: left;
++        transition: transform 0.08s linear; }
++    .rb3-pwr .lbl {
++        font-size: 11px; font-weight: 800;
++        letter-spacing: 0.8px; color: #fff;
++        opacity: 0.9; text-transform: uppercase;
++        text-shadow: 0 1px 0 rgba(0,0,0,0.5); }
++
++    /* ===== Banner (centre): grote fase-specifieke tekst ===== */
++    .rb3-banner { position: absolute; left: 50%; top: 38%;
++        transform: translate(-50%, -50%);
++        padding: 14px 26px; border-radius: 22px;
++        background: rgba(15,30,50,0.82); color: #fff;
++        border: 3px solid var(--pcol, #ffd54a);
++        box-shadow: 0 8px 30px rgba(0,0,0,0.55),
++                    0 0 30px var(--pcol, transparent);
++        font-weight: 900; font-size: 28px; letter-spacing: 0.5px;
++        text-align: center; line-height: 1.1;
++        text-shadow: 0 2px 0 rgba(0,0,0,0.5);
++        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
++        pointer-events: none; animation: rb3bnPop .35s ease; max-width: 80vw; }
++    .rb3-banner small { display: block; font-size: 11px;
++        letter-spacing: 1.5px; opacity: 0.7;
++        text-transform: uppercase; font-weight: 800;
++        margin-bottom: 4px; }
++    @keyframes rb3bnPop {
++        from { transform: translate(-50%, -50%) scale(0.7); opacity: 0; }
++        to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
++    }
++    /* ===== Toast (centre below banner): kort feedback bericht ===== */
++    .rb3-toast { position: absolute; left: 50%; top: 50%;
++        transform: translate(-50%, -50%);
++        padding: 12px 22px; border-radius: 999px;
++        background: rgba(15,30,50,0.88); color: #fff;
++        border: 2px solid var(--pcol, #ffd54a);
++        box-shadow: 0 6px 22px rgba(0,0,0,0.6),
++                    0 0 22px var(--pcol, transparent);
++        font-weight: 900; font-size: 22px;
++        text-shadow: 0 2px 0 rgba(0,0,0,0.5);
++        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
++        pointer-events: none; animation: rb3bnPop .25s ease;
++        white-space: nowrap; z-index: 24; }
++
++    /* ===== Raft Battle wrapper — full-screen iframe with floating chrome (LEGACY) ===== */
++    /* Voor de oude iframe-based versie (`playRaftBattleIframe`). De nieuwe
++       3D-in-scene versie gebruikt deze chrome niet. */
++
      .rb-back::before { content: ""; position: absolute; inset: 0; pointer-events: none;
        background:
          radial-gradient(circle at 20% 10%, rgba(255,200,90,0.10), transparent 35%),
@@ -30,7 +206,7 @@
      /* Floating header overlay — small, semi-transparent, taps pass through except labels */
      .rb-header { position: absolute; top: 0; left: 0; right: 0; z-index: 3;
        padding: max(8px, env(safe-area-inset-top)) 60px 8px 60px;
-@@ -5456,15 +5463,66 @@
+@@ -5456,15 +5637,66 @@
  
  // ── Setup screen ──
  let SETUP_TAB = 'game';
@@ -102,7 +278,7 @@
  
      const screen = el('div', { className: 'screen' });
      const title = el('h1', {}, '🌋 Drank Eiland');
-@@ -5498,6 +5556,7 @@
+@@ -5498,6 +5730,7 @@
                  if (updated) {
                      p.avatar = updated;
                      saveAvatar(p.colorIdx, updated);
@@ -110,7 +286,7 @@
                      renderGame();
                  }
              });
-@@ -5513,14 +5572,15 @@
+@@ -5513,14 +5746,15 @@
                  // OR keep the current avatar but adopt the new slot's default outfit.
                  const saved = loadAvatars()[next];
                  p.avatar = saved || p.avatar || defaultAvatar(next);
@@ -128,7 +304,7 @@
                  row.append(rm);
              }
              card.append(row);
-@@ -5532,6 +5592,7 @@
+@@ -5532,6 +5766,7 @@
                      let c = 0; while (taken.has(c)) c++;
                      draft.push({ name: `Speler ${draft.length + 1}`, colorIdx: c,
                                   avatar: loadAvatarForColor(c) });
@@ -136,7 +312,7 @@
                      renderGame();
                  } } }, '+ Speler toevoegen');
              card.append(addBtn);
-@@ -5608,23 +5669,56 @@
+@@ -5608,23 +5843,56 @@
      }
      mgCard.append(mgIntro, mgGrid);
  
@@ -210,7 +386,7 @@
  
      mgPanel.append(mgCard, quick);
  
-@@ -5682,20 +5776,22 @@
+@@ -5682,20 +5950,22 @@
          return;
      }
  
@@ -241,7 +417,90 @@
              drinks: 3,
          });
          if (winner) {
-@@ -6232,12 +6328,32 @@
+@@ -6065,6 +6335,44 @@
+     }
+ }
+ 
++/* ============================================================
++   hideMinigameChrome / restoreMinigameChrome
++   ============================================================
++   Tijdens een minigame willen we al het bord-game UI rommel
++   verstoppen: home-knop, top-bar (titel+ronde), mini-map (rechts-
++   boven), en de bottom-hud (speler-kaart + dobbelsteen). Plus de
++   home-scherm overlay (.screen) op de minigame-tab.
++
++   Zonder dit hangt er bv. een dobbelsteen-icoon midden over een
++   raft-battle of bowling-scoreboard heen — niet wat we willen.
++
++   Returns een array met {el, prev} entries die je aan
++   restoreMinigameChrome doorgeeft als de minigame klaar is.
++   ============================================================ */
++function hideMinigameChrome() {
++    const hidden = [];
++    // Bord-game chrome
++    for (const id of ['home-btn', 'top-bar', 'minimap', 'hud']) {
++        const e = document.getElementById(id);
++        if (e) {
++            hidden.push({ el: e, prev: e.style.display });
++            e.style.display = 'none';
++        }
++    }
++    // Home-scherm overlay (alleen actief op de minigame-tab)
++    document.querySelectorAll('#game-ui > .screen').forEach(s => {
++        hidden.push({ el: s, prev: s.style.display });
++        s.style.display = 'none';
++    });
++    return hidden;
++}
++function restoreMinigameChrome(hidden) {
++    if (!hidden) return;
++    for (const h of hidden) {
++        if (h.el && h.el.style) h.el.style.display = h.prev;
++    }
++}
++
+ function refreshHUD() {
+     const cur = G.players[G.turnIdx];
+     if (!cur) return;
+@@ -6158,9 +6466,25 @@
+     return skip;
+ }
+ 
+-function playRaftBattle({ playerA, playerB, drinks = 4 } = {}) {
++// BACKUP: oude iframe-based Raft Battle. Wordt niet meer aangeroepen, maar
++// blijft staan voor het geval de nieuwe 3D versie hieronder issues geeft —
++// dan kun je gewoon `playRaftBattle` aanroepen vanaf deze functie en het
++// werkt direct weer.
++function playRaftBattleIframe({ playerA, playerB, drinks = 4 } = {}) {
+     return new Promise(resolve => {
+         const ui = document.getElementById('game-ui');
++
++        // ── Home-scherm overlay verbergen ──────────────────────
++        // De minigame-tab zet een semi-transparante .screen-overlay
++        // over de 3D scene. Tijdens de battle willen we 'm verstoppen
++        // zodat het eiland duidelijk zichtbaar is achter de transparante
++        // iframe. In finish() weer terugzetten.
++        const hiddenScreens = [];
++        document.querySelectorAll('#game-ui > .screen').forEach(s => {
++            hiddenScreens.push({ el: s, prevDisplay: s.style.display });
++            s.style.display = 'none';
++        });
++
+         const back = el('div', { className: 'rb-back' });
+ 
+         // Floating header overlay with title + VS chips matching player colors
+@@ -6191,6 +6515,10 @@
+             done = true;
+             window.removeEventListener('message', onMsg);
+             back.remove();
++            // Home-scherm overlay weer tonen
++            for (const h of hiddenScreens) {
++                h.el.style.display = h.prevDisplay;
++            }
+             if (winner) {
+                 const loser = winner === playerA ? playerB : playerA;
+                 await showModal({ emoji: '🏴‍☠️',
+@@ -6232,12 +6560,32 @@
  
          // Send the player config to the iframe. We do this both on load
          // and whenever the iframe says "hello", so the timing always works.
@@ -276,7 +535,836 @@
                  }, '*');
              } catch (e) { /* cross-origin — ignore */ }
          }
-@@ -7378,6 +7494,25 @@
+@@ -6282,6 +6630,761 @@
+     });
+ }
+ 
++
++/* ════════════════════════════════════════════════════════════════════
++   playRaftBattle — 3D in-scene Raft Battle (PHASED, MOBIEL-FIRST)
++   ════════════════════════════════════════════════════════════════════
++   Volledig in de Three.js bord-game scene. Geen iframe. Klassieke
++   artillery-flow (Pocket Tanks / Hills of Steel / Worms-stijl):
++
++     INTRO  (~700ms)  camera glijdt vanaf bord-game pos naar wide-shot
++     STUDY  (wacht)    overzicht — beide vlotten + wind zichtbaar
++                       "TAP TO CONTINUE" → ga naar aim
++     AIM    (wacht)    camera zoomt achter huidige speler
++                       drag op het scherm = mik + power preview
++                       loslaten = vuren
++     FIRE   (~400ms)   camera glijdt terug naar wide-shot
++     FLY    (physics)  kogel volgt zwaartekracht + wind, max 3× over
++                       water stuiteren, raakt het andere vlot of niet
++     RESULT (~1500ms)  korte HIT/MISS toast
++     → terug naar STUDY met andere speler aan beurt
++     GAMEOVER          winnaar-overlay, dan resolve
++
++   Camera-posities zijn fixed (geen orbit). Touch input via één enkele
++   handler op een fullscreen overlay-div, zodat OrbitControls helemaal
++   nergens tussen komt.
++   ════════════════════════════════════════════════════════════════════ */
++function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
++    return new Promise(resolveOuter => {
++        // ════════════════════════════════════════════════════════
++        //  A. SETUP — bord-game chrome verbergen, camera bewaren
++        // ════════════════════════════════════════════════════════
++        const uiRoot = document.getElementById('game-ui');
++        // Verberg al het bord-game UI rommel (home-knop, top-bar,
++        // mini-map, hud-card, dobbelsteen) + de home-scherm overlay
++        const hiddenChrome = hideMinigameChrome();
++        // Camera/controls snapshot
++        const savedCam = {
++            pos: camera.position.clone(),
++            fov: camera.fov,
++            target: controls.target.clone(),
++            autoRotate: controls.autoRotate,
++            enabled: controls.enabled,
++        };
++        controls.autoRotate = false;
++        controls.enabled = false;
++        camera.fov = 68;          // breder dan default 42 zodat beide
++        // boten in een portrait-scherm naast elkaar passen
++        camera.updateProjectionMatrix();
++
++        // ════════════════════════════════════════════════════════
++        //  B. RAFT FABRIEK + PLAATSING
++        // ════════════════════════════════════════════════════════
++        function makeRaft(colorHex) {
++            const grp = new THREE.Group();
++            const colMat = new THREE.MeshToonMaterial({
++                color: colorHex, gradientMap: toon,
++                emissive: colorHex, emissiveIntensity: 0.18 });
++            // 3 logs
++            for (let i = -1; i <= 1; i++) {
++                const log = new THREE.Mesh(
++                    new THREE.CylinderGeometry(0.32, 0.32, 4.5, 10), MAT.wood);
++                log.rotation.z = Math.PI / 2;
++                log.position.set(0, 0.32, i * 0.8);
++                log.castShadow = log.receiveShadow = true;
++                grp.add(log);
++            }
++            // Dek
++            const deck = new THREE.Mesh(
++                new THREE.BoxGeometry(4.6, 0.12, 2.6), MAT.woodLight);
++            deck.position.y = 0.62;
++            deck.castShadow = deck.receiveShadow = true;
++            grp.add(deck);
++            // Mast + zeil
++            const mast = new THREE.Mesh(
++                new THREE.CylinderGeometry(0.08, 0.08, 3.6, 8), MAT.wood);
++            mast.position.set(-0.4, 2.45, 0); mast.castShadow = true;
++            grp.add(mast);
++            const sailShape = new THREE.Shape();
++            sailShape.moveTo(0, 0); sailShape.lineTo(1.7, 0);
++            sailShape.lineTo(0, 2.2); sailShape.lineTo(0, 0);
++            const sailMat = new THREE.MeshToonMaterial({
++                color: colorHex, gradientMap: toon,
++                side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
++            const sail = new THREE.Mesh(new THREE.ShapeGeometry(sailShape), sailMat);
++            sail.position.set(-0.4, 1.30, 0.01); grp.add(sail);
++            // Kanon
++            const cBase = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.25, 0.7), colMat);
++            cBase.position.set(1.3, 0.82, 0); cBase.castShadow = true;
++            grp.add(cBase);
++            const barrel = new THREE.Mesh(
++                new THREE.CylinderGeometry(0.18, 0.22, 1.1, 14),
++                new THREE.MeshToonMaterial({ color: 0x222230, gradientMap: toon }));
++            barrel.rotation.z = -Math.PI / 2 + 0.20; // standaard iets omhoog
++            barrel.position.set(1.85, 1.0, 0);
++            barrel.castShadow = true;
++            grp.add(barrel);
++            grp.userData.barrel = barrel;
++            return grp;
++        }
++        const RAFT_DIST = 16; // half-afstand → 32 units totaal tussen boten
++        // Genoeg voor "veel verder uit elkaar dan in 2D" gevoel,
++        // maar past nog op een portrait phone-scherm met fov=68.
++        const RAFT_Z = 24;
++        const raftA = makeRaft(playerA.color.hex);
++        raftA.position.set(-RAFT_DIST, 0, RAFT_Z);
++        scene.add(raftA);
++        const raftB = makeRaft(playerB.color.hex);
++        raftB.position.set( RAFT_DIST, 0, RAFT_Z);
++        raftB.rotation.y = Math.PI;
++        scene.add(raftB);
++        // Speler-tokens (avatar) op de boten — flink groter dan op het
++        // bordspel (scale 1.3) zodat het gezicht goed te zien is vanaf
++        // de aim-camera. We zetten ze iets naast het kanon (x=-0.8 in
++        // raft-local) zodat ze niet in de loop staan. Hoofd tilt iets
++        // omhoog, zoals _gameHook normaal doet op het bord, zodat ze
++        // naar de camera "kijken".
++        const tokenA = makePlayerAvatarToken(playerA.color.hex, playerA.avatar || null);
++        tokenGroup.remove(tokenA); raftA.add(tokenA);
++        tokenA.position.set(-0.8, 0.7, 0); tokenA.scale.setScalar(1.3);
++        if (tokenA.userData.headGroup) {
++            tokenA.userData.headGroup.rotation.x = -0.30;
++        }
++        const tokenB = makePlayerAvatarToken(playerB.color.hex, playerB.avatar || null);
++        tokenGroup.remove(tokenB); raftB.add(tokenB);
++        tokenB.position.set(-0.8, 0.7, 0); tokenB.scale.setScalar(1.3);
++        if (tokenB.userData.headGroup) {
++            tokenB.userData.headGroup.rotation.x = -0.30;
++        }
++
++        // ════════════════════════════════════════════════════════
++        //  C. BAL + TRAJECT-PREVIEW
++        // ════════════════════════════════════════════════════════
++        const ballMesh = new THREE.Mesh(
++            new THREE.SphereGeometry(0.32, 14, 12),
++            new THREE.MeshToonMaterial({ color: 0x2a2230, gradientMap: toon }));
++        ballMesh.castShadow = true; ballMesh.visible = false;
++        scene.add(ballMesh);
++        // Trail
++        const TRAIL_N = 16;
++        const trailGeo = new THREE.BufferGeometry();
++        trailGeo.setAttribute('position',
++            new THREE.BufferAttribute(new Float32Array(TRAIL_N * 3), 3));
++        const trail = new THREE.Points(trailGeo, new THREE.PointsMaterial({
++            color: 0xfff1a8, size: 0.28, transparent: true, opacity: 0.85,
++            depthWrite: false, sizeAttenuation: true }));
++        scene.add(trail);
++        const trailPts = [];
++        // Aim-preview lijn
++        const PREV_N = 32;
++        const previewGeo = new THREE.BufferGeometry();
++        previewGeo.setAttribute('position',
++            new THREE.BufferAttribute(new Float32Array(PREV_N * 3), 3));
++        const preview = new THREE.Line(previewGeo, new THREE.LineDashedMaterial({
++            color: 0xffd54a, dashSize: 0.55, gapSize: 0.35,
++            transparent: true, opacity: 0.95, depthTest: false }));
++        preview.visible = false; preview.renderOrder = 999;
++        scene.add(preview);
++
++        // ════════════════════════════════════════════════════════
++        //  D. CAMERA-POSITIES (3 vaste shots, smooth lerp)
++        // ════════════════════════════════════════════════════════
++        // WIDE: beide boten in beeld + eiland erachter
++        // Camera ver genoeg achter en omhoog voor een mooi overview op
++        // zowel landscape als portrait phones.
++        const CAM_WIDE = {
++            pos: new THREE.Vector3(0, 22, 68),
++            tgt: new THREE.Vector3(0, 2, RAFT_Z),
++        };
++        // SIDE-AIM cameras: klassiek zij-aanzicht maar GEZOOMD op de
++        // huidige speler. De camera blijft loodrecht op de schiet-lijn
++        // (zelfde "side view" feel als CAM_WIDE), maar:
++        //  - z=44 (i.p.v. 68) — flink dichterbij voor zoom-in gevoel
++        //  - x verschoven richting de huidige speler — boot komt
++        //    duidelijk in beeld, vol bij raft-detail (avatar zichtbaar)
++        //  - target iets richting het midden — trajectory-zone in
++        //    upper portion van het scherm, vol ruimte voor finger-drag
++        // Na het schieten glijdt de camera terug naar CAM_WIDE zodat
++        // je de volledige boog + landing ziet — beste van beide werelden.
++        const CAM_AIM_A = {
++            pos: new THREE.Vector3(-8, 9, 44),
++            tgt: new THREE.Vector3(-2, 5, RAFT_Z),
++        };
++        const CAM_AIM_B = {
++            pos: new THREE.Vector3( 8, 9, 44),
++            tgt: new THREE.Vector3( 2, 5, RAFT_Z),
++        };
++        const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
++        let camTo = CAM_WIDE;
++        let camLerpT = 0;   // 0..1; 1 = aangekomen
++        let camLerpDur = 0.7;
++
++        function setCameraTarget(to, durationSec) {
++            camFrom.pos.copy(camera.position);
++            camFrom.tgt.copy(controls.target);
++            camTo = to;
++            camLerpDur = durationSec;
++            camLerpT = 0;
++        }
++
++        // ════════════════════════════════════════════════════════
++        //  E. STATE
++        // ════════════════════════════════════════════════════════
++        const players = {
++            A: { ...playerA, raft: raftA, hp: targetHp },
++            B: { ...playerB, raft: raftB, hp: targetHp },
++        };
++        let current = Math.random() < 0.5 ? 'A' : 'B';
++        let wind = randomWind();
++        let phase = 'intro';
++        let phaseT = 0;             // tijd in huidige fase
++        let lastShot = null;        // { hit:bool, knockout:bool }
++        let ball = null;            // {vel:Vector3, waterBounces}
++        let finished = false;
++
++        function randomWind() {
++            // Iets agressievere wind dan voorheen: rangee 0.9 – 2.8
++            // sterk genoeg om compensatie te eisen.
++            if (Math.random() < 0.20) return 0;   // 20% windstil
++            return (Math.random() < 0.5 ? -1 : 1) * (0.9 + Math.random() * 1.9);
++        }
++
++        // ════════════════════════════════════════════════════════
++        //  F. HUD-OVERLAY (DOM)
++        // ════════════════════════════════════════════════════════
++        const back = el('div', { className: 'rb3-back' });
++        const hit  = el('div', { className: 'rb3-hit' });
++        back.append(hit);
++        // Top-bar: HP A | wind | HP B
++        const top = el('div', { className: 'rb3-top' });
++        const chipA = el('div', { className: 'rb3-chip',
++            style: { '--pcol': playerA.color.css } });
++        const dotA = el('div', { className: 'dot',
++            style: { background: playerA.color.css,
++                     boxShadow: '0 0 8px ' + playerA.color.css } });
++        const nmA  = el('div', {}, playerA.name);
++        const hpA  = el('div', { className: 'hp' });
++        chipA.append(dotA, nmA, hpA);
++        const windEl = el('div', { className: 'rb3-wind' });
++        const chipB = el('div', { className: 'rb3-chip',
++            style: { '--pcol': playerB.color.css } });
++        const dotB = el('div', { className: 'dot',
++            style: { background: playerB.color.css,
++                     boxShadow: '0 0 8px ' + playerB.color.css } });
++        const nmB  = el('div', {}, playerB.name);
++        const hpB  = el('div', { className: 'hp' });
++        chipB.append(dotB, nmB, hpB);
++        const rowAB = el('div', {
++            style: { display: 'flex', gap: '10px', alignItems: 'center' }
++        }, [chipA, windEl, chipB]);
++        top.append(rowAB);
++        // Center banner — fase-specifieke instructie
++        const banner = el('div', { className: 'rb3-banner',
++            style: { display: 'none' } });
++        // Bottom: huidige speler + tip
++        const bot = el('div', { className: 'rb3-bot' });
++        const turnBox = el('div', { className: 'rb3-turn',
++            style: { '--pcol': playerA.color.css } });
++        const turnLbl  = el('div', { className: 'lbl' }, 'AAN DE BEURT');
++        const turnName = el('div', { className: 'nm' }, '');
++        turnBox.append(turnLbl, turnName);
++        const tip = el('div', { className: 'rb3-tip' }, '');
++        bot.append(turnBox, tip);
++        // Aim-marker (volgt vinger)
++        const aimMark = el('div', { className: 'rb3-aim',
++            style: { display: 'none' } }, '🎯');
++        // Result toast
++        const toast = el('div', { className: 'rb3-toast',
++            style: { display: 'none' } });
++        // Skip-pill (long-press → manual winner)
++        const skip = makeMinigameSkip({
++            onSkip: () => finish(null),
++            winners: [
++                { label: playerA.name, color: playerA.color.css,
++                    onPick: () => finish(playerA) },
++                { label: playerB.name, color: playerB.color.css,
++                    onPick: () => finish(playerB) },
++            ],
++        });
++        skip.classList.add('rb3-skip');
++        // Power-meter (alleen tijdens AIM zichtbaar). Maakt zonder
++        // zicht op de tegenstander toch duidelijk hoe hard je gaat
++        // schieten: groen=zacht, geel=gemiddeld, rood=max.
++        const pwrBox = el('div', { className: 'rb3-pwr' });
++        const pwrBar = el('div', { className: 'bar' });
++        const pwrMeter = el('div', { className: 'meter' }, pwrBar);
++        const pwrLbl = el('div', { className: 'lbl' }, 'POWER');
++        pwrBox.append(pwrMeter, pwrLbl);
++        // Flash + KO-overlay containers
++        const flash = el('div', { className: 'rb3-flash' });
++        back.append(top, banner, bot, aimMark, toast, skip, pwrBox, flash);
++        uiRoot.append(back);
++
++        function renderHP(node, hp) {
++            clear(node);
++            for (let i = 0; i < targetHp; i++) {
++                node.append(el('span',
++                    { className: 'heart' + (i < hp ? '' : ' gone') }, '❤️'));
++            }
++        }
++        function renderHUD() {
++            const cur = players[current];
++            renderHP(hpA, players.A.hp);
++            renderHP(hpB, players.B.hp);
++            // Wind
++            const w = Math.abs(wind);
++            if (w < 0.1) {
++                windEl.innerHTML = '💨 <b>STIL</b>';
++            } else {
++                const arrow = wind > 0 ? '➡️' : '⬅️';
++                const lbl = w > 1.7 ? 'STERK' : w > 1.0 ? 'MATIG' : 'ZWAK';
++                windEl.innerHTML = `💨 <b>${lbl}</b><span class="arrow">${arrow}</span>`;
++            }
++            turnBox.style.setProperty('--pcol', cur.color.css);
++            turnName.textContent = cur.name;
++            turnName.style.color = cur.color.css;
++        }
++        function setBanner(text, color) {
++            if (!text) { banner.style.display = 'none'; return; }
++            banner.style.display = 'block';
++            banner.style.setProperty('--pcol', color || '#ffd54a');
++            banner.innerHTML = text;
++        }
++        function setTip(text) { tip.textContent = text || ''; }
++        function showToast(html, ms = 1400, color = '#ffd54a') {
++            toast.innerHTML = html;
++            toast.style.setProperty('--pcol', color);
++            toast.style.display = 'block';
++            clearTimeout(toast._t);
++            toast._t = setTimeout(() => toast.style.display = 'none', ms);
++        }
++        renderHUD();
++
++        // ════════════════════════════════════════════════════════
++        //  G. AIM / INPUT
++        // ════════════════════════════════════════════════════════
++        const drag = { active: false, sx: 0, sy: 0, x: 0, y: 0, id: null };
++        function aimVector() {
++            // Sleep richting waarheen je wil schieten. De drag-vector is
++            // ONBEGRENSD — je vinger mag van het scherm af glijden, de
++            // delta vanaf start blijft tellen. Dat is exact zoals in
++            // raftwar 2D, en past op een phone-scherm.
++            const dx = drag.x - drag.sx;     // pixels (rechts positief)
++            const dy = drag.y - drag.sy;     // pixels (omlaag positief in DOM)
++            const mag = Math.hypot(dx, dy);
++            if (mag < 12) return null;       // dead-zone
++            // POWER curve — kanon mag flink hard schieten. Op iPhone met
++            // 844px hoogte kun je tot ~600px slepen voor max power.
++            const POWER_PER_PX = 0.062;
++            const MIN_P = 8, MAX_P = 32;
++            const power = Math.min(MAX_P, Math.max(MIN_P, mag * POWER_PER_PX));
++            const sign = current === 'A' ? 1 : -1;
++            let fwd = (dx * sign) / mag;
++            let up  = (-dy) / mag;
++            if (fwd < 0.10) fwd = 0.10;
++            if (up  < 0.12) up  = 0.12;
++            const len = Math.hypot(fwd, up);
++            fwd /= len; up /= len;
++            return {
++                vx: sign * fwd * power,
++                vy: up * power,
++                vz: 0,
++                power,
++                vAng: Math.atan2(up, fwd),
++            };
++        }
++        const GRAVITY = -9.81;
++        function updatePreviewAndCannon() {
++            const aim = aimVector();
++            const cur = players[current];
++            const barrel = cur.raft.userData.barrel;
++            if (barrel) {
++                if (aim && phase === 'aiming') {
++                    barrel.rotation.z = -Math.PI / 2 + aim.vAng;
++                } else {
++                    barrel.rotation.z = -Math.PI / 2 + 0.20;
++                }
++            }
++            // Power-meter — visueel feedback hoe hard je gaat schieten.
++            // Gebruikt min/max constants uit aimVector zodat ze synchroon
++            // blijven.
++            if (aim && phase === 'aiming') {
++                const MIN_P = 8, MAX_P = 32;
++                const pct = Math.max(0, Math.min(1, (aim.power - MIN_P) / (MAX_P - MIN_P)));
++                pwrBar.style.transform = `scaleX(${pct})`;
++                pwrBox.classList.add('show');
++                // Label-tekst geeft kwalitatieve hint
++                pwrLbl.textContent = pct < 0.33 ? 'ZACHT' :
++                                     pct < 0.67 ? 'GEMIDDELD' : 'MAX POWER';
++            } else if (phase !== 'aiming' || !drag.active) {
++                pwrBox.classList.remove('show');
++            }
++            if (!aim || phase !== 'aiming') {
++                preview.visible = false;
++                return;
++            }
++            // Simuleer fysica voor preview
++            const pos = cur.raft.position.clone();
++            pos.y += 1.1;
++            pos.x += (current === 'A' ? 1.9 : -1.9);
++            const vel = new THREE.Vector3(aim.vx, aim.vy, aim.vz);
++            const positions = preview.geometry.attributes.position.array;
++            const dt = 0.06;
++            for (let i = 0; i < PREV_N; i++) {
++                positions[i*3]     = pos.x;
++                positions[i*3 + 1] = pos.y;
++                positions[i*3 + 2] = pos.z;
++                vel.y += GRAVITY * dt;
++                vel.x += wind * dt;
++                pos.addScaledVector(vel, dt);
++                if (pos.y < 0.1) pos.y = 0.1;
++            }
++            preview.geometry.attributes.position.needsUpdate = true;
++            preview.visible = true;
++            preview.computeLineDistances();
++        }
++        // Pointer-handlers (eenvoudig, robuust, werkt op alle phones)
++        function onPointerDown(clientX, clientY, id) {
++            if (finished) return;
++            // STUDY: tap → ga naar aim
++            if (phase === 'study') {
++                phase = 'aim_intro';
++                phaseT = 0;
++                const target = current === 'A' ? CAM_AIM_A : CAM_AIM_B;
++                setCameraTarget(target, 0.6);
++                setBanner('', '');
++                setTip('Sleep om te mikken — laat los om te schieten');
++                return;
++            }
++            // RESULT: tap → volgende beurt
++            if (phase === 'result') {
++                advanceToNext();
++                return;
++            }
++            // AIMING: start drag
++            if (phase === 'aiming') {
++                drag.active = true; drag.id = id;
++                drag.sx = drag.x = clientX;
++                drag.sy = drag.y = clientY;
++                aimMark.style.display = 'flex';
++                aimMark.style.left = clientX + 'px';
++                aimMark.style.top = clientY + 'px';
++                updatePreviewAndCannon();
++            }
++        }
++        function onPointerMove(clientX, clientY) {
++            if (!drag.active) return;
++            drag.x = clientX; drag.y = clientY;
++            aimMark.style.left = clientX + 'px';
++            aimMark.style.top = clientY + 'px';
++            updatePreviewAndCannon();
++        }
++        function onPointerUp() {
++            if (!drag.active) return;
++            drag.active = false;
++            aimMark.style.display = 'none';
++            preview.visible = false;
++            if (phase !== 'aiming') return;
++            const aim = aimVector();
++            if (aim) {
++                fireBall(aim);
++            } else {
++                // te kort gesleept, kanon terug naar rust
++                updatePreviewAndCannon();
++            }
++        }
++        // Touch + mouse listeners op de hit-laag
++        hit.addEventListener('touchstart', e => {
++            e.preventDefault();
++            const t = e.changedTouches[0];
++            if (t) onPointerDown(t.clientX, t.clientY, t.identifier);
++        }, { passive: false });
++        hit.addEventListener('touchmove', e => {
++            e.preventDefault();
++            for (const t of e.changedTouches) {
++                if (t.identifier === drag.id) {
++                    onPointerMove(t.clientX, t.clientY); break;
++                }
++            }
++        }, { passive: false });
++        const touchEnd = e => {
++            for (const t of e.changedTouches) {
++                if (t.identifier === drag.id) { onPointerUp(); break; }
++            }
++            // ook tap zonder drag: handle als down+up op zelfde plek
++            if (!drag.active && e.changedTouches[0] && phase !== 'aiming') {
++                onPointerDown(e.changedTouches[0].clientX,
++                    e.changedTouches[0].clientY,
++                    e.changedTouches[0].identifier);
++            }
++            e.preventDefault();
++        };
++        hit.addEventListener('touchend', touchEnd, { passive: false });
++        hit.addEventListener('touchcancel', () => onPointerUp());
++        let mouseDown = false;
++        hit.addEventListener('mousedown', e => {
++            mouseDown = true;
++            onPointerDown(e.clientX, e.clientY, -1);
++        });
++        hit.addEventListener('mousemove', e => {
++            if (mouseDown) onPointerMove(e.clientX, e.clientY);
++        });
++        window.addEventListener('mouseup', () => {
++            if (mouseDown) { mouseDown = false; onPointerUp(); }
++        });
++
++        // ════════════════════════════════════════════════════════
++        //  H. SCHIETEN, FYSICA, HIT-DETECTIE
++        // ════════════════════════════════════════════════════════
++        function fireBall(aim) {
++            const cur = players[current];
++            const start = cur.raft.position.clone();
++            start.y += 1.1;
++            start.x += (current === 'A' ? 1.9 : -1.9);
++            ballMesh.position.copy(start);
++            ballMesh.visible = true;
++            trailPts.length = 0;
++            ball = {
++                vel: new THREE.Vector3(aim.vx, aim.vy, aim.vz),
++                waterBounces: 0,
++            };
++            phase = 'fire';     // korte camera-uitzoem
++            phaseT = 0;
++            setCameraTarget(CAM_WIDE, 0.4);
++            setBanner('', '');
++            setTip('');
++            // Kanon-recoil
++            const barrel = cur.raft.userData.barrel;
++            if (barrel) {
++                const sgn = current === 'A' ? -0.4 : 0.4;
++                barrel.position.x += sgn;
++                setTimeout(() => barrel.position.x -= sgn, 200);
++            }
++        }
++        function checkBallPhysics(dt, time) {
++            if (!ball) return;
++            ball.vel.y += GRAVITY * dt;
++            ball.vel.x += wind * dt;
++            ballMesh.position.addScaledVector(ball.vel, dt);
++            ballMesh.rotation.x += dt * 6;
++            ballMesh.rotation.z += dt * 4;
++            // Trail
++            trailPts.unshift({ x: ballMesh.position.x, y: ballMesh.position.y, z: ballMesh.position.z });
++            if (trailPts.length > TRAIL_N) trailPts.length = TRAIL_N;
++            const tarr = trail.geometry.attributes.position.array;
++            for (let i = 0; i < TRAIL_N; i++) {
++                const p = trailPts[i];
++                if (p) { tarr[i*3]=p.x; tarr[i*3+1]=p.y; tarr[i*3+2]=p.z; }
++                else   { tarr[i*3]=tarr[i*3+1]=tarr[i*3+2]=9999; }
++            }
++            trail.geometry.attributes.position.needsUpdate = true;
++            // Water-bounce — max 1 keer skippen, dan zinkt-ie. Maakt
++            // het flink moeilijker: je moet bijna direct raken,
++            // ricochet over het water is een laatste kans, niet een
++            // makkelijke optie.
++            const WATER_Y = 0.1;
++            if (ballMesh.position.y <= WATER_Y && ball.vel.y < 0) {
++                if (Math.abs(ball.vel.y) > 2.5 && ball.waterBounces < 1) {
++                    ballMesh.position.y = WATER_Y + 0.02;
++                    ball.vel.y = -ball.vel.y * 0.50;
++                    ball.vel.x *= 0.78; ball.vel.z *= 0.78;
++                    ball.waterBounces++;
++                    return;
++                }
++                // Echte plons → miss
++                endShot(false);
++                return;
++            }
++            // Out-of-bounds
++            if (Math.abs(ballMesh.position.x) > 80 ||
++                Math.abs(ballMesh.position.z) > 80 ||
++                ballMesh.position.y < -5) {
++                endShot(false);
++                return;
++            }
++            // Hit-test op vijand — krappere hitbox dan voorheen, voor
++            // meer precisie. Vlot is ~4.6 wide en ~2.6 deep, hitbox
++            // is nu 2.0 x 1.4 x 1.5 (vroeger 2.5 x 1.6 x 2.4).
++            const oppKey = current === 'A' ? 'B' : 'A';
++            const opp = players[oppKey];
++            const dx = ballMesh.position.x - opp.raft.position.x;
++            const dy = ballMesh.position.y - (opp.raft.position.y + 1.0);
++            const dz = ballMesh.position.z - opp.raft.position.z;
++            if (Math.abs(dx) < 2.0 && Math.abs(dz) < 1.4 &&
++                dy > -0.4 && dy < 1.5) {
++                opp.hp = Math.max(0, opp.hp - 1);
++                flash.classList.add('show');
++                setTimeout(() => flash.classList.remove('show'), 350);
++                renderHUD();
++                endShot(true, oppKey, opp.hp <= 0);
++            }
++        }
++        function endShot(wasHit, oppKey, knockout) {
++            if (phase === 'result' || phase === 'gameover') return;
++            ballMesh.visible = false;
++            ball = null;
++            lastShot = { hit: wasHit, knockout };
++            if (knockout) {
++                phase = 'gameover';
++                phaseT = 0;
++                const winner = (oppKey === 'A') ? playerB : playerA;
++                setBanner(`🏴‍☠️ ${winner.name} WINT!`, winner.color.css);
++                showToast('KNOCK-OUT!', 2200, '#ff5050');
++                showKO(winner);
++                return;
++            }
++            phase = 'result';
++            phaseT = 0;
++            const cur = players[current];
++            if (wasHit) {
++                showToast(`💥 RAAK! ${cur.name} mikt goed`, 1600, cur.color.css);
++            } else {
++                showToast('💦 plons — gemist', 1400, '#7fc6ff');
++            }
++            setTip('Tik om door te gaan');
++        }
++        function advanceToNext() {
++            // Reset kannonnen
++            for (const k of ['A', 'B']) {
++                const b = players[k].raft.userData.barrel;
++                if (b) b.rotation.z = -Math.PI / 2 + 0.20;
++            }
++            current = current === 'A' ? 'B' : 'A';
++            wind = randomWind();
++            renderHUD();
++            phase = 'study';
++            phaseT = 0;
++            setCameraTarget(CAM_WIDE, 0.55);
++            setBanner(`<small>BEURT</small><br>${players[current].name}`,
++                players[current].color.css);
++            setTip('Tik op het scherm om in te zoomen');
++        }
++        function showKO(winner) {
++            // Volledig KO-scherm met "Verder" knop
++            const ko = el('div', { className: 'rb3-ko',
++                style: { '--pcol': winner.color.css } });
++            const loser = winner === playerA ? playerB : playerA;
++            ko.append(
++                el('h2', {}, `🏴‍☠️ ${winner.name} wint!`),
++                el('p', {}, `${loser.name} drinkt ${drinks} 🍻`),
++                el('p', { style: { fontSize: '13px', opacity: '0.85' } },
++                    `${winner.name} krijgt +1 gouden dobbelsteen 🎲💛`),
++                el('button', { className: 'btn-pill', type: 'button',
++                    on: { click: () => finish(winner) } }, 'Verder'),
++            );
++            back.append(ko);
++            // Auto-advance na 6s
++            setTimeout(() => finish(winner), 6000);
++        }
++
++        // ════════════════════════════════════════════════════════
++        //  I. ANIMATIE-HOOK (per-frame)
++        // ════════════════════════════════════════════════════════
++        const PREV_HOOK = window.__deGameHook;
++        let lastT = 0;
++        window.__deGameHook = (time) => {
++            const dt = lastT ? Math.min(0.05, time - lastT) : 0;
++            lastT = time;
++            phaseT += dt;
++            // ── Camera lerp ─────────────────────────────────────
++            if (camLerpT < 1) {
++                camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
++                const k = camLerpT;
++                // Ease-in-out cubic
++                const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
++                camera.position.lerpVectors(camFrom.pos, camTo.pos, e);
++                controls.target.lerpVectors(camFrom.tgt, camTo.tgt, e);
++            } else {
++                camera.position.copy(camTo.pos);
++                controls.target.copy(camTo.tgt);
++            }
++            camera.lookAt(controls.target);
++            // ── Raft-bob ────────────────────────────────────────
++            raftA.position.y = Math.sin(time * 1.3 + 0.2) * 0.16 - 0.05;
++            raftA.rotation.z = Math.sin(time * 1.5) * 0.04;
++            raftA.rotation.x = Math.sin(time * 1.1 + 0.3) * 0.03;
++            raftB.position.y = Math.sin(time * 1.3 + 1.4) * 0.16 - 0.05;
++            raftB.rotation.z = Math.sin(time * 1.5 + 1.0) * 0.04;
++            raftB.rotation.x = Math.sin(time * 1.1 + 1.6) * 0.03;
++            // ── Fase-overgangen op timer-basis ──────────────────
++            if (phase === 'intro' && phaseT >= 0.7) {
++                phase = 'study';
++                phaseT = 0;
++                setBanner(`<small>BEURT</small><br>${players[current].name}`,
++                    players[current].color.css);
++                setTip('Tik op het scherm om in te zoomen');
++            }
++            else if (phase === 'aim_intro' && phaseT >= 0.6) {
++                phase = 'aiming';
++                phaseT = 0;
++                setBanner('', '');
++                setTip('Sleep om te mikken — laat los om te schieten');
++            }
++            else if (phase === 'fire' && phaseT >= 0.4) {
++                phase = 'flying';
++                phaseT = 0;
++            }
++            // ── Bal-fysica tijdens flying ───────────────────────
++            if (phase === 'flying') checkBallPhysics(dt, time);
++            // ── Vlam-flash easing ───────────────────────────────
++            // (CSS doet 't via class toggle, niets te doen hier)
++        };
++
++        // Start de game door de eerste camera-glide te plannen
++        setBanner(`<small>BEURT</small><br>${players[current].name}`,
++            players[current].color.css);
++        setTip('Tik op het scherm om in te zoomen');
++        setCameraTarget(CAM_WIDE, 0.7);
++
++        // ════════════════════════════════════════════════════════
++        //  J. CLEANUP
++        // ════════════════════════════════════════════════════════
++        function disposeMesh(m) {
++            if (!m) return;
++            m.geometry && m.geometry.dispose && m.geometry.dispose();
++            if (m.material) {
++                const ms = Array.isArray(m.material) ? m.material : [m.material];
++                for (const mat of ms) mat.dispose && mat.dispose();
++            }
++        }
++        function disposeGroup(g) { g.traverse(o => disposeMesh(o)); }
++        async function finish(winner) {
++            if (finished) return;
++            finished = true;
++            window.__deGameHook = PREV_HOOK;
++            // 3D opruimen
++            scene.remove(raftA); disposeGroup(raftA);
++            scene.remove(raftB); disposeGroup(raftB);
++            scene.remove(ballMesh); disposeMesh(ballMesh);
++            scene.remove(trail); disposeMesh(trail);
++            scene.remove(preview); disposeMesh(preview);
++            // Camera + controls herstellen
++            camera.fov = savedCam.fov;
++            camera.position.copy(savedCam.pos);
++            camera.updateProjectionMatrix();
++            controls.target.copy(savedCam.target);
++            controls.autoRotate = savedCam.autoRotate;
++            controls.enabled = savedCam.enabled;
++            camera.lookAt(controls.target);
++            // HUD weg
++            back.remove();
++            // Bord-game chrome weer terug
++            restoreMinigameChrome(hiddenChrome);
++            // Resultaat-modal
++            if (winner) {
++                const loser = winner === playerA ? playerB : playerA;
++                await showModal({ emoji: '🏴‍☠️',
++                    title: `${winner.name} wint Raft Battle!`,
++                    body: [`${loser.name} drinkt ${drinks} 🍻`,
++                        `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
++                    actions: [{ label: 'Klaar', value: true }] });
++            }
++            resolveOuter(winner || null);
++        }
++    });
++}
++
++
+ /* ============================================================
+    playBowling — Bowlspel (iframe)
+    ============================================================
+@@ -6295,23 +7398,16 @@
+ function playBowling({ players, drinks = 4 } = {}) {
+     return new Promise(resolve => {
+         const ui = document.getElementById('game-ui');
++        // Verberg al het bord-game UI rommel (home, top-bar, mini-map,
++        // hud-card) + home-overlay. Het bowling-scoreboard binnen de
++        // iframe toont alle spelers + huidige beurt al duidelijk — we
++        // hoeven daar geen parent-header overheen te leggen.
++        const hiddenChrome = hideMinigameChrome();
+         const back = el('div', { className: 'bw-back' });
+ 
+-        // Header — show first two player chips, "+N more" if needed
+-        const header = el('div', { className: 'bw-header' });
+-        const titleEl = el('div', { className: 'ttl' }, '🎳 Bowlspel');
+-        const vs = el('div', { className: 'bw-vs' });
+-        const showChips = players.slice(0, 3);
+-        showChips.forEach((p, i) => {
+-            if (i > 0) vs.append(el('span', { className: 'x' }, 'vs'));
+-            const chip = el('div', { className: 'chip', style: { '--pcol': p.color.css } });
+-            chip.append(el('div', { className: 'dot' }), document.createTextNode(p.name));
+-            vs.append(chip);
+-        });
+-        if (players.length > 3) {
+-            vs.append(el('span', { className: 'x' }, `+${players.length - 3}`));
+-        }
+-        header.append(titleEl, vs);
++        // (Geen header meer — de bowling-scoreboard binnen de iframe
++        // toont alle spelers + wie aan de beurt is al. Een floating
++        // skip-pil rechtsboven is voldoende voor parent-controle.)
+ 
+         const wrap = el('div', { className: 'bw-canvas-wrap' });
+         const iframe = el('iframe', {
+@@ -6319,8 +7415,7 @@
+             scrolling: 'no' });
+         wrap.append(iframe);
+ 
+-        // Compose: iframe (full-screen) + header (floating top)
+-        back.append(wrap, header);
++        back.append(wrap);
+ 
+         let done = false;
+         async function finish(winner, winnerScore) {
+@@ -6328,6 +7423,7 @@
+             done = true;
+             window.removeEventListener('message', onMsg);
+             back.remove();
++            restoreMinigameChrome(hiddenChrome);
+             if (winner) {
+                 const losers = players.filter(p => p !== winner);
+                 const loserNames = losers.map(p => p.name).join(', ');
+@@ -6419,6 +7515,8 @@
+ function playConnectFour({ playerA, playerB, drinks = 4 } = {}) {
+     return new Promise(resolve => {
+         const ui = document.getElementById('game-ui');
++        // Verberg al het bord-game UI rommel + home-overlay
++        const hiddenChrome = hideMinigameChrome();
+         const back = el('div', { className: 'cf-back' });
+ 
+         const header = el('div', { className: 'cf-header' });
+@@ -6445,6 +7543,7 @@
+             done = true;
+             window.removeEventListener('message', onMsg);
+             back.remove();
++            restoreMinigameChrome(hiddenChrome);
+             if (isDraw) {
+                 await showModal({ emoji: '🤝', title: 'Gelijkspel!',
+                     body: ['Niemand drinkt — de goden zijn vandaag neutraal.'],
+@@ -7378,6 +8477,25 @@
          // Distance from the top/bottom edge of the canvas to the paddles.
          // Larger value = paddle moves away from the iPhone notch / home indicator.
          const PAD_INSET = 70;
@@ -302,7 +1390,7 @@
          const state = {
              padA: 0.5, padB: 0.5, // x positions 0..1
              ballX: 0, ballY: 0, vx: 0, vy: 0,
-@@ -7388,10 +7523,9 @@
+@@ -7388,10 +8506,9 @@
          function resetBall(dir) {
              state.ballX = W / 2;
              state.ballY = H / 2;
@@ -316,7 +1404,7 @@
              state.vx = Math.cos(ang) * speed;
              state.vy = Math.sin(ang) * speed;
          }
-@@ -7463,11 +7597,35 @@
+@@ -7463,11 +8580,35 @@
              rafId = requestAnimationFrame(tick);
          }
          function update(dt) {
@@ -355,7 +1443,7 @@
  
              const padAx = state.padA * W;
              const padBx = state.padB * W;
-@@ -7479,16 +7637,24 @@
+@@ -7479,16 +8620,24 @@
              if (state.vy < 0 && state.ballY - BALL_R <= PAD_Y_TOP + PAD_H/2 && state.ballY > PAD_Y_TOP - PAD_H) {
                  if (Math.abs(state.ballX - padAx) <= padHalfW + BALL_R) {
                      state.ballY = PAD_Y_TOP + PAD_H/2 + BALL_R;
@@ -384,7 +1472,7 @@
                  }
              }
  
-@@ -7498,11 +7664,37 @@
+@@ -7498,11 +8647,37 @@
                  scoreBot.textContent = state.scoreB;
                  if (state.scoreB >= targetScore) endGame(playerB, playerA);
                  else resetBall(1);
