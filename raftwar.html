@@ -15,12 +15,25 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 html,body{width:100%;height:100%;overflow:hidden;background:#0a4d8c;touch-action:none;overscroll-behavior:none;position:fixed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+/* Wanneer de pagina embedded in een iframe geladen wordt (vanuit Drank
+   Eiland), zetten we de pagina-achtergrond transparant zodat de Three.js
+   eiland-scene van de ouder doorheen zichtbaar is. .embedded wordt heel
+   vroeg in het script gezet (vóór de eerste render). */
+html.embedded, html.embedded body { background: transparent !important; }
+html.embedded canvas { background: transparent !important; }
 canvas{display:block;width:100vw;height:100vh;touch-action:none;image-rendering:auto}
 #orient{display:none;position:fixed;inset:0;background:linear-gradient(180deg,#48b3e8,#0a4d8c);color:#fff;align-items:center;justify-content:center;font-size:22px;text-align:center;padding:30px;z-index:100;flex-direction:column;gap:20px}
 #orient .icon{font-size:80px;animation:rot 2s ease-in-out infinite}
 @keyframes rot{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
 @media(orientation:landscape) and (max-height:500px){#orient{display:flex}}
 #start{position:fixed;inset:0;background:linear-gradient(180deg,#ffcb6e 0%,#ff8c42 40%,#48b3e8 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px;z-index:50;color:#fff;text-align:center;transition:opacity .5s;padding:40px 24px}
+/* Embedded-modus: laat de bord-game scene doorheen schijnen via een
+   donkere semi-transparante laag (i.p.v. een eigen lucht-gradient) en
+   match de gouden CTA-knop aan de bord-game stijl. */
+html.embedded #start{
+  background: linear-gradient(180deg, rgba(20,40,70,0.78) 0%, rgba(30,15,40,0.85) 100%);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
 #start.hide{opacity:0;pointer-events:none}
 #start h1{font-size:clamp(36px,11vw,80px);font-weight:900;letter-spacing:1px;text-shadow:0 6px 0 #5a2800,0 10px 30px rgba(0,0,0,.3);color:#fff;-webkit-text-stroke:3px #5a2800;line-height:.9}
 #start .sub{font-size:clamp(16px,4.5vw,28px);font-weight:800;color:#fff;-webkit-text-stroke:2px #5a2800;text-shadow:0 3px 0 #5a2800}
@@ -37,19 +50,34 @@ canvas{display:block;width:100vw;height:100vh;touch-action:none;image-rendering:
   <h1>RAFT BATTLE</h1>
   <div class="sub">🌋 Volcano Island 🌴</div>
   <div id="vsCard" style="display:none;font-size:clamp(14px,4vw,20px);font-weight:900;background:rgba(0,0,0,0.3);padding:10px 18px;border-radius:14px;border:3px solid rgba(255,255,255,0.35);box-shadow:0 4px 14px rgba(0,0,0,0.3);"></div>
-  <p>📖 <b>Hot-seat 1v1:</b><br>1. STUDY the enemy raft & 💨 wind<br>2. Tap CONTINUE — camera zooms in on YOU<br>3. Aim from memory & FIRE!<br>4. Each hit costs ❤️ — first to lose all 3 hearts loses</p>
+  <p>📖 <b>Hot-seat 1v1:</b><br>1. STUDY de vijand & 💨 wind<br>2. Tik CONTINUE — camera zoomt in op JOU<br>3. Mik uit het geheugen & VUUR!<br>4. <b>NIEUW:</b> kogels stuiteren tot 3× over het water — bank-shots tellen!<br>5. Eerste die 3× ❤️ verliest, drinkt</p>
   <button id="startBtn">TAP TO PLAY</button>
   <div class="tag">Best in portrait • Works offline as PWA</div>
 </div>
 <script>
 'use strict';
 
+// Vroege embedded-detectie zodat de CSS-regels direct werken.
+try {
+  if (window.self !== window.top) {
+    document.documentElement.classList.add('embedded');
+  }
+} catch (e) {
+  document.documentElement.classList.add('embedded');
+}
+
 /* ============================================================
    PARENT BRIDGE — when this file is embedded in Drank Eiland
-   the parent sends us { type:'raft-init', playerA:{name,color},
-   playerB:{name,color} }. We use those for raft colors + HUD
-   labels, and post { type:'raft-knockout', winner:1|2 } back
-   when somebody loses all their hearts.
+   the parent sends us { type:'raft-init', playerA:{name,color,
+   avatarSVG?}, playerB:{name,color,avatarSVG?} }. We use those
+   for raft colors + HUD labels, and post { type:'raft-knockout',
+   winner:1|2 } back when somebody loses all their hearts.
+
+   avatarSVG (optioneel): de raw SVG XML van de speler-avatar uit
+   het bordspel. Wordt omgezet naar een <img> + Image-object, en
+   per frame op het canvas getekend i.p.v. het generieke "oranje
+   mannetje". Zo zien spelers hun eigen poppetje uit het bordspel
+   ook op de boot terug.
    ============================================================ */
 const IS_EMBEDDED = (() => {
   try { return window.self !== window.top; } catch (e) { return true; }
@@ -59,10 +87,27 @@ const RAFT_BRIDGE = {
   config: null,      // { playerA:{name,color}, playerB:{name,color} }
   knocked: false,    // already sent the knockout message
   onConfig: null,    // optional callback when init arrives
+  // Pre-geladen avatar-images. null als geen SVG meegestuurd.
+  avatarImg: { 1: null, 2: null },
 };
 function postToParent(msg) {
   if (!IS_EMBEDDED) return;
   try { window.parent.postMessage(msg, '*'); } catch (e) { /* ignore */ }
+}
+// Bouw een Image() uit een SVG-XML string. Geeft direct het Image
+// object terug — `complete` wordt true zodra de browser klaar is
+// met decoderen. Tot dan tekenen we de fallback (canvas-mannetje).
+function imageFromSVG(svgXml) {
+  if (!svgXml || typeof svgXml !== 'string') return null;
+  try {
+    const blob = new Blob([svgXml], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload  = () => { /* keep URL alive while drawing */ };
+    img.onerror = () => { URL.revokeObjectURL(url); };
+    img.src = url;
+    return img;
+  } catch (e) { return null; }
 }
 window.addEventListener('message', (ev) => {
   const d = ev && ev.data;
@@ -72,6 +117,9 @@ window.addEventListener('message', (ev) => {
       playerA: d.playerA || { name: 'Player 1', color: '#ff8c42' },
       playerB: d.playerB || { name: 'Player 2', color: '#ffd84d' },
     };
+    // Laad de meegestuurde avatar-SVGs (optioneel)
+    RAFT_BRIDGE.avatarImg[1] = imageFromSVG(d.playerA && d.playerA.avatarSVG);
+    RAFT_BRIDGE.avatarImg[2] = imageFromSVG(d.playerB && d.playerB.avatarSVG);
     if (typeof RAFT_BRIDGE.onConfig === 'function') {
       try { RAFT_BRIDGE.onConfig(RAFT_BRIDGE.config); } catch (e) {}
     }
@@ -102,8 +150,12 @@ const TURN_DELAY = 800;
 const MAX_HP = 3;
 
 // raft positions
-const P1_X = 170;
-const P2_X = 730;
+// Vergroot de afstand tussen de bootjes flink: in het oude design stonden
+// ze 560 px uit elkaar (170 ↔ 730). Nu 740 px (80 ↔ 820), wat de directe
+// rechte-lijn schoten lastiger maakt en de nieuwe water-stuiter-mechaniek
+// echt nuttig — soms móét je over het water bouncen om er te komen.
+const P1_X = 80;
+const P2_X = 820;
 
 // helpers
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -372,10 +424,59 @@ class Character {
     if (!this.attached) ctx.rotate(Math.sin(this.flailPhase) * 0.3);
 
     const c = this.raft.colors;
-    // ground shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.beginPath(); ctx.ellipse(0, 30, 22, 5, 0, 0, Math.PI * 2); ctx.fill();
+    // ground shadow (altijd, voelt natuurlijker)
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.beginPath(); ctx.ellipse(0, 30, 26, 6, 0, 0, Math.PI * 2); ctx.fill();
 
+    // ── Speler-avatar (uit het bordspel) als die meegestuurd is ───
+    // Het bord-spel stuurt via postMessage de SVG van het poppetje
+    // mee. Hier tekenen we dat als hoofdgestalte — schaal zodat het
+    // visueel op het oude mannetje lijkt qua afmeting maar duidelijk
+    // herkenbaar is als jouw speler-avatar.
+    const avatarImg = RAFT_BRIDGE.avatarImg && RAFT_BRIDGE.avatarImg[this.raft.player];
+    if (avatarImg && avatarImg.complete && avatarImg.naturalWidth > 0) {
+      // Cirkel-clip om de avatar (matched de bord-game "head" thumbs)
+      const R = 36;
+      // Achtergrond-disc in spelerkleur — dezelfde "ring" look als
+      // de bord-game tokens. We gebruiken `c.body` (= de bord-game
+      // kleur die de parent meestuurt) i.p.v. `c.shirt`, anders zou
+      // de disc altijd het hardcoded blauw/paars zijn.
+      ctx.save();
+      ctx.fillStyle = c.body;
+      ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(0, -12, R, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+      // White inner ring, voor extra contrast tegen de zee
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(0, -12, R - 2, 0, Math.PI * 2);
+      ctx.stroke();
+      // Clip & teken de avatar
+      ctx.beginPath(); ctx.arc(0, -12, R - 3, 0, Math.PI * 2);
+      ctx.clip();
+      // De SVG-avatars zijn vierkant; we tekenen ze iets groter dan
+      // de cirkel zodat het hoofd lekker vult.
+      const D = (R - 3) * 2.4;
+      ctx.drawImage(avatarImg, -D / 2, -12 - D / 2 + 4, D, D);
+      // Hit-flash overlay
+      if (this.flashRed > 0) {
+        ctx.fillStyle = 'rgba(255,80,80,0.55)';
+        ctx.beginPath(); ctx.arc(0, -12, R - 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      // Kleine status-indicator: dazed sterretjes blijven leuk
+      if (this.dazed > 0 && this.hp > 0) {
+        ctx.fillStyle = '#ffd54a';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('★', -16, -52);
+        ctx.fillText('☆', 14, -55);
+      }
+      ctx.restore();
+      return;
+    }
+
+    // ── Fallback: het originele "oranje mannetje" als geen avatar ──
     // body
     const bodyFill = this.flashRed > 0 ? '#ff5555' : c.shirt;
     ctx.fillStyle = bodyFill;
@@ -650,7 +751,8 @@ class Ball {
     this.rot = 0;
     this.alive = true;
     this.trail = [];
-    this.bounces = 0;
+    this.bounces = 0;        // hits op de vlotten (oude logica)
+    this.waterBounces = 0;   // skip-stuiters op het wateroppervlak (nieuw)
     this.wind = wind;
   }
   update(dt) {
@@ -981,6 +1083,45 @@ class Game {
     if (!this.ball || !this.ball.alive) return;
     const b = this.ball;
     if (b.y + b.radius >= WATER_Y) {
+      // ── Water-ricochet ───────────────────────────────────────
+      // Op het oude design zou de bal hier meteen sterven. Nu mag
+      // hij MAX_WATER_BOUNCES keer skippen — denk: kanonskogel die
+      // over het water "stuitert". Verliest energie per skip én
+      // moet nog genoeg verticale snelheid hebben om weer omhoog
+      // te komen, anders zinkt-ie alsnog (realistisch + speelbaar).
+      const MAX_WATER_BOUNCES = 3;
+      // Energieverlies per skip: 35% verticaal, 18% horizontaal.
+      // Genoeg ricochet om over te bouncen, niet zoveel dat het
+      // oneindig doorgaat.
+      const VY_KEEP = 0.65;
+      const VX_KEEP = 0.82;
+      // Minimum-snelheid om uberhaupt te skippen — als de bal er
+      // recht naar beneden in valt: gewoon plons.
+      const MIN_SKIP_VY = 4;
+      const allowedBounces = b.waterBounces || 0;
+      if (b.vy > MIN_SKIP_VY && allowedBounces < MAX_WATER_BOUNCES) {
+        // Skip-spatter (kleinere splash dan een echte plons)
+        for (let j = 0; j < 12; j++) {
+          const a = -Math.PI / 2 + rand(-0.8, 0.8);
+          const s = rand(2, 7);
+          this.particles.push(new Particle(b.x, WATER_Y,
+            Math.cos(a) * s, Math.sin(a) * s,
+            '#cfeefb', rand(12, 22), rand(2, 4), 'circle'));
+        }
+        for (let j = 0; j < 6; j++) {
+          this.particles.push(new Particle(b.x, WATER_Y, rand(-3, 3),
+            rand(-5, -1), '#fff', rand(15, 25), rand(3, 6), 'foam'));
+        }
+        this.audio.splash();
+        this.camera.shake(3);
+        // Reflecteer de bal boven het water
+        b.y = WATER_Y - b.radius - 1;
+        b.vy = -Math.abs(b.vy) * VY_KEEP;
+        b.vx *= VX_KEEP;
+        b.waterBounces = allowedBounces + 1;
+        return;
+      }
+      // Echte plons: bal zinkt, beurt voorbij
       this.spawnSplash(b.x, WATER_Y);
       b.alive = false;
       this.lastHit = { player: this.currentPlayer === 1 ? 2 : 1, hit: false };
@@ -1147,43 +1288,53 @@ class Game {
     const ctx = this.ctx;
     const sw = this.screenW, sh = this.screenH;
 
-    // Sky gradient: tropical morning
-    const sky = ctx.createLinearGradient(0, 0, 0, sh);
-    sky.addColorStop(0, '#ffcb6e');     // peach top
-    sky.addColorStop(0.25, '#ffa45e');  // warm orange
-    sky.addColorStop(0.55, '#68c8ec');  // turquoise
-    sky.addColorStop(1, '#2e8ec4');     // ocean blue
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, sw, sh);
+    if (IS_EMBEDDED) {
+      // ── Embedded mode (in Drank Eiland) ──
+      // Achtergrond transparant laten zodat de Three.js eiland-scene
+      // van de ouder doorheen te zien is. We tekenen ALLEEN de
+      // gameplay-elementen (rafts, characters, ball, water, particles).
+      // Volkanen, wolken, zon, vogels, side-eilanden zitten al in de
+      // bord-game scene; die zouden hier alleen storend dubbel zijn.
+      ctx.clearRect(0, 0, sw, sh);
+    } else {
+      // Sky gradient: tropical morning (standalone mode)
+      const sky = ctx.createLinearGradient(0, 0, 0, sh);
+      sky.addColorStop(0, '#ffcb6e');     // peach top
+      sky.addColorStop(0.25, '#ffa45e');  // warm orange
+      sky.addColorStop(0.55, '#68c8ec');  // turquoise
+      sky.addColorStop(1, '#2e8ec4');     // ocean blue
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, sw, sh);
 
-    // Sun
-    ctx.save();
-    ctx.globalAlpha = 0.9;
-    const sunX = sw * 0.22;
-    const sunY = sh * 0.12;
-    const sg = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 140 * this.dpr);
-    sg.addColorStop(0, 'rgba(255,250,220,0.95)');
-    sg.addColorStop(0.4, 'rgba(255,220,130,0.5)');
-    sg.addColorStop(1, 'rgba(255,180,60,0)');
-    ctx.fillStyle = sg;
-    ctx.fillRect(0, 0, sw, sh);
-    ctx.fillStyle = '#fffbe0';
-    ctx.beginPath(); ctx.arc(sunX, sunY, 38 * this.dpr, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
+      // Sun
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      const sunX = sw * 0.22;
+      const sunY = sh * 0.12;
+      const sg = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 140 * this.dpr);
+      sg.addColorStop(0, 'rgba(255,250,220,0.95)');
+      sg.addColorStop(0.4, 'rgba(255,220,130,0.5)');
+      sg.addColorStop(1, 'rgba(255,180,60,0)');
+      ctx.fillStyle = sg;
+      ctx.fillRect(0, 0, sw, sh);
+      ctx.fillStyle = '#fffbe0';
+      ctx.beginPath(); ctx.arc(sunX, sunY, 38 * this.dpr, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
 
     // World transform
     ctx.save();
     this.camera.apply(ctx, sw, sh, this.worldScale);
 
-    // Distant clouds
-    for (const c of this.clouds) this.drawCloud(ctx, c);
-
-    // Volcano + islands backdrop
-    this.drawVolcano(ctx);
-    this.drawSideIslands(ctx);
-
-    // Birds
-    for (const b of this.birds) this.drawBird(ctx, b);
+    if (!IS_EMBEDDED) {
+      // Distant clouds, volcano + side-eilanden, vogels: alleen in
+      // standalone-mode. In embedded mode levert de bord-game scene
+      // al een eiland-achtergrond.
+      for (const c of this.clouds) this.drawCloud(ctx, c);
+      this.drawVolcano(ctx);
+      this.drawSideIslands(ctx);
+      for (const b of this.birds) this.drawBird(ctx, b);
+    }
 
     // Water
     this.drawWater(ctx);
