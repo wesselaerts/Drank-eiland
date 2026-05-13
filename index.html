@@ -7576,14 +7576,14 @@ function playBowling({ players, drinks = 4 } = {}) {
 }
 
 /* ============================================================
-   playConnectFour — Vier op een Rij (iframe)
+   playConnectFourIframe — Vier op een Rij (iframe, LEGACY backup)
    ============================================================
-   1v1 turn-based game. Iframe accepts player names + colours via
-   'cf-init' and reports the winner via 'cf-result' (winner = 1 or 2,
-   or 0 for a draw).
-   Returns: <player> (winner) or null (draw / skip)
+   Oude iframe-based versie. Niet meer aangeroepen — de nieuwe 3D-in-
+   scene versie hieronder (`playConnectFour`) zet het vlot met bord
+   midden in de eiland-scene, net als raft battle. Behoud als safety-
+   net mocht de 3D versie issues geven.
    ============================================================ */
-function playConnectFour({ playerA, playerB, drinks = 4 } = {}) {
+function playConnectFourIframe({ playerA, playerB, drinks = 4 } = {}) {
     return new Promise(resolve => {
         const ui = document.getElementById('game-ui');
         // Verberg al het bord-game UI rommel + home-overlay
@@ -7691,6 +7691,641 @@ function playConnectFour({ playerA, playerB, drinks = 4 } = {}) {
         iframe.src = 'vier-op-een-rij.html';
     });
 }
+
+
+/* ════════════════════════════════════════════════════════════════════
+   playConnectFour — 3D in-scene Vier op een Rij (PHASED)
+   ════════════════════════════════════════════════════════════════════
+   Volledig in de Three.js bord-game scene, vlak voor de vulkaan. Een
+   vlot drijft op het water met daarop een verticaal 6×7 bord — net
+   als raft battle. Spelers tikken op een kolom om hun schijf erin te
+   laten vallen.
+
+     INTRO  (~700ms)  camera glijdt naar overview
+     OVERVIEW         beide spelers + bord zichtbaar; "Tap to start"
+     PLAY_INTRO       inzoomen op het bord (face-on)
+     PLAYING          tap op kolom → schijf valt
+     DROPPING         animatie ~550ms
+     RESULT_CHECK     win? draw? anders volgende speler
+     GAMEOVER         winnaar-overlay + drink opdracht
+
+   Touch: tap ergens in een kolom → schijf valt in die kolom.
+   Raycast bepaalt welke kolom geraakt werd via onzichtbare hit-boxes
+   die de hoogte van elke kolom afdekken.
+   ════════════════════════════════════════════════════════════════════ */
+function playConnectFour({ playerA, playerB, drinks = 4 } = {}) {
+    return new Promise(resolveOuter => {
+        // ════════════════════════════════════════════════════════
+        //  A. SETUP
+        // ════════════════════════════════════════════════════════
+        const uiRoot = document.getElementById('game-ui');
+        const hiddenChrome = hideMinigameChrome();
+        const savedCam = {
+            pos: camera.position.clone(),
+            fov: camera.fov,
+            target: controls.target.clone(),
+            autoRotate: controls.autoRotate,
+            enabled: controls.enabled,
+        };
+        controls.autoRotate = false;
+        controls.enabled = false;
+        camera.fov = 60;
+        camera.updateProjectionMatrix();
+
+        // ════════════════════════════════════════════════════════
+        //  B. CONSTANTEN
+        // ════════════════════════════════════════════════════════
+        const ROWS = 6, COLS = 7;
+        const CELL = 0.55;
+        const PITCH = 0.62;
+        const BOARD_W = COLS * PITCH; // 4.34
+        const BOARD_H = ROWS * PITCH; // 3.72
+        const FRAME_T = 0.22;
+        const BOARD_BASE_Y = 1.10;
+        const RAFT_Z = 24;
+
+        // ════════════════════════════════════════════════════════
+        //  C. VLOT BOUWEN
+        // ════════════════════════════════════════════════════════
+        function makeConnectRaft() {
+            const grp = new THREE.Group();
+            const RAFT_W = BOARD_W + 2.5;
+            const RAFT_D = 3.2;
+            for (let i = -2; i <= 2; i++) {
+                const log = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.32, 0.32, RAFT_W, 10),
+                    MAT.wood);
+                log.rotation.z = Math.PI / 2;
+                log.position.set(0, 0.32, i * 0.68);
+                log.castShadow = log.receiveShadow = true;
+                grp.add(log);
+            }
+            const deck = new THREE.Mesh(
+                new THREE.BoxGeometry(RAFT_W, 0.12, RAFT_D), MAT.woodLight);
+            deck.position.y = 0.62;
+            deck.castShadow = deck.receiveShadow = true;
+            grp.add(deck);
+            // Twee dikke palen die het bord 'vasthouden'
+            for (const x of [-(BOARD_W/2 + FRAME_T/2 + 0.1),
+                              (BOARD_W/2 + FRAME_T/2 + 0.1)]) {
+                const post = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.18, 0.20, BOARD_BASE_Y, 10),
+                    MAT.wood);
+                post.position.set(x, 0.62 + BOARD_BASE_Y/2, 0);
+                post.castShadow = true;
+                grp.add(post);
+            }
+            return grp;
+        }
+        const raft = makeConnectRaft();
+        raft.position.set(0, 0, RAFT_Z);
+        scene.add(raft);
+
+        // ════════════════════════════════════════════════════════
+        //  D. CONNECT-4 BORD BOUWEN
+        // ════════════════════════════════════════════════════════
+        function makeBoard() {
+            const grp = new THREE.Group();
+            // ECHT GLAS — bijna helemaal doorzichtig, geen blauwe tint
+            // meer. Heel lichte cyaan emissive geeft de typische glas-
+            // glans, opacity 0.15 zorgt dat je de vulkaan + zee dóór
+            // het bord heen ziet zoals door een schoon raam. De houten
+            // omlijsting eromheen blijft solide hout — die geeft de
+            // structuur van het bord aan, zodat het niet onzichtbaar
+            // wordt ondanks de helderheid.
+            const frameMat = new THREE.MeshToonMaterial({
+                color: 0xffffff, gradientMap: toon,
+                emissive: 0xb3e5fc, emissiveIntensity: 0.18,
+                transparent: true,
+                opacity: 0.28,         // iets dichter dan voorheen
+                side: THREE.DoubleSide,
+                depthWrite: false,
+            });
+            const backMat = new THREE.MeshToonMaterial({
+                color: 0xffffff, gradientMap: toon,
+                emissive: 0xb3e5fc, emissiveIntensity: 0.08,
+                transparent: true,
+                opacity: 0.16,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+            });
+            // Achter-paneel (donkerder, iets minder doorschijnend)
+            const backPanel = new THREE.Mesh(
+                new THREE.BoxGeometry(BOARD_W, BOARD_H, 0.06), backMat);
+            backPanel.position.set(0, BOARD_H/2, -0.10);
+            backPanel.receiveShadow = true;
+            backPanel.renderOrder = 1;
+            grp.add(backPanel);
+            // Voor-paneel met echte ronde gaten via ExtrudeGeometry
+            const shape = new THREE.Shape();
+            const w2 = BOARD_W / 2, h2 = BOARD_H / 2;
+            shape.moveTo(-w2, -h2);
+            shape.lineTo( w2, -h2);
+            shape.lineTo( w2,  h2);
+            shape.lineTo(-w2,  h2);
+            shape.lineTo(-w2, -h2);
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cx = (c - (COLS - 1) / 2) * PITCH;
+                    const cy = (r + 0.5) * PITCH - h2;     // shape coord: y=0 = midden
+                    const hole = new THREE.Path();
+                    hole.absarc(cx, cy, CELL / 2 - 0.03, 0, Math.PI * 2, true);
+                    shape.holes.push(hole);
+                }
+            }
+            const frontGeo = new THREE.ExtrudeGeometry(shape, {
+                depth: 0.08, bevelEnabled: false });
+            const front = new THREE.Mesh(frontGeo, frameMat);
+            // Front-paneel staat NET vóór het midden (z=0.04) zodat
+            // schijven (op z=0, dikte 0.10) goed tussen het voor- en
+            // achter-paneel zichtbaar zijn door de gaten.
+            front.position.set(0, BOARD_H/2, 0.04);
+            front.castShadow = true; front.receiveShadow = true;
+            front.renderOrder = 2;
+            grp.add(front);
+
+            // Cyaan rand-ringen rond elk gat zodat je de slots duidelijk
+            // ziet ondanks het heldere glas. Ringen staan op z=0.13 (net
+            // vóór het voor-paneel) en zijn opaque-cyaan met glow.
+            const ringMat = new THREE.MeshToonMaterial({
+                color: 0xe1f5fe, gradientMap: toon,
+                emissive: 0x4fc3f7, emissiveIntensity: 0.50,
+            });
+            const ringGeo = new THREE.TorusGeometry(
+                CELL / 2 - 0.03,    // zelfde straal als het gat
+                0.018,              // dunne ring
+                6, 24);
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const ring = new THREE.Mesh(ringGeo, ringMat);
+                    ring.position.set(
+                        (c - (COLS - 1) / 2) * PITCH,
+                        (r + 0.5) * PITCH,
+                        0.13);
+                    ring.renderOrder = 3;
+                    grp.add(ring);
+                }
+            }
+            // Houten omlijsting (rails)
+            const railMat = new THREE.MeshToonMaterial({
+                color: 0xd4a85a, gradientMap: toon });
+            for (const yy of [-FRAME_T/2, BOARD_H + FRAME_T/2]) {
+                const r = new THREE.Mesh(
+                    new THREE.BoxGeometry(BOARD_W + 2*FRAME_T, FRAME_T, FRAME_T*1.4),
+                    railMat);
+                r.position.set(0, yy, 0.05);
+                r.castShadow = true;
+                grp.add(r);
+            }
+            for (const xx of [-(BOARD_W/2 + FRAME_T/2), BOARD_W/2 + FRAME_T/2]) {
+                const r = new THREE.Mesh(
+                    new THREE.BoxGeometry(FRAME_T, BOARD_H, FRAME_T*1.4), railMat);
+                r.position.set(xx, BOARD_H/2, 0.05);
+                r.castShadow = true;
+                grp.add(r);
+            }
+            return grp;
+        }
+        const board = makeBoard();
+        board.position.set(0, BOARD_BASE_Y, 0);
+        raft.add(board);
+
+        // Kolom hit-boxen (onzichtbaar) voor raycast
+        const columnHits = [];
+        for (let c = 0; c < COLS; c++) {
+            const hb = new THREE.Mesh(
+                new THREE.BoxGeometry(PITCH, BOARD_H + 1.5, 0.40),
+                new THREE.MeshBasicMaterial({ visible: false }));
+            hb.position.set(
+                (c - (COLS - 1) / 2) * PITCH,
+                BOARD_BASE_Y + BOARD_H / 2 + 0.5,
+                0.1);
+            hb.userData.col = c;
+            raft.add(hb);
+            columnHits.push(hb);
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  E. AVATARS OP HET VLOT
+        // ════════════════════════════════════════════════════════
+        const tokenA = makePlayerAvatarToken(playerA.color.hex, playerA.avatar || null);
+        tokenGroup.remove(tokenA); raft.add(tokenA);
+        tokenA.position.set(-BOARD_W/2 - 1.2, 0.7, 0.4);
+        tokenA.scale.setScalar(0.95);
+        tokenA.rotation.y = Math.PI / 2;
+        if (tokenA.userData.headGroup) tokenA.userData.headGroup.rotation.x = -0.22;
+        const tokenB = makePlayerAvatarToken(playerB.color.hex, playerB.avatar || null);
+        tokenGroup.remove(tokenB); raft.add(tokenB);
+        tokenB.position.set( BOARD_W/2 + 1.2, 0.7, 0.4);
+        tokenB.scale.setScalar(0.95);
+        tokenB.rotation.y = -Math.PI / 2;
+        if (tokenB.userData.headGroup) tokenB.userData.headGroup.rotation.x = -0.22;
+
+        // ════════════════════════════════════════════════════════
+        //  F. STATE
+        // ════════════════════════════════════════════════════════
+        const players = {
+            A: { ...playerA, key: 'A' },
+            B: { ...playerB, key: 'B' },
+        };
+        let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        let current = Math.random() < 0.5 ? 'A' : 'B';
+        let phase = 'intro';
+        let phaseT = 0;
+        let dropAnim = null;
+        let finished = false;
+        const placedDiscs = [];
+
+        // ════════════════════════════════════════════════════════
+        //  G. CAMERAS
+        // ════════════════════════════════════════════════════════
+        const CAM_WIDE = {
+            pos: new THREE.Vector3(0, 14, 52),
+            tgt: new THREE.Vector3(0, 3, RAFT_Z),
+        };
+        // Speel-camera: face-on op het bord vanaf +Z
+        const CAM_PLAY = {
+            pos: new THREE.Vector3(0, 3.0, RAFT_Z + 11),
+            tgt: new THREE.Vector3(0, 3.0, RAFT_Z),
+        };
+        const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
+        let camTo = CAM_WIDE;
+        let camLerpT = 0;
+        let camLerpDur = 0.7;
+        function setCameraTarget(to, durationSec) {
+            camFrom.pos.copy(camera.position);
+            camFrom.tgt.copy(controls.target);
+            camTo = to;
+            camLerpDur = durationSec;
+            camLerpT = 0;
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  H. HUD
+        // ════════════════════════════════════════════════════════
+        const cfBack = el('div', { className: 'rb3-back' });
+        const cfHit  = el('div', { className: 'rb3-hit' });
+        cfBack.append(cfHit);
+        const top = el('div', { className: 'rb3-top' });
+        const chipA = el('div', { className: 'rb3-chip',
+            style: { '--pcol': playerA.color.css } });
+        const dotA = el('div', { className: 'dot',
+            style: { background: playerA.color.css,
+                     boxShadow: '0 0 8px ' + playerA.color.css } });
+        chipA.append(dotA, el('div', {}, playerA.name));
+        const vsLbl = el('div', { className: 'rb3-wind' }, '🟡 4 op een Rij');
+        const chipB = el('div', { className: 'rb3-chip',
+            style: { '--pcol': playerB.color.css } });
+        const dotB = el('div', { className: 'dot',
+            style: { background: playerB.color.css,
+                     boxShadow: '0 0 8px ' + playerB.color.css } });
+        chipB.append(dotB, el('div', {}, playerB.name));
+        const rowAB = el('div', {
+            style: { display: 'flex', gap: '10px', alignItems: 'center' }
+        }, [chipA, vsLbl, chipB]);
+        top.append(rowAB);
+        const banner = el('div', { className: 'rb3-banner',
+            style: { display: 'none' } });
+        const bot = el('div', { className: 'rb3-bot' });
+        const turnBox = el('div', { className: 'rb3-turn',
+            style: { '--pcol': playerA.color.css } });
+        turnBox.append(
+            el('div', { className: 'lbl' }, 'AAN DE BEURT'),
+            el('div', { className: 'nm' }, ''));
+        const turnName = turnBox.children[1];
+        const tip = el('div', { className: 'rb3-tip' }, '');
+        bot.append(turnBox, tip);
+        const toast = el('div', { className: 'rb3-toast',
+            style: { display: 'none' } });
+        const skipBtn = makeMinigameSkip({
+            onSkip: () => finish(null, true),
+            winners: [
+                { label: playerA.name, color: playerA.color.css,
+                    onPick: () => finish(playerA) },
+                { label: playerB.name, color: playerB.color.css,
+                    onPick: () => finish(playerB) },
+            ],
+        });
+        skipBtn.classList.add('rb3-skip');
+        const flash = el('div', { className: 'rb3-flash' });
+        cfBack.append(top, banner, bot, toast, skipBtn, flash);
+        uiRoot.append(cfBack);
+
+        function highlightCurrent() {
+            const cur = players[current];
+            chipA.style.opacity = current === 'A' ? '1' : '0.55';
+            chipB.style.opacity = current === 'B' ? '1' : '0.55';
+            turnBox.style.setProperty('--pcol', cur.color.css);
+            turnName.textContent = cur.name;
+            turnName.style.color = cur.color.css;
+        }
+        function setBanner(text, color) {
+            if (!text) { banner.style.display = 'none'; return; }
+            banner.style.display = 'block';
+            banner.style.setProperty('--pcol', color || '#ffd54a');
+            banner.innerHTML = text;
+        }
+        function setTip(text) { tip.textContent = text || ''; }
+        function showToast(html, ms = 1400, color = '#ffd54a') {
+            toast.innerHTML = html;
+            toast.style.setProperty('--pcol', color);
+            toast.style.display = 'block';
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => toast.style.display = 'none', ms);
+        }
+        highlightCurrent();
+
+        // ════════════════════════════════════════════════════════
+        //  I. INPUT
+        // ════════════════════════════════════════════════════════
+        const raycaster = new THREE.Raycaster();
+        const ndc = new THREE.Vector2();
+        function pickColumn(clientX, clientY) {
+            ndc.x = (clientX / window.innerWidth) * 2 - 1;
+            ndc.y = -(clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(ndc, camera);
+            raft.updateMatrixWorld(true);
+            const hits = raycaster.intersectObjects(columnHits);
+            if (hits.length === 0) return -1;
+            return hits[0].object.userData.col;
+        }
+        function onTap(clientX, clientY) {
+            if (finished) return;
+            if (phase === 'overview') {
+                phase = 'play_intro';
+                phaseT = 0;
+                setCameraTarget(CAM_PLAY, 0.7);
+                setBanner('', '');
+                setTip('Tik op een kolom om je schijf te laten vallen');
+                return;
+            }
+            if (phase === 'playing') {
+                const col = pickColumn(clientX, clientY);
+                if (col < 0) return;
+                let row = -1;
+                for (let r = 0; r < ROWS; r++) {
+                    if (grid[r][col] === 0) { row = r; break; }
+                }
+                if (row < 0) {
+                    showToast('Kolom vol!', 700, '#ffd54a');
+                    return;
+                }
+                dropDisc(col, row);
+            }
+        }
+        cfHit.addEventListener('touchstart', e => {
+            e.preventDefault();
+            const t = e.changedTouches[0];
+            if (t) onTap(t.clientX, t.clientY);
+        }, { passive: false });
+        cfHit.addEventListener('click', e => {
+            onTap(e.clientX, e.clientY);
+        });
+
+        // ════════════════════════════════════════════════════════
+        //  J. SCHIJF
+        // ════════════════════════════════════════════════════════
+        function makeDisc(colorHex) {
+            const mat = new THREE.MeshToonMaterial({
+                color: colorHex, gradientMap: toon,
+                emissive: colorHex, emissiveIntensity: 0.25 });
+            const disc = new THREE.Mesh(
+                new THREE.CylinderGeometry(CELL/2 - 0.04, CELL/2 - 0.04, 0.10, 18),
+                mat);
+            disc.rotation.x = Math.PI / 2;
+            disc.castShadow = true;
+            const outlineMat = new THREE.MeshBasicMaterial({
+                color: 0xffffff, side: THREE.BackSide });
+            const out = new THREE.Mesh(disc.geometry, outlineMat);
+            out.scale.setScalar(1.10);
+            disc.add(out);
+            return disc;
+        }
+        function dropDisc(col, row) {
+            const cur = players[current];
+            const disc = makeDisc(cur.color.hex);
+            const cellX = (col - (COLS - 1) / 2) * PITCH;
+            const cellY_end = (row + 0.5) * PITCH;
+            const cellY_start = BOARD_H + 0.6;
+            board.add(disc);
+            // Schijf zit op z=0, precies tussen achter-paneel (z<-0.07)
+            // en voor-paneel (z>0.04) — door het transparante plexi en
+            // door de echte gaten in het voor-paneel duidelijk te zien.
+            disc.position.set(cellX, cellY_start, 0);
+            disc.renderOrder = 0;        // schijven eerst (zijn opaque)
+            dropAnim = {
+                mesh: disc, col, row,
+                yStart: cellY_start, yEnd: cellY_end,
+                t: 0, dur: 0.55,
+            };
+            phase = 'dropping';
+            phaseT = 0;
+            placedDiscs.push(disc);
+        }
+        function finishDrop() {
+            grid[dropAnim.row][dropAnim.col] = current === 'A' ? 1 : 2;
+            const win = checkWin(dropAnim.row, dropAnim.col);
+            const cur = players[current];
+            dropAnim = null;
+            if (win) {
+                phase = 'gameover';
+                phaseT = 0;
+                highlightWin(win);
+                setBanner(`🏆 ${cur.name} WINT!`, cur.color.css);
+                showToast('4 op een rij!', 2400, cur.color.css);
+                flash.classList.add('show');
+                setTimeout(() => flash.classList.remove('show'), 350);
+                showKO(cur);
+                return;
+            }
+            if (isBoardFull()) {
+                phase = 'gameover';
+                phaseT = 0;
+                setBanner('🤝 GELIJKSPEL', '#aaaaaa');
+                showToast('Bord vol — gelijkspel', 2000, '#aaaaaa');
+                setTimeout(() => finish(null, true), 2200);
+                return;
+            }
+            nextTurn();
+        }
+        function nextTurn() {
+            current = current === 'A' ? 'B' : 'A';
+            highlightCurrent();
+            phase = 'playing';
+            phaseT = 0;
+            setTip('Tik op een kolom om je schijf te laten vallen');
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  K. WIN-DETECTIE
+        // ════════════════════════════════════════════════════════
+        function checkWin(row, col) {
+            const cell = grid[row][col];
+            if (!cell) return null;
+            const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+            for (const [dr, dc] of dirs) {
+                const cells = [[row, col]];
+                let r = row + dr, c = col + dc;
+                while (r>=0 && r<ROWS && c>=0 && c<COLS && grid[r][c] === cell) {
+                    cells.push([r, c]); r += dr; c += dc;
+                }
+                r = row - dr; c = col - dc;
+                while (r>=0 && r<ROWS && c>=0 && c<COLS && grid[r][c] === cell) {
+                    cells.unshift([r, c]); r -= dr; c -= dc;
+                }
+                if (cells.length >= 4) return { cells };
+            }
+            return null;
+        }
+        function isBoardFull() {
+            return grid.every(row => row.every(c => c !== 0));
+        }
+        function highlightWin(win) {
+            for (const [r, c] of win.cells) {
+                for (const d of placedDiscs) {
+                    const cx = (c - (COLS - 1) / 2) * PITCH;
+                    const cy = (r + 0.5) * PITCH;
+                    if (Math.abs(d.position.x - cx) < 0.1 &&
+                        Math.abs(d.position.y - cy) < 0.1) {
+                        if (d.material && d.material.emissive) {
+                            d.material.emissiveIntensity = 0.9;
+                            d.userData.winGlow = true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        function showKO(winner) {
+            const ko = el('div', { className: 'rb3-ko',
+                style: { '--pcol': winner.color.css } });
+            const loser = winner === players.A ? playerB : playerA;
+            ko.append(
+                el('h2', {}, `🏆 ${winner.name} wint!`),
+                el('p', {}, `${loser.name} drinkt ${drinks} 🍻`),
+                el('p', { style: { fontSize: '13px', opacity: '0.85' } },
+                    `${winner.name} krijgt +1 gouden dobbelsteen 🎲💛`),
+                el('button', { className: 'btn-pill', type: 'button',
+                    on: { click: () => finish(winner) } }, 'Verder'),
+            );
+            cfBack.append(ko);
+            setTimeout(() => finish(winner), 6000);
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  L. ANIMATIE-HOOK
+        // ════════════════════════════════════════════════════════
+        const PREV_HOOK = window.__deGameHook;
+        let lastT = 0;
+        window.__deGameHook = (time) => {
+            const dt = lastT ? Math.min(0.05, time - lastT) : 0;
+            lastT = time;
+            phaseT += dt;
+            // Camera lerp
+            if (camLerpT < 1) {
+                camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
+                const k = camLerpT;
+                const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
+                camera.position.lerpVectors(camFrom.pos, camTo.pos, e);
+                controls.target.lerpVectors(camFrom.tgt, camTo.tgt, e);
+            } else {
+                camera.position.copy(camTo.pos);
+                controls.target.copy(camTo.tgt);
+            }
+            camera.lookAt(controls.target);
+            // Vlot deint
+            // Vlot blijft helemaal stil — anders deint het hele beeld
+            // (incl. de schijven en het bord), wat heel snel misselijk-
+            // makend werkt bij een face-on close-up camera. Het vlot
+            // staat geparkeerd voor de vulkaan, niet op open zee.
+            // (De golven en boot-bewegingen die de echte zee suggereren
+            // doet het water-shader + de wolken zelf al, dat is genoeg.)
+            // Win-glow pulse
+            for (const d of placedDiscs) {
+                if (d.userData.winGlow && d.material && d.material.emissive) {
+                    d.material.emissiveIntensity = 0.5 + 0.5 * Math.sin(time * 4);
+                }
+            }
+            // Fase-overgangen
+            if (phase === 'intro' && phaseT >= 0.7) {
+                phase = 'overview';
+                phaseT = 0;
+                setBanner(`<small>4 OP EEN RIJ</small><br>${players[current].name} begint`,
+                    players[current].color.css);
+                setTip('Tik op het scherm om te starten');
+            }
+            else if (phase === 'play_intro' && phaseT >= 0.7) {
+                phase = 'playing';
+                phaseT = 0;
+                setTip('Tik op een kolom om je schijf te laten vallen');
+            }
+            // Drop-animatie
+            if (phase === 'dropping' && dropAnim) {
+                dropAnim.t = Math.min(1, dropAnim.t + dt / dropAnim.dur);
+                const k = dropAnim.t;
+                const eased = k * k;     // accelereer naar beneden
+                dropAnim.mesh.position.y =
+                    dropAnim.yStart + (dropAnim.yEnd - dropAnim.yStart) * eased;
+                if (dropAnim.t >= 1) {
+                    dropAnim.mesh.position.y = dropAnim.yEnd;
+                    finishDrop();
+                }
+            }
+        };
+
+        // Kick-off
+        setBanner(`<small>4 OP EEN RIJ</small><br>${players[current].name} begint`,
+            players[current].color.css);
+        setTip('Tik op het scherm om te starten');
+        setCameraTarget(CAM_WIDE, 0.7);
+
+        // ════════════════════════════════════════════════════════
+        //  M. CLEANUP
+        // ════════════════════════════════════════════════════════
+        function disposeMesh(m) {
+            if (!m) return;
+            m.geometry && m.geometry.dispose && m.geometry.dispose();
+            if (m.material) {
+                const ms = Array.isArray(m.material) ? m.material : [m.material];
+                for (const mat of ms) mat.dispose && mat.dispose();
+            }
+        }
+        function disposeGroup(g) { g.traverse(o => disposeMesh(o)); }
+        async function finish(winner, isDraw = false) {
+            if (finished) return;
+            finished = true;
+            window.__deGameHook = PREV_HOOK;
+            scene.remove(raft); disposeGroup(raft);
+            camera.fov = savedCam.fov;
+            camera.position.copy(savedCam.pos);
+            camera.updateProjectionMatrix();
+            controls.target.copy(savedCam.target);
+            controls.autoRotate = savedCam.autoRotate;
+            controls.enabled = savedCam.enabled;
+            camera.lookAt(controls.target);
+            cfBack.remove();
+            restoreMinigameChrome(hiddenChrome);
+            if (isDraw && !winner) {
+                await showModal({ emoji: '🤝', title: 'Gelijkspel!',
+                    body: ['Niemand drinkt — bord vol.'],
+                    actions: [{ label: 'OK', value: true }] });
+                resolveOuter(null);
+                return;
+            }
+            if (winner) {
+                const loser = winner === playerA ? playerB : playerA;
+                await showModal({ emoji: '🟡',
+                    title: `${winner.name} heeft 4 op een rij!`,
+                    body: [`${loser.name} drinkt ${drinks} 🍻`,
+                        `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
+                    actions: [{ label: 'Klaar', value: true }] });
+            }
+            resolveOuter(winner || null);
+        }
+    });
+}
+
+
 
 // ── Pip layouts for each die face ──
 const PIP_LAYOUTS = {
