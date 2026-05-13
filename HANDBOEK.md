@@ -858,7 +858,133 @@ Wii Party-stijl behouden:
 
 ---
 
-## 18. Ten slotte
+
+## 18. ⚡ NIEUW: Avatar systeem (mei 2026)
+
+[#18--nieuw-avatar-systeem-mei-2026](#18--nieuw-avatar-systeem-mei-2026)
+
+Elke speler heeft sinds deze update een **chibi avatar** in plaats van een simpele kleurpion. Volledig vector-SVG, geen externe libraries, opslag in `localStorage`. CSS-prefix `av-`.
+
+### Architectuur
+
+[#architectuur-18](#architectuur-18)
+
+Drie lagen, allemaal inline in `index.html`:
+
+1. **Schema + renderer** (~460 regels). Bovenaan na `function clear()`. Definieert:
+   - `AVATAR_SKIN_TONES`, `AVATAR_HAIR_COLORS`, `AVATAR_EYE_COLORS`, `AVATAR_OUTFIT_COLORS`, `AVATAR_BROW_COLORS`
+   - `AVATAR_FACE_OPTIONS`, `AVATAR_EYE_OPTIONS`, etc. (9 categorieën totaal)
+   - `defaultAvatar(colorIdx)`, `randomAvatar()`
+   - Part-renderers: `renderFace`, `renderEyes`, `renderBrows`, `renderNose`, `renderMouth`, `renderHair` (returns `{back, front}` voor layering), `renderAccessory`, `renderBody`
+   - `renderAvatarSVG(avatar, mode, extraAttrs)` — main composer
+   - `avatarToCanvas(avatar, size)` — async, voor THREE.CanvasTexture
+   - `loadAvatars()`, `saveAvatar(colorIdx, avatar)`, `loadAvatarForColor(colorIdx)` — `localStorage` key `drank-eiland-avatars-v1`
+
+2. **Creator UI** (~330 regels). `openAvatarCreator(initial, title) → Promise<avatar|null>`. Full-screen overlay, Pattern A. Categorieën als horizontale scroll-tabs, opties als swipeable carousel met mini-previews, kleurpalet als swatch-rij, footer met Cancel + Save.
+
+3. **Integratie helpers**:
+   - `makePlayerAvatarToken(colorHex, avatar)` — replaces de oude `makePlayerToken`. Behoudt base-disc + body-cone in `colorHex` (voor minimap-consistency), vervangt de sphere-head door een `THREE.Sprite` met `CanvasTexture` van de avatar SVG.
+   - `getAvatarTexture(avatar)` — async, met cache (`_avatarTextureCache` Map). Verhindert dat dezelfde avatar 60× per seconde opnieuw wordt gerenderd.
+   - `renderPlayerAvatarDOM(player, size, mode)` — DOM-helper voor minigame-overlays.
+
+### Avatar schema (versie 1)
+
+[#avatar-schema-versie-1](#avatar-schema-versie-1)
+
+```
+{
+  v: 1,
+  face: 'round'|'oval'|'square'|'heart'|'long'|'chubby'|'pointed'|'diamond',
+  skin: '#hex',
+  eyes:  { shape: 'normal'|'big'|'sleepy'|'wink'|'star'|'dot'|'closed'|'square'|'sparkle'|'tired', color: '#hex' },
+  brows: { shape: 'flat'|'arched'|'angry'|'surprised'|'thick'|'thin'|'wavy'|'none', color: '#hex' },
+  nose: 'small'|'button'|'wide'|'long'|'pointy'|'none',
+  mouth: 'smile'|'grin'|'neutral'|'open'|'smirk'|'tongue'|'o'|'frown'|'kiss'|'tooth',
+  hair: { style: 'bald'|'short_messy'|...|'wavy_long', color: '#hex' },  // 14 styles
+  accessory: 'none'|'glasses'|'shades'|'cap'|'beanie'|'crown'|'bandana'|'headband'|'helmet'|'earrings',
+  body: 'slim'|'normal'|'chunky',
+  outfit: '#hex',
+}
+```
+
+Bij toekomstige uitbreidingen: verhoog `v` en voeg een migratie toe in `loadAvatars()`. Het schema is bewust flat genoeg om met `JSON.parse(JSON.stringify(a))` te clonen.
+
+### Render-modi
+
+[#render-modi](#render-modi)
+
+`renderAvatarSVG(avatar, mode)`:
+
+- `'full'` — head + chibi-torso (viewBox `0 0 200 260`). Voor Creator preview, modals, Schnaps-call beller-portret.
+- `'head'` — alleen kop (viewBox `20 0 160 180`). Voor option-thumbs, scoreboards, HUD.
+- `'square'` — kop in 1:1 viewBox (`0 -10 200 200`). Voor de THREE.CanvasTexture op het 3D-token.
+
+### Integratiepunten in het hoofdspel
+
+[#integratiepunten-in-het-hoofdspel](#integratiepunten-in-het-hoofdspel)
+
+| Plek | Wat | Hoe |
+| --- | --- | --- |
+| **Setup-scherm player-row** | Klikbare avatar-thumb met edit-pencil (✎) | `renderAvatarSVG(p.avatar, 'head')` in `.av-thumb` div. Click → `openAvatarCreator`. |
+| **Setup standalone tab** | Avatar Creator als "minigame" | Entry in `MINIGAMES` (`id:'avatar'`). Handler bovenaan `launchStandaloneMinigame`. |
+| **Bord (3D)** | Chibi-kop op de pion | `makePlayerAvatarToken(colorHex, avatar)`. Sprite at `position.y = 1.6`, scale 0.9×0.9. |
+| **HUD bottom-card** | Avatar binnen identity-color ring | `refreshHUD` rendert `renderAvatarSVG(cur.avatar, 'head')` in de `.player-card .avatar` div. Glow blijft `cur.color.css`. |
+| **Schnaps Call** | Beller-portret = avatar i.p.v. 🥃 | `playSchnapsCall`: in-game mode rendert `renderAvatarSVG(player.avatar, 'square')` in `.sk-avatar`. |
+| **Standalone minigames** | Fake spelers krijgen avatar | `launchStandaloneMinigame` zet `avatar: loadAvatarForColor(i)` op de fake players. |
+
+### Persistence-gedrag
+
+[#persistence-gedrag](#persistence-gedrag)
+
+- **Per kleurslot, niet per speler-naam**. Slot 0 (Rood) heeft één opgeslagen avatar, slot 1 (Blauw) een andere, etc. Logisch want spelernamen wisselen, kleurslot is stabieler.
+- Wordt automatisch geladen op setup → players kunnen meteen herkend worden zonder elke sessie opnieuw te configureren.
+- Wordt opgeslagen bij elke `Opslaan`-klik in de Creator.
+- Bij kleurwissel in setup: wordt geprobeerd om saved avatar voor nieuwe kleur te laden; anders blijft huidige avatar behouden.
+
+### Performance-noten
+
+[#performance-noten](#performance-noten)
+
+- SVG-rendering is goedkoop (gewoon string-concat). Geen `requestAnimationFrame` nodig.
+- THREE.CanvasTexture wordt 1× per unieke avatar gemaakt en gecached in `_avatarTextureCache` (Map met avatar-hash key). Hash is `JSON.stringify(avatar)` — bij elke change wordt een nieuwe texture aangemaakt en de oude blijft in cache. Voor 8 spelers × ~10 customizations per game zijn dat ~80 textures, prima.
+- Bij heel veel customizations zou de cache kunnen groeien. In dat geval: voeg een `invalidateAvatarTexture(avatar)` call toe bij elke save.
+- `avatarToCanvas` gebruikt een SVG-Blob + Image.onload trick (geen `XMLSerializer` of `Canvg`).
+
+### Een nieuwe avatar-categorie toevoegen — stappen
+
+[#een-nieuwe-avatar-categorie-toevoegen--stappen](#een-nieuwe-avatar-categorie-toevoegen--stappen)
+
+1. Definieer nieuwe constanten bovenaan (bv. `AVATAR_PIERCING_OPTIONS = ['none','nose','lip','brow']`).
+2. Voeg property toe in `defaultAvatar` en `randomAvatar`.
+3. Schrijf een part-renderer `renderPiercing(kind)` die een SVG-fragment teruggeeft.
+4. Voeg de renderer-aanroep in `renderAvatarSVG()` in de juiste z-volgorde toe.
+5. Voeg een entry toe aan `AVATAR_CATEGORIES`.
+6. Voeg Dutch labels toe in `AVATAR_LABELS`.
+7. Voeg een check toe in `loadAvatars()` voor migratie als bestaande opgeslagen avatars dit veld missen.
+
+### Bekende beperkingen / TODO's
+
+[#bekende-beperkingen--todos](#bekende-beperkingen--todos)
+
+- **Iframes** (Raft Battle, Bowling, Connect 4) zien de avatars nog niet — die ontvangen op dit moment alleen `name + color` via `postMessage`. Toekomstige uitbreiding: stuur `avatar` payload mee en render in iframe-side.
+- Geen "schaduw"-onder-de-token op het 3D-bord (de oude sphere-head had ook geen extra schaduw, maar de sprite is platter, dus kan minder grondig overkomen).
+- Geen positie/grootte-sliders voor fijnafstemming (eyes spacing, mouth size). Was bewust v1-scope.
+
+### Visuele identiteit (style anchor)
+
+[#visuele-identiteit-style-anchor](#visuele-identiteit-style-anchor)
+
+Match met Wii Party / bestaande UI:
+- Chunky outline `stroke="#1a1010" stroke-width="2.5..3"` op ALLE shapes.
+- Witte highlights in ogen (`circle r="1.8" fill="#fff"`).
+- Felle skin tones, geen gradients (toon-style flat colors).
+- Body-cilinder met halve-cirkel mouwen.
+- Geen schaduwen of gradients in de SVG zelf — diepte komt uit de stroke + filter:drop-shadow op de container.
+
+---
+
+
+## 19. Ten slotte
 
 Als deze handleiding inconsistent is met de code: **de code wint**. Update dit document als je iets fundamenteel wijzigt aan de architectuur.
 
