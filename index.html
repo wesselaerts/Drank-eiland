@@ -1556,6 +1556,222 @@
       background: linear-gradient(180deg, #ffd54a, #ff9a1a);
       color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
 
+    /* ===== 🍌 Banana Brig — gyro stilstand minigame ===== */
+    .bnb-back { position: fixed; inset: 0; z-index: 60;
+      background:
+        radial-gradient(ellipse at 50% 30%, #4a6a2a 0%, #2a3a18 35%, #18220a 100%);
+      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      user-select: none; overflow: hidden; touch-action: none;
+      padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+    .bnb-back::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(circle at 12% 80%, rgba(60,140,40,0.35), transparent 30%),
+        radial-gradient(circle at 88% 75%, rgba(60,140,40,0.35), transparent 32%),
+        radial-gradient(circle at 50% 110%, rgba(20,40,5,0.7), transparent 50%); }
+    .bnb-head { position: relative; z-index: 2; text-align: center; padding: 4px 8px 6px; }
+    .bnb-head h2 { margin: 0; font-size: 20px; font-weight: 900; letter-spacing: 0.5px;
+      text-shadow: 0 2px 0 #000, 0 0 16px rgba(255,220,80,0.6); }
+    .bnb-head .sub { font-size: 12px; opacity: 0.78; margin-top: 2px; }
+    .bnb-hud { display: flex; justify-content: space-around; margin: 4px 8px 8px;
+      gap: 8px; position: relative; z-index: 2; }
+    .bnb-chip { padding: 6px 12px; border-radius: 999px;
+      background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.18);
+      display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 90px; }
+    .bnb-chip .lbl { font-size: 10px; opacity: 0.7; letter-spacing: 0.6px; text-transform: uppercase; }
+    .bnb-chip .val { font-size: 18px; font-weight: 900; color: var(--pcol, #ffd54a); }
+    .bnb-stage { flex: 1; position: relative; overflow: hidden;
+      border-radius: 18px; margin: 0 4px;
+      background:
+        radial-gradient(ellipse at 50% 100%, #6c4a18 0%, #3a2410 60%, #1a0e04 100%);
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.5); }
+    /* Jungle silhouette achtergrond */
+    .bnb-stage::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 35% 45% at 15% 70%, rgba(20,40,10,0.7), transparent 70%),
+        radial-gradient(ellipse 30% 50% at 85% 65%, rgba(20,40,10,0.7), transparent 70%),
+        radial-gradient(circle at 50% 110%, rgba(0,0,0,0.6), transparent 60%); }
+    /* Speler-silhouette met bananenstapel op het hoofd */
+    .bnb-char { position: absolute; left: 50%; bottom: 12%;
+      transform: translate(-50%, 0) rotate(0deg);
+      transform-origin: 50% 90%;
+      width: 200px; height: 320px;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+      transition: transform 0.05s linear;
+      will-change: transform; }
+    .bnb-stack { position: relative; width: 140px; height: 200px;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; }
+    .bnb-banana { font-size: 54px; line-height: 0.7;
+      filter: drop-shadow(0 3px 4px rgba(0,0,0,0.55));
+      animation: bnb-wob 1.2s ease-in-out infinite alternate; }
+    .bnb-banana:nth-child(1) { transform: rotate( 8deg); animation-delay: 0.05s; }
+    .bnb-banana:nth-child(2) { transform: rotate(-12deg); animation-delay: 0.15s; }
+    .bnb-banana:nth-child(3) { transform: rotate(  6deg); animation-delay: 0.25s; }
+    .bnb-banana:nth-child(4) { transform: rotate(-4deg); animation-delay: 0.35s; }
+    .bnb-banana:nth-child(5) { transform: rotate(10deg); animation-delay: 0.45s; }
+    .bnb-banana:nth-child(6) { transform: rotate(-8deg); animation-delay: 0.55s; }
+    @keyframes bnb-wob { from { translate: 0 0; } to { translate: 0 -2px; } }
+    /* Het hoofd waar de stapel op staat */
+    .bnb-head-emoji { font-size: 76px; margin-top: -10px;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.7)); }
+    /* Stability meter onderaan */
+    .bnb-meter { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 18px;
+      background: rgba(0,0,0,0.55); border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.25); overflow: hidden;
+      pointer-events: none; }
+    .bnb-meter::before, .bnb-meter::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 22%;
+      background: linear-gradient(90deg, transparent, #ff3a3a); }
+    .bnb-meter::before { left: 0; transform: scaleX(-1); }
+    .bnb-meter::after  { right: 0; }
+    .bnb-meter .pin {
+      position: absolute; top: -3px; bottom: -3px; width: 8px; left: 50%;
+      transform: translateX(-50%);
+      background: #ffd54a; box-shadow: 0 0 14px #ffd54a;
+      border-radius: 4px; transition: left 0.05s linear; }
+    .bnb-meter .center { position: absolute; top: 0; bottom: 0;
+      width: 2px; left: 50%; background: rgba(255,255,255,0.55); }
+    /* Permissie / banner */
+    .bnb-card { position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%); z-index: 6;
+      padding: 18px 22px; border-radius: 18px; text-align: center;
+      background: rgba(20,15,5,0.94); border: 2px solid #ffd54a;
+      box-shadow: 0 0 38px rgba(255,200,80,0.45);
+      max-width: 90%; }
+    .bnb-card h3 { margin: 0 0 8px; font-size: 22px;
+      text-shadow: 0 2px 0 #000, 0 0 12px rgba(255,220,80,0.5); }
+    .bnb-card p { margin: 6px 0; opacity: 0.92; font-size: 14px; line-height: 1.4; max-width: 280px; }
+    .bnb-card .big { font-size: 32px; font-weight: 900; color: var(--pcol, #ffd54a);
+      text-shadow: 0 2px 0 #000, 0 0 14px var(--pcol, #ffd54a); }
+    .bnb-back .btn-pill { min-height: 50px; padding: 0 22px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.1);
+      color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; margin: 4px 4px 0; }
+    .bnb-back .btn-pill.gold {
+      background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+      color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
+    /* Distractie-objecten: kokosnoten die over het scherm vliegen */
+    .bnb-coco { position: absolute; font-size: 44px; pointer-events: none;
+      filter: drop-shadow(0 3px 5px rgba(0,0,0,0.6));
+      animation: bnb-cocoFly 1.8s linear forwards; z-index: 4; }
+    @keyframes bnb-cocoFly {
+      0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { transform: translate(var(--tx, 0), var(--ty, 0)) rotate(720deg); opacity: 0; }
+    }
+    /* Nep-waarschuwingen */
+    .bnb-fake { position: absolute; left: 50%; top: 25%;
+      transform: translate(-50%, 0) scale(0.6); opacity: 0;
+      padding: 10px 18px; border-radius: 12px;
+      background: rgba(0,0,0,0.85); border: 2px solid #ff3a3a;
+      color: #fff; font-weight: 900; font-size: 18px; letter-spacing: 0.5px;
+      text-shadow: 0 1px 0 #000; pointer-events: none; z-index: 5;
+      animation: bnb-fakePop 1.1s ease-out forwards; }
+    .bnb-fake.ok { border-color: #3aff7a; }
+    @keyframes bnb-fakePop {
+      0%   { transform: translate(-50%, 0) scale(0.6); opacity: 0; }
+      18%  { transform: translate(-50%, 0) scale(1.15); opacity: 1; }
+      35%  { transform: translate(-50%, 0) scale(1.0); opacity: 1; }
+      85%  { transform: translate(-50%, 0) scale(1.0); opacity: 1; }
+      100% { transform: translate(-50%, -20px) scale(0.8); opacity: 0; }
+    }
+    /* Banana explosie bij fail */
+    .bnb-burst { position: absolute; font-size: 60px; pointer-events: none;
+      animation: bnb-burst 1.4s ease-out forwards;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.7)); z-index: 7; }
+    @keyframes bnb-burst {
+      0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+      20%  { transform: translate(-50%, -50%) translate(var(--tx,0), var(--ty,0)) scale(1.2) rotate(180deg); opacity: 1; }
+      100% { transform: translate(-50%, -50%) translate(calc(var(--tx,0) * 3.5), calc(var(--ty,0) * 3.5 + 200px)) scale(0.4) rotate(720deg); opacity: 0; }
+    }
+    /* Shake-overlay tijdens chaos-bursts (alleen op de stage) */
+    .bnb-stage.shake { animation: bnb-stageShake 0.5s ease-in-out; }
+    @keyframes bnb-stageShake {
+      0%,100% { transform: translate(0,0); }
+      20% { transform: translate(-5px, 3px); }
+      40% { transform: translate(4px, -3px); }
+      60% { transform: translate(-3px, 4px); }
+      80% { transform: translate(4px, -2px); }
+    }
+    /* Monkey Respect ceremonie */
+    .bnb-respect { position: absolute; inset: 0; display: flex;
+      align-items: center; justify-content: center; flex-direction: column; gap: 10px;
+      background: radial-gradient(ellipse at center, rgba(255,200,60,0.25), transparent 70%);
+      z-index: 6; pointer-events: none; animation: fadeIn 0.4s ease; }
+    .bnb-respect .crown { font-size: 80px;
+      filter: drop-shadow(0 0 24px #ffd54a); animation: bnb-bounce 1.6s ease-in-out infinite; }
+    @keyframes bnb-bounce {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .bnb-respect .apes { font-size: 48px; letter-spacing: 8px; }
+
+    /* ===== 🌋 TIKI WHEEL — verbannings-rad ===== */
+    .tw-back { position: fixed; inset: 0; z-index: 65;
+      background: radial-gradient(ellipse at 50% 50%, rgba(80,30,10,0.85) 0%, rgba(20,5,5,0.96) 100%);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 18px; padding: 24px; animation: fadeIn .3s ease;
+      color: #fff; user-select: none; }
+    .tw-title { text-align: center; }
+    .tw-title h2 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: 1px;
+      text-shadow: 0 3px 0 #000, 0 0 22px rgba(255,140,40,0.7); }
+    .tw-title p { margin: 6px 0 0; font-size: 14px; opacity: 0.85; }
+    .tw-stage { position: relative; width: min(82vw, 340px); aspect-ratio: 1 / 1;
+      filter: drop-shadow(0 12px 24px rgba(0,0,0,0.6)); }
+    /* Tiki masker bovenaan (vaste pointer) */
+    .tw-pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+      font-size: 54px; z-index: 4;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,0.7)); }
+    /* Het rad zelf */
+    .tw-wheel { position: absolute; inset: 0; border-radius: 50%;
+      transform: rotate(0deg); transition: none;
+      box-shadow: 0 0 0 6px #3a1a0a, 0 0 0 10px #ffd54a,
+                  inset 0 0 50px rgba(0,0,0,0.4); }
+    .tw-wheel.spinning { transition: transform 4.5s cubic-bezier(.18,.62,.18,1); }
+    /* 4 segmenten als CSS conic-gradient. Het rad is verdeeld in 4 kwarten;
+       per kwart een gradient + label. */
+    .tw-wheel {
+      background: conic-gradient(
+        from -45deg,
+        #d92e3a 0deg 90deg,
+        #4da6ff 90deg 180deg,
+        #3ec866 180deg 270deg,
+        #ffd54a 270deg 360deg
+      );
+    }
+    .tw-seg { position: absolute; left: 50%; top: 50%;
+      width: 50%; transform-origin: 0 50%;
+      pointer-events: none; }
+    .tw-seg .label { position: absolute; left: 50%; top: -14px;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      font-size: 26px; line-height: 1; pointer-events: none;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.5);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+    .tw-seg .name { position: absolute; left: 50%; top: 12px;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      font-size: 11px; font-weight: 900; letter-spacing: 0.5px;
+      color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,0.7);
+      white-space: nowrap; pointer-events: none; }
+    .tw-seg.locked { opacity: 0.55; }
+    .tw-seg.locked .label { filter: grayscale(0.7) brightness(0.65); }
+    /* Naafje in het midden */
+    .tw-hub { position: absolute; left: 50%; top: 50%;
+      width: 22%; height: 22%; transform: translate(-50%, -50%);
+      border-radius: 50%; background: radial-gradient(circle, #ffd54a 0%, #c8881a 70%, #6d4c2a 100%);
+      box-shadow: 0 0 0 4px #3a1a0a, 0 4px 10px rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center; font-size: 30px;
+      z-index: 3; }
+    .tw-result { position: absolute; left: 50%; bottom: -60px;
+      transform: translate(-50%, 0) scale(0); opacity: 0;
+      padding: 10px 22px; border-radius: 999px;
+      background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+      color: #2a1a00; font-weight: 900; font-size: 16px;
+      box-shadow: 0 4px 0 #b56a00; white-space: nowrap;
+      transition: transform 0.5s cubic-bezier(.4,1.6,.5,1), opacity 0.3s ease; }
+    .tw-result.show { transform: translate(-50%, 0) scale(1); opacity: 1; }
+    .tw-actions { display: flex; gap: 10px; }
+
 
     /* ===== Tappy Bird — pass-and-play flappy ===== */
     .tb-back { position: fixed; inset: 0; z-index: 60; background: #4ec0ca;
@@ -2632,9 +2848,338 @@ function makeSatelliteIsland(x, z, radiusScale = 1, rotation = 0) {
 const satellites = [
     makeSatelliteIsland( 19,   8,  1.0,  0.4),   // east
     makeSatelliteIsland(-17,  10,  0.85, 0.9),   // northwest
-    makeSatelliteIsland(  4, -19,  1.1, -0.3),   // south
+    makeSatelliteIsland(  4, -19,  1.1, -0.3),   // south  → BANANA BRIG (apeneiland)
     makeSatelliteIsland(-15, -12,  0.7,  1.6),   // southwest (small)
 ];
+
+// Index van het eiland dat we tot Banana Brig ombouwen. Andere 3 satellieten
+// blijven generieke straf-eilandjes (voor later uit te bouwen).
+const BANANA_BRIG_INDEX = 2;
+const bananaBrig = satellites[BANANA_BRIG_INDEX];
+
+/* ─────────────────────────────────────────────
+   6b. 🍌 BANANA BRIG — apeneiland-gevangenis
+   ─────────────────────────────────────────────
+   Vervangt de decoratie van het zuid-satelliet door:
+     - houten/bamboe-kooi met tralies en hangslot
+     - rieten dak
+     - stapel bananen-trossen ervoor
+     - 2 simpele apen (lui-zit poses)
+     - houten pier richting hoofdeiland
+     - bordje "BANANA BRIG"
+   ───────────────────────────────────────────── */
+(function buildBananaBrig() {
+    const g = bananaBrig.group;
+    const cx = 0, cz = 0;          // lokale coords binnen group
+    const baseY = 2.4;             // top van het gras-eiland (zie return van makeSatelliteIsland)
+
+    // Verwijder de random gras-bump die makeSatelliteIsland eraan toevoegde
+    // (dit is altijd de 4e child; b=0, bch=1, gr=2, bump=3)
+    if (g.children.length > 3) {
+        const bump = g.children[3];
+        g.remove(bump);
+        if (bump.geometry) bump.geometry.dispose();
+    }
+
+    // ── Materialen ── (Wii-toon, gradient ramp, met outlines)
+    const matBamboo      = new THREE.MeshToonMaterial({ color: 0xd4a86a, gradientMap: toon,
+                                                          emissive: 0x6d4c2a, emissiveIntensity: 0.06 });
+    const matBambooDark  = new THREE.MeshToonMaterial({ color: 0x8a5e2f, gradientMap: toon });
+    const matThatch      = new THREE.MeshToonMaterial({ color: 0xc89a4a, gradientMap: toon });
+    const matThatchDark  = new THREE.MeshToonMaterial({ color: 0x8a682a, gradientMap: toon });
+    const matBanana      = new THREE.MeshToonMaterial({ color: 0xffd84a, gradientMap: toon,
+                                                          emissive: 0xffaa00, emissiveIntensity: 0.18 });
+    const matBananaStem  = new THREE.MeshToonMaterial({ color: 0x4a6a2a, gradientMap: toon });
+    const matApeFur      = new THREE.MeshToonMaterial({ color: 0x6a4a30, gradientMap: toon });
+    const matApeBelly    = new THREE.MeshToonMaterial({ color: 0xc8a070, gradientMap: toon });
+    const matApeFace     = new THREE.MeshToonMaterial({ color: 0x3a2410, gradientMap: toon });
+    const matApeEye      = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const matLockGold    = new THREE.MeshToonMaterial({ color: 0xffd54a, gradientMap: toon,
+                                                          emissive: 0xc8881a, emissiveIntensity: 0.4 });
+    const matPlank       = new THREE.MeshToonMaterial({ color: 0x8a5a30, gradientMap: toon });
+    const matStone       = new THREE.MeshToonMaterial({ color: 0x6a6068, gradientMap: toon });
+
+    // ── 1. Stenen plateau onder de kooi (om hoogteverschil te verbergen)
+    const plateau = new THREE.Mesh(
+        deformCylinder(new THREE.CylinderGeometry(2.0, 2.2, 0.45, 14), 0.25),
+        matStone);
+    plateau.position.set(cx, baseY + 0.25, cz);
+    plateau.castShadow = true; plateau.receiveShadow = true;
+    g.add(plateau);
+    addOutline(plateau, 1.015);
+
+    // ── 2. De Kooi (bamboe-tralies in cirkel + ringen onder/boven) ──
+    const cage = new THREE.Group();
+    cage.position.set(cx, baseY + 0.45, cz);
+    g.add(cage);
+
+    const BAR_COUNT = 18;            // dichter: 18 tralies (was 10)
+    const BAR_RADIUS = 1.55;
+    const BAR_HEIGHT = 2.4;
+    const BAR_THICKNESS = 0.11;      // dikker (was 0.085)
+    // Tralies, met een klein gat ervoor (de "deur" — alleen 1 traliel overslaan)
+    // Lokaal +Z is richting hoofdeiland — daar zit de deur-opening
+    for (let i = 0; i < BAR_COUNT; i++) {
+        const a = (Math.PI * 2 / BAR_COUNT) * i;
+        // Skip alleen de centrale voor-traliel (smalle deur-opening)
+        if (i === 0) continue;
+        const bar = new THREE.Mesh(
+            new THREE.CylinderGeometry(BAR_THICKNESS, BAR_THICKNESS, BAR_HEIGHT, 7),
+            matBamboo);
+        bar.position.set(Math.cos(a) * BAR_RADIUS, BAR_HEIGHT / 2, Math.sin(a) * BAR_RADIUS);
+        bar.castShadow = true;
+        cage.add(bar);
+        // Bamboe-knopen op elke tralie (4 knopen verticaal, dikker)
+        for (let k = 0; k < 4; k++) {
+            const knot = new THREE.Mesh(
+                new THREE.TorusGeometry(BAR_THICKNESS * 1.35, 0.035, 5, 10),
+                matBambooDark);
+            knot.rotation.x = Math.PI / 2;
+            knot.position.set(bar.position.x, 0.3 + k * 0.6, bar.position.z);
+            cage.add(knot);
+        }
+    }
+    // Horizontale bindstrengen op 3 hoogtes — geven het ECHT een kooi-look
+    for (const ringY of [0.55, 1.20, 1.85]) {
+        const ring = new THREE.Mesh(
+            new THREE.TorusGeometry(BAR_RADIUS + 0.04, 0.045, 5, 22, Math.PI * 1.85),
+            matBambooDark);
+        ring.rotation.x = Math.PI / 2;
+        // Rotatie zo dat de opening in de ring samenvalt met de deur-opening (+Z)
+        ring.rotation.z = -Math.PI * 0.075;
+        ring.position.y = ringY;
+        cage.add(ring);
+    }
+    // Bovenring (volledig, dikker)
+    const ringTop = new THREE.Mesh(
+        new THREE.TorusGeometry(BAR_RADIUS, 0.11, 6, 22),
+        matBambooDark);
+    ringTop.rotation.x = Math.PI / 2;
+    ringTop.position.y = BAR_HEIGHT;
+    ringTop.castShadow = true;
+    cage.add(ringTop);
+    // Onderring — volledig nu (geen open gat onder)
+    const ringBot = new THREE.Mesh(
+        new THREE.TorusGeometry(BAR_RADIUS, 0.11, 6, 22),
+        matBambooDark);
+    ringBot.rotation.x = Math.PI / 2;
+    ringBot.position.y = 0.05;
+    cage.add(ringBot);
+
+    // ── 3. Rieten dak (kegel op de kooi) ──
+    const roof = new THREE.Mesh(
+        new THREE.ConeGeometry(BAR_RADIUS + 0.25, 1.3, 12),
+        matThatch);
+    roof.position.y = BAR_HEIGHT + 0.55;
+    roof.castShadow = true;
+    cage.add(roof);
+    addOutline(roof, 1.025);
+    // Donkere ribben op het dak voor riet-look
+    for (let i = 0; i < 6; i++) {
+        const a = (Math.PI * 2 / 6) * i;
+        const rib = new THREE.Mesh(
+            new THREE.BoxGeometry(0.05, 1.4, 0.05),
+            matThatchDark);
+        rib.position.set(Math.cos(a) * (BAR_RADIUS * 0.55), BAR_HEIGHT + 0.55, Math.sin(a) * (BAR_RADIUS * 0.55));
+        rib.lookAt(0, BAR_HEIGHT + 1.2, 0);
+        cage.add(rib);
+    }
+    // Gouden bol op de top (voor flair)
+    const finial = new THREE.Mesh(
+        new THREE.SphereGeometry(0.14, 8, 6),
+        matLockGold);
+    finial.position.y = BAR_HEIGHT + 1.25;
+    cage.add(finial);
+
+    // ── 4. Gouden hangslot bij de deuropening ──
+    const lockGroup = new THREE.Group();
+    lockGroup.position.set(0, 1.0, BAR_RADIUS + 0.18);
+    cage.add(lockGroup);
+    const lockBody = new THREE.Mesh(
+        new THREE.BoxGeometry(0.36, 0.42, 0.18),
+        matLockGold);
+    lockBody.castShadow = true;
+    lockGroup.add(lockBody);
+    addOutline(lockBody, 1.06);
+    const lockShackle = new THREE.Mesh(
+        new THREE.TorusGeometry(0.13, 0.04, 5, 10, Math.PI),
+        matLockGold);
+    lockShackle.position.y = 0.27;
+    lockGroup.add(lockShackle);
+
+    // ── 5. Banana stash voor de kooi (4 trossen op een hoop) ──
+    function makeBananaBunch(x, z, scale = 1, rotY = 0) {
+        const bunch = new THREE.Group();
+        bunch.position.set(x, baseY + 0.5, z);
+        bunch.rotation.y = rotY;
+        bunch.scale.setScalar(scale);
+        g.add(bunch);
+        // Stam
+        const stem = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.05, 0.05, 0.35, 6),
+            matBananaStem);
+        stem.rotation.z = 0.3;
+        bunch.add(stem);
+        // 5 bananen om de stam
+        for (let i = 0; i < 5; i++) {
+            const a = (Math.PI * 2 / 5) * i + Math.random() * 0.3;
+            const banana = new THREE.Mesh(
+                new THREE.TorusGeometry(0.22, 0.07, 5, 8, Math.PI * 0.85),
+                matBanana);
+            banana.position.set(Math.cos(a) * 0.18, -0.1 + (i % 2) * 0.08, Math.sin(a) * 0.18);
+            banana.rotation.y = a + Math.PI / 2;
+            banana.rotation.z = -1.2;
+            banana.castShadow = true;
+            bunch.add(banana);
+            addOutline(banana, 1.04);
+        }
+        return bunch;
+    }
+    makeBananaBunch( 0.8, 1.9, 1.0,  0.4);
+    makeBananaBunch(-0.7, 2.0, 0.9, -0.3);
+    makeBananaBunch( 0.2, 2.4, 1.1,  0.9);
+    makeBananaBunch( 1.4, 2.3, 0.8,  0.0);
+
+    // ── 6. Twee simpele apen (low-poly, geen botten) ──
+    function makeApe(x, z, scale = 1, rotY = 0) {
+        const ape = new THREE.Group();
+        ape.position.set(x, baseY + 0.5, z);
+        ape.rotation.y = rotY;
+        ape.scale.setScalar(scale);
+        g.add(ape);
+
+        // Body (zittend)
+        const body = new THREE.Mesh(
+            new THREE.SphereGeometry(0.42, 10, 8),
+            matApeFur);
+        body.scale.set(1, 0.85, 0.9);
+        body.position.y = 0.32;
+        body.castShadow = true;
+        ape.add(body);
+        addOutline(body, 1.04);
+        // Belly
+        const belly = new THREE.Mesh(
+            new THREE.SphereGeometry(0.26, 8, 6),
+            matApeBelly);
+        belly.scale.set(0.9, 0.7, 0.5);
+        belly.position.set(0, 0.28, 0.18);
+        ape.add(belly);
+        // Head
+        const head = new THREE.Mesh(
+            new THREE.SphereGeometry(0.34, 10, 8),
+            matApeFur);
+        head.position.y = 0.85;
+        head.castShadow = true;
+        ape.add(head);
+        addOutline(head, 1.04);
+        // Face patch
+        const face = new THREE.Mesh(
+            new THREE.SphereGeometry(0.21, 8, 6),
+            matApeBelly);
+        face.scale.set(0.95, 0.85, 0.5);
+        face.position.set(0, 0.78, 0.21);
+        ape.add(face);
+        // Eyes
+        for (const ex of [-0.09, 0.09]) {
+            const eye = new THREE.Mesh(
+                new THREE.SphereGeometry(0.04, 6, 5),
+                matApeEye);
+            eye.position.set(ex, 0.88, 0.32);
+            ape.add(eye);
+            const pupil = new THREE.Mesh(
+                new THREE.SphereGeometry(0.022, 5, 4),
+                matApeFace);
+            pupil.position.set(ex, 0.88, 0.36);
+            ape.add(pupil);
+        }
+        // Ears
+        for (const ex of [-0.32, 0.32]) {
+            const ear = new THREE.Mesh(
+                new THREE.SphereGeometry(0.11, 6, 5),
+                matApeFur);
+            ear.scale.set(0.5, 1, 0.7);
+            ear.position.set(ex, 0.88, 0);
+            ape.add(ear);
+        }
+        // Arms — beide naar voren (lui zittend)
+        for (const sx of [-1, 1]) {
+            const arm = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.09, 0.08, 0.55, 6),
+                matApeFur);
+            arm.position.set(sx * 0.32, 0.36, 0.12);
+            arm.rotation.x = -0.7;
+            arm.rotation.z = sx * 0.35;
+            arm.castShadow = true;
+            ape.add(arm);
+        }
+        // Legs (zittend uitstrekken)
+        for (const sx of [-1, 1]) {
+            const leg = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.1, 0.1, 0.45, 6),
+                matApeFur);
+            leg.position.set(sx * 0.16, 0.1, 0.25);
+            leg.rotation.x = Math.PI / 2;
+            ape.add(leg);
+        }
+        return ape;
+    }
+    const ape1 = makeApe(-1.6,  0.4, 1.0,  0.5);
+    const ape2 = makeApe( 1.7,  0.5, 0.85, -0.6);
+    // Iets achter de kooi: een derde ape die op de uitkijk zit
+    const ape3 = makeApe( 0.0, -1.7, 0.95, Math.PI);
+
+    // ── 7. Houten pier richting hoofdeiland (z+ vanuit dit eiland) ──
+    // Lokale z+ in dit eiland wijst noord (richting hoofdeiland), perfect.
+    const pier = new THREE.Group();
+    g.add(pier);
+    for (let i = 0; i < 4; i++) {
+        const plank = new THREE.Mesh(
+            new THREE.BoxGeometry(1.2, 0.16, 0.5),
+            matPlank);
+        plank.position.set(0, baseY + 0.1, 2.3 + i * 0.55);
+        plank.castShadow = true; plank.receiveShadow = true;
+        pier.add(plank);
+        // Paaltjes onder elke 2e plank
+        if (i % 2 === 0) {
+            for (const sx of [-0.5, 0.5]) {
+                const post = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.07, 0.07, 1.2, 6),
+                    matPlank);
+                post.position.set(sx, baseY - 0.4, 2.3 + i * 0.55);
+                pier.add(post);
+            }
+        }
+    }
+
+    // ── 8. Bordje "BANANA BRIG" ──
+    const signGroup = new THREE.Group();
+    signGroup.position.set(2.0, baseY + 0.5, 1.4);
+    signGroup.rotation.y = -0.6;
+    g.add(signGroup);
+    const signPost = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05, 0.05, 1.0, 6),
+        matPlank);
+    signPost.position.y = 0.5;
+    signGroup.add(signPost);
+    const signBoard = new THREE.Mesh(
+        new THREE.BoxGeometry(0.9, 0.4, 0.05),
+        matPlank);
+    signBoard.position.y = 0.85;
+    signGroup.add(signBoard);
+    addOutline(signBoard, 1.05);
+    // Bananen-icoon op het bord (gele torus)
+    const signIcon = new THREE.Mesh(
+        new THREE.TorusGeometry(0.13, 0.045, 5, 8, Math.PI),
+        matBanana);
+    signIcon.position.set(0, 0.85, 0.04);
+    signIcon.rotation.z = -1.2;
+    signGroup.add(signIcon);
+
+    // ── 9. Subtiele wiebel/animatie voor sfeer
+    //     We registreren ape3 (uitkijkje) zodat de animatie-loop hem
+    //     zacht laat ademen. (Hooks naar __bananaBrigBits gebruikt.)
+    window.__bananaBrigBits = { apes: [ape1, ape2, ape3], lockGroup, finial };
+})();
 
 
 /* ─────────────────────────────────────────────
@@ -2947,7 +3492,7 @@ const SPECIAL_TILES = {
     15: 'bluestatue',   // mid-game jackpot — huge boost
     19: 'tornado',      // pick a victim, blow them back
     23: 'ufo',          // swap places with another player
-    30: 'skull',        // fall into the volcano!
+    30: 'skull',        // 🌋 Volcano Verbanning — sucked to Banana Brig prison
     32: 'bluestatue',   // second jackpot
     37: 'tornado',
     43: 'ufo',
@@ -3217,10 +3762,26 @@ const satelliteTilePositions = [
 ];
 
 const dangerMarkers = [];
+// Custom gele Banana Brig tegel (vervangt de paarse straftegel op het zuid-eiland)
+const bananaTileMat = new THREE.MeshToonMaterial({
+    color: 0xffd84a,
+    gradientMap: toon,
+    emissive: 0xffaa00,
+    emissiveIntensity: 0.55,
+});
+const bananaMarkerMat = new THREE.MeshToonMaterial({
+    color: 0xffd84a,
+    gradientMap: toon,
+    emissive: 0xffaa00,
+    emissiveIntensity: 0.7,
+});
 for (let i = 0; i < satelliteTilePositions.length; i++) {
     const s = satelliteTilePositions[i];
-    const tile = new THREE.Mesh(dangerTileGeo, dangerMat);
-    tile.position.set(s.x, s.surfaceY + 0.16, s.z);
+    const isBananaBrig = (i === BANANA_BRIG_INDEX);
+    const tile = new THREE.Mesh(dangerTileGeo, isBananaBrig ? bananaTileMat : dangerMat);
+    // Banana Brig tegel staat IN de kooi — een stukje hoger zodat hij boven de
+    // bodem van de kooi uitkomt en goed zichtbaar is vanuit de standaard camera
+    tile.position.set(s.x, s.surfaceY + (isBananaBrig ? 0.30 : 0.16), s.z);
     tile.castShadow = true;
     tile.receiveShadow = true;
 
@@ -3232,18 +3793,29 @@ for (let i = 0; i < satelliteTilePositions.length; i++) {
     outline.scale.set(1.28, 1.22, 1.28);
     tile.add(outline);
 
-    // floating warning marker (octahedron spinning above)
-    const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.3, 0), skullMat);
-    marker.position.y = 0.95;
+    // floating marker boven de tegel: bananen-tros voor Banana Brig, anders het
+    // klassieke witte octaëder waarschuwingsteken.
+    let marker;
+    if (isBananaBrig) {
+        marker = new THREE.Mesh(
+            new THREE.TorusGeometry(0.22, 0.075, 5, 10, Math.PI),
+            bananaMarkerMat);
+        marker.rotation.z = -1.2;
+        marker.position.y = 1.05;
+    } else {
+        marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.3, 0), skullMat);
+        marker.position.y = 0.95;
+    }
     tile.add(marker);
     dangerMarkers.push(marker);
 
     scene.add(tile);
     tiles.push({
         mesh: tile,
-        baseY: s.surfaceY + 0.16,
+        baseY: s.surfaceY + (isBananaBrig ? 0.30 : 0.16),
         phase: i * 0.9,
         isDanger: true,
+        isBananaBrig,
     });
 }
 
@@ -6881,6 +7453,7 @@ function startGame(draft) {
             bonusDice: cfg.startBonusDice || 0,
             extraRoll: false,
             skipNextTurn: false,
+            inPrison: false,
         };
     });
     G.turnIdx = 0;
@@ -10310,6 +10883,46 @@ function onRollDice() {
             });
         }
 
+        // ─── PRISON CHECK ───────────────────────────────────────────────
+        // Als de speler vastzit in Banana Brig: minimaal 4 gooien om uit te
+        // breken. Lager = nóg een ronde vast, met een kleine drinkstraf.
+        // Hoog genoeg = ontsnapping én normaal bewegen vanaf de verbannings-
+        // tegel met het aantal ogen.
+        if (player.inPrison) {
+            if (total >= 4) {
+                player.inPrison = false;
+                refreshHUD();
+                screenShake(350);
+                if (navigator.vibrate) {
+                    try { navigator.vibrate([60, 30, 80, 30, 120]); } catch (e) {}
+                }
+                await showStamp({
+                    emoji: '🍌🔓', big: 'ONTSNAPT!',
+                    sub: `${player.name} gooit ${total} en breekt uit Banana Brig!`,
+                    palette: 'gold',
+                });
+                // Vervolg normaal: bewegen + onLandedOnTile
+                G.phase = 'moving';
+                moveTokenAlong(player, total, () => onLandedOnTile(player));
+            } else {
+                // Te laag → blijft vast, drinkt een beetje, beurt voorbij
+                const d = slokken(2);
+                await showStamp({
+                    emoji: '🐒🚫', big: 'BEWAKERS!',
+                    sub: `${player.name} gooide ${total} — te laag, blijft vast. Drinkt ${d} 🍻`,
+                    palette: 'dark',
+                });
+                // Beurt eindigt zonder beweging
+                advanceTurn();
+                G.phase = 'idle';
+                refreshHUD();
+                await maybeFireSchnapsCall();
+                const btn2 = document.getElementById('dice-btn');
+                if (btn2) { btn2.disabled = false; btn2.textContent = '🎲'; }
+            }
+            return;
+        }
+
         G.phase = 'moving';
         moveTokenAlong(player, total, () => onLandedOnTile(player));
     }
@@ -13012,6 +13625,113 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
 }
 
 
+/* ════════════════════════════════════════════════════════════════════
+   🎡 showTikiWheel — Volcano Verbanningen rad
+   ════════════════════════════════════════════════════════════════════
+   Toont een spinnend tiki-rad met 4 segmenten (1 per satelliet-eiland).
+   Voor nu is enkel Banana Brig speelbaar; de andere 3 zijn "BINNENKORT".
+   Returns: een Promise die resolved met de gekozen island-id, of null
+   bij skip.
+   ════════════════════════════════════════════════════════════════════ */
+function showTikiWheel({ subtitle = '' } = {}) {
+    return new Promise(resolve => {
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'tw-back' });
+        const title = el('div', { className: 'tw-title' });
+        title.append(
+            el('h2', {}, '🌋 VOLCANO VERBANNING'),
+            el('p', {}, subtitle || 'De vulkaan kiest je lot…'),
+        );
+        const stage = el('div', { className: 'tw-stage' });
+        const pointer = el('div', { className: 'tw-pointer' }, '🗿');
+        const wheel = el('div', { className: 'tw-wheel' });
+        const hub = el('div', { className: 'tw-hub' }, '🌋');
+
+        // 4 segmenten — voor nu: Banana Brig speelbaar, rest binnenkort.
+        // Volgorde komt overeen met de 4 conic-gradient kleuren:
+        //   0° → 90°: rood   (BANANA BRIG)
+        //   90° → 180°: blauw (BINNENKORT)
+        //   180° → 270°: groen (BINNENKORT)
+        //   270° → 360°: geel (BINNENKORT)
+        // Het rad-segment dat de pointer raakt is degene boven (= centered
+        // op 0deg na rotation). Onze pointer staat bovenaan, het 1e segment
+        // (Banana Brig) is gecentreerd op 45deg in de gradient.
+        const ISLANDS = [
+            { id: 'bananabrig', label: '🍌', name: 'BANANA BRIG',  unlocked: true,  angle:  45 },
+            { id: 'coming1',    label: '🌶️', name: 'BINNENKORT',  unlocked: false, angle: 135 },
+            { id: 'coming2',    label: '❓',  name: 'BINNENKORT',  unlocked: false, angle: 225 },
+            { id: 'coming3',    label: '🔒', name: 'BINNENKORT',  unlocked: false, angle: 315 },
+        ];
+        for (const isle of ISLANDS) {
+            const seg = el('div', { className: 'tw-seg' + (isle.unlocked ? '' : ' locked') });
+            seg.style.transform = `rotate(${isle.angle - 90}deg)`;
+            seg.append(
+                el('div', { className: 'label' }, isle.label),
+                el('div', { className: 'name'  }, isle.name),
+            );
+            wheel.append(seg);
+        }
+
+        stage.append(pointer, wheel, hub);
+        const result = el('div', { className: 'tw-result' });
+        stage.append(result);
+
+        const actions = el('div', { className: 'tw-actions' });
+        const spinBtn = el('button', { className: 'btn-pill gold', type: 'button' }, '🎰 Draai het rad');
+        const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
+        actions.append(spinBtn, skipBtn);
+
+        back.append(title, stage, actions);
+        ui.append(back);
+
+        let spun = false;
+        function spin() {
+            if (spun) return; spun = true;
+            spinBtn.disabled = true; spinBtn.style.opacity = '0.5';
+            skipBtn.disabled = true; skipBtn.style.opacity = '0.5';
+
+            // Voor nu: ALTIJD Banana Brig (de andere 3 zijn locked).
+            // Pointer staat op 0° (boven). Een segment op `angle` valt
+            // onder de pointer als het rad naar `-angle` draait.
+            // We willen op Banana Brig (angle 45°) eindigen → eind-rotatie = -45° + N*360°.
+            const target = ISLANDS[0];           // Banana Brig
+            const finalAngle = -target.angle;
+            const extraSpins = 5 + Math.floor(Math.random() * 3);   // 5..7 volledige rondes
+            // Kleine willekeurige offset zodat hij niet altijd precies in het midden eindigt
+            const jitter = (Math.random() - 0.5) * 16;              // ±8° binnen het segment
+            const totalRotation = extraSpins * 360 + finalAngle + jitter;
+
+            wheel.classList.add('spinning');
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+            // Tijdens spin: triller-haptic en zachte audio-tick
+            if (navigator.vibrate) {
+                try { navigator.vibrate([20, 60, 20, 60, 20, 60, 30, 80, 30, 100, 50, 200, 80]); } catch (e) {}
+            }
+
+            setTimeout(() => {
+                result.textContent = `${target.label}  ${target.name}!`;
+                result.classList.add('show');
+                if (navigator.vibrate) {
+                    try { navigator.vibrate([200, 60, 200]); } catch (e) {}
+                }
+                setTimeout(() => {
+                    back.style.transition = 'opacity 0.3s ease';
+                    back.style.opacity = '0';
+                    setTimeout(() => { back.remove(); resolve(target.id); }, 320);
+                }, 1500);
+            }, 4600);
+        }
+        spinBtn.addEventListener('click', spin);
+        skipBtn.addEventListener('click', () => {
+            back.style.transition = 'opacity 0.25s ease';
+            back.style.opacity = '0';
+            setTimeout(() => { back.remove(); resolve(null); }, 270);
+        });
+    });
+}
+
+
 /* ============================================================
    Schnaps ruft an — "Schnaps is calling"
    ============================================================
@@ -14647,32 +15367,13 @@ async function onLandedOnTile(player) {
             if (player.tileIdx >= TILE_COUNT - 1) return onLandedOnTile(player);
         }
     }
-    // ─── SKULL — fall into the volcano (Gezellig: gets disabled, acts like drink tile)
+    // ─── SKULL — pitchzwarte tegel die je naar Banana Brig verbant
+    //              (Gezellig: spookt alleen, klein slokje en klaar)
     else if (tileType === 'skull') {
         G.phase = 'event';
-        if (cfg.skullEnabled) {
-            screenShake(600);
-            const d = slokken(4);
-            await showStamp({
-                emoji: '💀🌋', big: 'IN DE VULKAAN!',
-                sub: `${player.name} drinkt ${d} 🍻 • slaat 1 beurt over`,
-                palette: 'lava',
-            });
-            player.skipNextTurn = true;
-            await new Promise(r => moveTokenBy(player, -1, r));
-            layoutTokensOnTile(player.tileIdx);
-            refreshHUD();
-            if (Math.random() < 0.5) {
-                G.volcanoActive = 3;
-                updateVolcanoBanner();
-                await showStamp({
-                    emoji: '🌋', big: 'UITBARSTING!',
-                    sub: 'Volgende 3 rondes: vulkaan rommelt — alle worpen −1',
-                    palette: 'lava',
-                });
-            }
-        } else {
-            // Gezellig: schedel is alleen voor de show
+
+        if (!cfg.skullEnabled) {
+            // Gezellig modus: schedel is alleen voor de show
             const d = slokken(2);
             await showStamp({
                 emoji: '💀', big: 'BRRR…',
@@ -14680,6 +15381,130 @@ async function onLandedOnTile(player) {
                 palette: 'dark',
             });
             refreshHUD();
+            return;
+        }
+
+        // 1. Drama-buildup: screenshake + telefoon-vibratie + dramatic stamp
+        screenShake(800);
+        if (navigator.vibrate) {
+            try { navigator.vibrate([80, 40, 80, 40, 80, 40, 200, 60, 300]); } catch (e) {}
+        }
+        await showStamp({
+            emoji: '💀🌋', big: 'VERBANNING!',
+            sub: `De vulkaan rommelt — ${player.name} wordt verbannen…`,
+            palette: 'dark',
+        });
+
+        // 2. Camera zwaait uit naar overzichtspositie zodat het rad past
+        const savedCamPos = camera.position.clone();
+        const wasAutoRotate = controls.autoRotate;
+        controls.autoRotate = false;
+        await new Promise(r => {
+            const camFrom = camera.position.clone();
+            const tgtFrom = controls.target.clone();
+            const camTo = new THREE.Vector3(40, 38, 40);
+            const tgtTo = new THREE.Vector3(0, 6, 0);
+            const t0 = performance.now();
+            const dur = 700;
+            const step = (now) => {
+                const k = Math.min(1, (now - t0) / dur);
+                const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+                camera.position.lerpVectors(camFrom, camTo, e);
+                controls.target.lerpVectors(tgtFrom, tgtTo, e);
+                if (k < 1) requestAnimationFrame(step); else r();
+            };
+            requestAnimationFrame(step);
+        });
+
+        // 3. Tiki Wheel spint → kiest een eiland (voor nu altijd Banana Brig)
+        const islandId = await showTikiWheel({
+            subtitle: `${player.name} wordt naar een eiland gestuurd…`,
+        });
+
+        if (!islandId) {
+            // Skip gekozen → camera terug, geen straf
+            await new Promise(r => {
+                const camFrom = camera.position.clone();
+                const tgtFrom = controls.target.clone();
+                const finalTile = tileWorldPos[player.tileIdx].clone();
+                const t0 = performance.now();
+                const dur = 600;
+                const step = (now) => {
+                    const k = Math.min(1, (now - t0) / dur);
+                    const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+                    camera.position.lerpVectors(camFrom, savedCamPos, e);
+                    controls.target.lerpVectors(tgtFrom, finalTile, e);
+                    if (k < 1) requestAnimationFrame(step); else r();
+                };
+                requestAnimationFrame(step);
+            });
+            controls.autoRotate = wasAutoRotate;
+            return;
+        }
+
+        // 4. Camera zoomt in op het Banana Brig satelliet-eiland.
+        //    Positie van Banana Brig satelliet is (4, -19), top y ≈ 2.4.
+        const bbX = 4, bbZ = -19, bbY = 2.4;
+        await new Promise(r => {
+            const camFrom = camera.position.clone();
+            const tgtFrom = controls.target.clone();
+            const camTo = new THREE.Vector3(bbX + 5, bbY + 8, bbZ + 9);
+            const tgtTo = new THREE.Vector3(bbX, bbY + 2, bbZ);
+            const t0 = performance.now();
+            const dur = 1100;
+            const step = (now) => {
+                const k = Math.min(1, (now - t0) / dur);
+                const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+                camera.position.lerpVectors(camFrom, camTo, e);
+                controls.target.lerpVectors(tgtFrom, tgtTo, e);
+                if (k < 1) requestAnimationFrame(step); else r();
+            };
+            requestAnimationFrame(step);
+        });
+
+        // Stamp: hier zit je vast, gooi 4+ om vrij te komen
+        await showStamp({
+            emoji: '🍌🔒', big: 'BANANA BRIG',
+            sub: `${player.name} zit nu vast — gooi 4 of hoger om uit te breken!`,
+            palette: 'gold',
+        });
+
+        // 5. Markeer de speler als gevangen. De prison-check zit in onRollDice().
+        //    De token blijft visueel op de zwarte skull-tegel staan; de kooi op
+        //    het eiland is puur sfeer.
+        player.inPrison = true;
+        refreshHUD();
+
+        // 6. Camera zwaait terug naar het bord
+        await new Promise(r => {
+            const camFrom = camera.position.clone();
+            const tgtFrom = controls.target.clone();
+            const finalTile = tileWorldPos[player.tileIdx].clone();
+            const t0 = performance.now();
+            const dur = 900;
+            const step = (now) => {
+                const k = Math.min(1, (now - t0) / dur);
+                const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+                camera.position.lerpVectors(camFrom, savedCamPos, e);
+                controls.target.lerpVectors(tgtFrom, finalTile, e);
+                if (k < 1) requestAnimationFrame(step); else r();
+            };
+            requestAnimationFrame(step);
+        });
+        controls.autoRotate = wasAutoRotate;
+
+        // 7. 50% kans dat de vulkaan begint uit te barsten (themische bonus
+        //    — past mooi bij "De vulkaan rommelt"). 3 rondes lang −1 op alle
+        //    worpen, dus ook gevangen spelers hebben het zwaarder om eruit
+        //    te komen.
+        if (Math.random() < 0.5) {
+            G.volcanoActive = 3;
+            updateVolcanoBanner();
+            await showStamp({
+                emoji: '🌋', big: 'UITBARSTING!',
+                sub: 'Volgende 3 rondes: vulkaan rommelt — alle worpen −1',
+                palette: 'lava',
+            });
         }
     }
     // ─── LAVA — drinking penalty + possible knockback during eruption ───
