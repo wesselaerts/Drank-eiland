@@ -955,7 +955,13 @@
     .chwazi-result .drinks { margin-top: 6px; font-size: 22px; font-weight: 800; opacity: 0.95; }
 
     /* ===== Krokodil — vertical mouth, teeth around perimeter ===== */
-    .kroko-back { position: fixed; inset: 0; z-index: 60; background: #000;
+    .kroko-back { position: fixed; inset: 0; z-index: 60;
+      /* Transparante achtergrond zodat de 3D vulkaan-scene zichtbaar is.
+         Radiaal vignet houdt de krokodil-graphic in het midden goed
+         leesbaar terwijl de zijkanten subtiel donker zijn. */
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 25%, rgba(0,0,0,0.50) 90%, rgba(0,0,0,0.70) 100%),
+        linear-gradient(180deg, rgba(5,10,25,0.25) 0%, rgba(5,10,25,0.05) 25%, rgba(5,10,25,0.05) 75%, rgba(5,10,25,0.30) 100%);
       display: flex; flex-direction: column; padding: max(6px, env(safe-area-inset-top)) 6px 4px;
       color: #fff; animation: fadeIn .25s ease; user-select: none; overflow: hidden; }
     .kroko-head { text-align: center; padding: 4px 8px 6px; position: relative; z-index: 3; }
@@ -1068,6 +1074,400 @@
       -webkit-tap-highlight-color: transparent; }
     .pd-back .btn-pill.gold { background: linear-gradient(180deg, #ffd54a, #ff9a1a);
       color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
+
+    /* ════════════════════════════════════════════════════════════
+       NIEUWE MINIGAMES — alle 5 hieronder
+       ════════════════════════════════════════════════════════════ */
+
+    /* ─── 1. De Hete Lavasteen ────────────────────────────────── */
+    .lava-back { position: fixed; inset: 0; z-index: 60;
+      background: radial-gradient(ellipse at 50% 60%, #2a0a00 0%, #100200 60%, #050000 100%);
+      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      user-select: none; overflow: hidden; touch-action: none;
+      padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+    .lava-head { text-align: center; padding: 4px 8px 8px; z-index: 3; }
+    .lava-head h2 { margin: 0; font-size: 20px; font-weight: 900; opacity: 0.92;
+      text-shadow: 0 2px 8px rgba(255,80,0,0.6); }
+    .lava-turn { display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin: 10px auto; padding: 10px 20px; border-radius: 999px;
+      background: rgba(255,255,255,0.06); border: 2px solid var(--pcol, #ffaa00);
+      box-shadow: 0 0 32px var(--pcol, transparent); transition: all 0.3s ease;
+      max-width: 90%; }
+    .lava-turn .dot { width: 14px; height: 14px; border-radius: 50%;
+      background: var(--pcol); box-shadow: 0 0 8px var(--pcol); }
+    .lava-turn .name { font-weight: 900; font-size: 18px; color: var(--pcol); }
+    .lava-stage { flex: 1; position: relative; display: flex; align-items: center;
+      justify-content: center; min-height: 0; }
+    /* De steen — gloed schaalt met --heat (0..1). Roken via ::before. */
+    .lava-rock {
+      --heat: 0;
+      width: min(60vw, 280px); aspect-ratio: 1; position: relative;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%,
+        hsl(calc(50deg - var(--heat) * 50deg), 90%, calc(60% - var(--heat) * 15%)) 0%,
+        hsl(calc(30deg - var(--heat) * 30deg), 95%, calc(45% - var(--heat) * 15%)) 35%,
+        hsl(calc(15deg - var(--heat) * 15deg), 95%, calc(28% - var(--heat) * 10%)) 70%,
+        #2a0a00 100%);
+      box-shadow:
+        0 0 calc(20px + var(--heat) * 80px) calc(8px + var(--heat) * 30px)
+            hsla(calc(30deg - var(--heat) * 30deg), 100%, 55%, calc(0.4 + var(--heat) * 0.5)),
+        inset 0 -8px 16px rgba(0,0,0,0.5),
+        inset 0 4px 12px rgba(255,200,80,calc(0.2 + var(--heat) * 0.4));
+      animation: lava-shake calc(0.5s - var(--heat) * 0.4s) infinite;
+      transition: box-shadow 0.4s ease;
+    }
+    .lava-rock::before {
+      content: ''; position: absolute; inset: -20px; pointer-events: none;
+      background: radial-gradient(circle at 50% 70%,
+        rgba(80,40,20, calc(var(--heat) * 0.5)) 0%, transparent 60%);
+      filter: blur(12px); opacity: var(--heat);
+    }
+    .lava-rock::after {
+      content: ''; position: absolute; left: 50%; bottom: 100%;
+      width: 60%; height: 80px; transform: translateX(-50%);
+      background: radial-gradient(ellipse at 50% 100%,
+        rgba(200,200,200,0.4) 0%, rgba(150,150,150,0.2) 30%, transparent 70%);
+      filter: blur(8px); opacity: calc(var(--heat) * 0.9);
+      animation: smoke-rise 2s ease-out infinite;
+    }
+    @keyframes lava-shake {
+      0%, 100% { transform: translate(0,0) rotate(0); }
+      25% { transform: translate(calc(var(--heat) * 4px), calc(var(--heat) * -2px)) rotate(calc(var(--heat) * 1deg)); }
+      50% { transform: translate(calc(var(--heat) * -3px), calc(var(--heat) * 3px)) rotate(calc(var(--heat) * -1deg)); }
+      75% { transform: translate(calc(var(--heat) * 2px), calc(var(--heat) * -3px)) rotate(calc(var(--heat) * 0.5deg)); }
+    }
+    @keyframes smoke-rise {
+      0% { transform: translate(-50%, 20%) scale(1); opacity: var(--heat); }
+      100% { transform: translate(-50%, -30%) scale(1.4); opacity: 0; }
+    }
+    .lava-tap { position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%);
+      padding: 16px 38px; border-radius: 999px; font-weight: 900; font-size: 18px;
+      background: linear-gradient(180deg, #ffd54a, #ff9a1a); color: #2a1a00;
+      border: 2px solid rgba(255,215,80,0.7); box-shadow: 0 6px 0 #b56a00;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      animation: pulse-grow 1.4s ease-in-out infinite; }
+    .lava-tap:active { transform: translateX(-50%) translateY(3px);
+      box-shadow: 0 3px 0 #b56a00; }
+    @keyframes pulse-grow {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.04); }
+    }
+    .lava-explosion {
+      position: absolute; inset: 0; pointer-events: none; z-index: 10;
+      background: radial-gradient(circle at 50% 50%,
+        rgba(255,200,50,0.9) 0%, rgba(255,80,0,0.7) 25%, rgba(120,20,0,0.4) 55%, transparent 80%);
+      animation: lava-boom 0.7s ease-out forwards;
+    }
+    @keyframes lava-boom {
+      0% { transform: scale(0.2); opacity: 0; }
+      30% { opacity: 1; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    .lava-result { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      padding: 24px 30px; border-radius: 20px; text-align: center; z-index: 20;
+      background: rgba(20,5,0,0.92); border: 2px solid var(--pcol, #ff5a3a);
+      box-shadow: 0 0 60px var(--pcol, #ff5a3a); animation: fadeIn 0.4s ease; }
+    .lava-result h2 { margin: 0 0 8px; font-size: 26px; font-weight: 900; }
+    .lava-result p { margin: 4px 0; opacity: 0.9; }
+
+    /* ─── 2. De Kano Race ─────────────────────────────────────── */
+    .kano-back { position: fixed; inset: 0; z-index: 60;
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.40) 95%),
+        linear-gradient(180deg, #0a3a5a 0%, #1a5a7a 50%, #0a3a5a 100%);
+      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      user-select: none; overflow: hidden; touch-action: none;
+      padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+    .kano-zone { flex: 1; position: relative; overflow: hidden; }
+    .kano-zone.top { transform: rotate(180deg); border-bottom: 2px solid rgba(255,255,255,0.20); }
+    /* Water — subtiele animatie van lijntjes die langs scrollen */
+    .kano-zone::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        repeating-linear-gradient(180deg,
+          rgba(255,255,255,0.05) 0,
+          rgba(255,255,255,0.05) 2px,
+          transparent 2px, transparent 24px),
+        repeating-linear-gradient(180deg,
+          rgba(255,255,255,0.08) 0,
+          rgba(255,255,255,0.08) 1px,
+          transparent 1px, transparent 60px);
+      animation: kano-water 1.6s linear infinite;
+    }
+    @keyframes kano-water {
+      0%   { background-position: 0 0, 0 0; }
+      100% { background-position: 0 24px, 0 60px; }
+    }
+    /* Strand-streep aan de "finish" (boven in de zone) */
+    .kano-finish { position: absolute; top: 60px; left: 0; right: 0; height: 24px;
+      background-image: repeating-linear-gradient(90deg,
+        #ffd54a 0, #ffd54a 18px, #2a1a00 18px, #2a1a00 36px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+    /* Palmboom-eilandje achter de finish */
+    .kano-island { position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 180px; height: 60px;
+      background: radial-gradient(ellipse at 50% 80%, #d4a85a 0%, #b87a3a 60%, transparent 100%);
+      pointer-events: none; }
+    .kano-island::before, .kano-island::after {
+      content: '🌴'; position: absolute; bottom: 20px; font-size: 38px;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+    }
+    .kano-island::before { left: 20%; transform: rotate(-8deg); }
+    .kano-island::after  { right: 20%; transform: rotate(8deg); }
+    /* De kano */
+    .kano-boat { position: absolute; left: 50%; bottom: 80px; transform: translateX(-50%);
+      width: 80px; height: 140px; transition: bottom 80ms linear;
+      pointer-events: none; }
+    .kano-boat::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.4) 0%, transparent 60%) bottom / 100% 30% no-repeat,
+        linear-gradient(180deg, #8b5a2b 0%, #6d4c41 100%);
+      clip-path: polygon(50% 0%, 100% 30%, 90% 100%, 10% 100%, 0% 30%);
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,0.3);
+    }
+    .kano-boat::after {
+      /* Hoofd / lichaam van de roeier */
+      content: '🧑'; position: absolute; top: 38%; left: 50%; transform: translateX(-50%);
+      font-size: 38px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+    }
+    .kano-boat[data-c]::before { background:
+        radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.4) 0%, transparent 60%) bottom / 100% 30% no-repeat,
+        linear-gradient(180deg, var(--bcol, #8b5a2b) 0%, color-mix(in srgb, var(--bcol, #6d4c41) 70%, #000) 100%); }
+    .kano-name { position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      font-weight: 900; font-size: 16px; padding: 6px 14px; border-radius: 999px;
+      background: rgba(0,0,0,0.5); color: var(--pcol, #fff);
+      border: 2px solid var(--pcol, #fff); white-space: nowrap; pointer-events: none; }
+    .kano-progress { position: absolute; bottom: 14px; left: 14px; right: 14px;
+      height: 8px; background: rgba(255,255,255,0.15); border-radius: 999px; overflow: hidden;
+      pointer-events: none; }
+    .kano-progress > div { height: 100%; background: var(--pcol, #fff);
+      box-shadow: 0 0 10px var(--pcol); transition: width 80ms linear; width: 0%; }
+    .kano-taps { position: absolute; top: 50%; right: 14px; transform: translateY(-50%);
+      writing-mode: vertical-rl; font-weight: 900; font-size: 14px; opacity: 0.65;
+      pointer-events: none; }
+    .kano-overlay { position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; flex-direction: column; gap: 12px; padding: 24px;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); z-index: 5;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease; color: #fff;
+      text-align: center; }
+    .kano-overlay.show { opacity: 1; pointer-events: auto; }
+    .kano-overlay h2 { margin: 0; font-size: 28px; font-weight: 900; }
+    .kano-overlay p { margin: 0; opacity: 0.85; max-width: 280px; }
+    .kano-back .btn-pill { min-height: 52px; padding: 0 22px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.1);
+      color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+    .kano-back .btn-pill.gold { background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+      color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
+
+    /* ─── 3. Krabben Vangen ───────────────────────────────────── */
+    .krab-back { position: fixed; inset: 0; z-index: 60;
+      background:
+        radial-gradient(ellipse at 50% 80%, #1a6090 0%, #0a3a60 35%, #051a30 100%);
+      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      user-select: none; overflow: hidden; touch-action: none;
+      padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+    .krab-head { text-align: center; padding: 4px 8px 6px; }
+    .krab-head h2 { margin: 0; font-size: 20px; font-weight: 900; }
+    .krab-hud { display: flex; justify-content: space-around; align-items: center;
+      margin: 8px 8px 0; gap: 8px; }
+    .krab-chip { display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+      border-radius: 999px; background: rgba(255,255,255,0.08);
+      border: 2px solid var(--pcol, rgba(255,255,255,0.2)); font-weight: 900; }
+    .krab-chip .lbl { font-size: 11px; opacity: 0.7; text-transform: uppercase; }
+    .krab-chip .val { font-size: 22px; color: var(--pcol, #ffd54a); }
+    .krab-stage { flex: 1; position: relative; margin: 16px 8px;
+      background:
+        radial-gradient(ellipse at 50% 100%, #fde08c 0%, #e0b56a 40%, #b88a3a 100%);
+      border-radius: 24px; box-shadow: inset 0 6px 24px rgba(0,0,0,0.35);
+      overflow: hidden; }
+    /* Wat zandkorrel-textuur */
+    .krab-stage::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.25) 0%, transparent 1.5%),
+        radial-gradient(circle at 60% 50%, rgba(0,0,0,0.10) 0%, transparent 1%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.20) 0%, transparent 1.2%),
+        radial-gradient(circle at 30% 70%, rgba(0,0,0,0.12) 0%, transparent 1.4%),
+        radial-gradient(circle at 50% 85%, rgba(255,255,255,0.18) 0%, transparent 1.1%);
+      opacity: 0.7;
+    }
+    /* Een gat in het zand */
+    .krab-hole { position: absolute; transform: translate(-50%, -50%);
+      width: 64px; height: 28px; border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 40%, #2a1a00 0%, #5a3a1a 60%, #8a6a3a 100%);
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.6),
+                  inset 0 -2px 4px rgba(255,255,255,0.1);
+    }
+    .krab-crab { position: absolute; transform: translate(-50%, -90%) scale(0);
+      font-size: 38px; cursor: pointer; pointer-events: auto;
+      transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+      -webkit-tap-highlight-color: transparent; }
+    .krab-crab.show { transform: translate(-50%, -90%) scale(1); }
+    .krab-crab.hit { animation: krab-hit 0.35s ease-out forwards; }
+    @keyframes krab-hit {
+      0%   { transform: translate(-50%, -90%) scale(1); }
+      40%  { transform: translate(-50%, -120%) scale(1.3) rotate(15deg); opacity: 1; }
+      100% { transform: translate(-50%, -60%) scale(0.4) rotate(180deg); opacity: 0; }
+    }
+    .krab-dust { position: absolute; pointer-events: none; transform: translate(-50%, -50%);
+      width: 80px; height: 80px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,240,210,0.7) 0%, transparent 70%);
+      animation: krab-dust 0.5s ease-out forwards; }
+    @keyframes krab-dust {
+      0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+    }
+    .krab-banner { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      padding: 16px 22px; border-radius: 16px; text-align: center; z-index: 10;
+      background: rgba(0,0,0,0.85); border: 2px solid var(--pcol, #ffd54a);
+      box-shadow: 0 0 32px var(--pcol, #ffd54a); animation: fadeIn 0.3s ease; }
+    .krab-banner h2 { margin: 0 0 6px; font-size: 22px; }
+    .krab-banner p { margin: 2px 0; opacity: 0.85; }
+    .krab-banner .big { font-size: 38px; font-weight: 900; color: var(--pcol); }
+
+    /* ─── 4. Tiki Ritme ───────────────────────────────────────── */
+    .tiki-back { position: fixed; inset: 0; z-index: 60;
+      background:
+        radial-gradient(ellipse at 50% 30%, #2a1a0a 0%, #1a0a05 60%, #050000 100%);
+      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      user-select: none; overflow: hidden; touch-action: none;
+      padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+    .tiki-head { text-align: center; padding: 4px 8px 8px; }
+    .tiki-head h2 { margin: 0; font-size: 20px; font-weight: 900; }
+    .tiki-status { display: flex; justify-content: space-around; align-items: center;
+      gap: 8px; margin: 4px 8px 12px; }
+    .tiki-chip { padding: 8px 14px; border-radius: 999px;
+      background: rgba(255,255,255,0.08); border: 2px solid var(--pcol, #ffd54a);
+      font-weight: 900; display: flex; align-items: center; gap: 8px; }
+    .tiki-chip .lbl { font-size: 11px; opacity: 0.7; text-transform: uppercase; }
+    .tiki-chip .val { font-size: 20px; color: var(--pcol, #ffd54a); }
+    .tiki-stage { flex: 1; display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px; padding: 8px 14px 14px; min-height: 0; }
+    .tiki-mask { position: relative; border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 80px; cursor: pointer; transition: all 0.15s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      -webkit-tap-highlight-color: transparent; user-select: none; }
+    .tiki-mask[data-i="0"] { background: linear-gradient(180deg, #6b4226, #3a1a08);
+      box-shadow: 0 6px 0 #1a0500, inset 0 4px 8px rgba(255,200,100,0.15); }
+    .tiki-mask[data-i="1"] { background: linear-gradient(180deg, #a8401a, #4a1a08);
+      box-shadow: 0 6px 0 #2a0500, inset 0 4px 8px rgba(255,150,80,0.15); }
+    .tiki-mask[data-i="2"] { background: linear-gradient(180deg, #2a5a3a, #0a2a18);
+      box-shadow: 0 6px 0 #001a00, inset 0 4px 8px rgba(150,255,150,0.12); }
+    .tiki-mask[data-i="3"] { background: linear-gradient(180deg, #8a5a8a, #3a1a3a);
+      box-shadow: 0 6px 0 #1a0a1a, inset 0 4px 8px rgba(220,180,255,0.15); }
+    .tiki-mask.lit {
+      transform: translateY(-4px) scale(1.04);
+      box-shadow: 0 10px 32px var(--litcol, #ffd54a),
+                  inset 0 4px 12px rgba(255,255,255,0.4);
+      filter: brightness(1.6) saturate(1.4); }
+    .tiki-mask:active { transform: translateY(2px) scale(0.98); }
+    .tiki-locked { pointer-events: none; opacity: 0.7; }
+    .tiki-banner { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      padding: 18px 26px; border-radius: 18px; text-align: center; z-index: 80;
+      background: rgba(0,0,0,0.92); border: 2px solid var(--pcol, #ffd54a);
+      box-shadow: 0 0 40px var(--pcol); animation: fadeIn 0.3s ease; }
+    .tiki-banner h2 { margin: 0 0 8px; font-size: 24px; }
+    .tiki-banner p { margin: 4px 0; opacity: 0.9; max-width: 260px; }
+    .tiki-banner .big { font-size: 38px; font-weight: 900; color: var(--pcol); }
+    .tiki-tip { text-align: center; font-size: 14px; opacity: 0.75;
+      padding: 6px 14px; }
+
+    /* ─── 5. Brug Balans ──────────────────────────────────────── */
+    .brug-back { position: fixed; inset: 0; z-index: 60;
+      background:
+        radial-gradient(ellipse at 50% 100%, #4a0a00 0%, #2a0500 30%, #0a0000 100%);
+      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      user-select: none; overflow: hidden; touch-action: none;
+      padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+    .brug-head { text-align: center; padding: 4px 8px; }
+    .brug-head h2 { margin: 0; font-size: 20px; font-weight: 900; }
+    .brug-hud { display: flex; justify-content: space-around; margin: 4px 8px 8px; gap: 8px; }
+    .brug-stage { flex: 1; position: relative; overflow: hidden;
+      background: linear-gradient(180deg,
+        #220a05 0%, #4a1a05 40%, #c84a05 70%, #ffaa3a 100%);
+      border-radius: 16px; }
+    /* Bubbelende lava */
+    .brug-stage::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(255,180,50,0.3) 0%, transparent 8%),
+        radial-gradient(circle at 70% 70%, rgba(255,80,0,0.3) 0%, transparent 6%),
+        radial-gradient(circle at 40% 90%, rgba(255,200,60,0.4) 0%, transparent 9%);
+      animation: brug-lava 3.5s ease-in-out infinite;
+    }
+    @keyframes brug-lava {
+      0%, 100% { transform: translateY(0); opacity: 0.7; }
+      50%      { transform: translateY(-6px); opacity: 1; }
+    }
+    .brug-bridge {
+      position: absolute; left: 50%; top: 0; bottom: 0;
+      width: 90px; transform: translateX(-50%);
+      background:
+        repeating-linear-gradient(180deg,
+          #6d4c41 0, #6d4c41 14px,
+          #4a2a1a 14px, #4a2a1a 18px);
+      box-shadow: 0 0 22px rgba(0,0,0,0.6), inset 0 0 10px rgba(0,0,0,0.4);
+    }
+    .brug-bridge::before, .brug-bridge::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 4px;
+      background: linear-gradient(180deg, #3a1a08, #1a0500);
+    }
+    .brug-bridge::before { left: -2px; }
+    .brug-bridge::after  { right: -2px; }
+    .brug-char { position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%) rotate(0deg);
+      font-size: 56px; transition: transform 0.06s linear;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.7));
+      will-change: transform; }
+    .brug-tilt-meter {
+      position: absolute; left: 12px; right: 12px; bottom: 12px; height: 14px;
+      background: rgba(0,0,0,0.5); border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2); overflow: hidden;
+      pointer-events: none; }
+    .brug-tilt-meter::before, .brug-tilt-meter::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 12%;
+      background: linear-gradient(90deg, transparent, #ff3a3a); }
+    .brug-tilt-meter::before { left: 0; transform: scaleX(-1); }
+    .brug-tilt-meter::after  { right: 0; }
+    .brug-tilt-meter .pin {
+      position: absolute; top: -3px; bottom: -3px; width: 6px; left: 50%;
+      transform: translateX(-50%);
+      background: #ffd54a; box-shadow: 0 0 10px #ffd54a;
+      border-radius: 3px; transition: left 0.06s linear; }
+    .brug-tilt-meter .center { position: absolute; top: 0; bottom: 0;
+      width: 2px; left: 50%; background: rgba(255,255,255,0.4); }
+    .brug-perm { position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%); z-index: 5;
+      padding: 18px 22px; border-radius: 16px; text-align: center;
+      background: rgba(0,0,0,0.92); border: 2px solid #ffd54a;
+      box-shadow: 0 0 40px #ffd54a; }
+    .brug-perm h3 { margin: 0 0 8px; font-size: 20px; }
+    .brug-perm p { margin: 6px 0; opacity: 0.85; max-width: 260px; font-size: 14px; }
+    .brug-banner { position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%); padding: 16px 24px; border-radius: 16px;
+      text-align: center; z-index: 4;
+      background: rgba(0,0,0,0.92); border: 2px solid var(--pcol, #ffd54a);
+      box-shadow: 0 0 36px var(--pcol); animation: fadeIn 0.3s ease; }
+    .brug-banner h2 { margin: 0 0 8px; font-size: 22px; }
+    .brug-banner p  { margin: 4px 0; opacity: 0.9; }
+    .brug-banner .big { font-size: 32px; font-weight: 900; color: var(--pcol); }
+
+    /* Gedeelde knop-stijl voor de nieuwe minigames */
+    .lava-back .btn-pill, .kano-back .btn-pill,
+    .krab-back .btn-pill, .tiki-back .btn-pill, .brug-back .btn-pill {
+      min-height: 50px; padding: 0 22px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.1);
+      color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+    .lava-back .btn-pill.gold, .kano-back .btn-pill.gold,
+    .krab-back .btn-pill.gold, .tiki-back .btn-pill.gold, .brug-back .btn-pill.gold {
+      background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+      color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
+
 
     /* ===== Tappy Bird — pass-and-play flappy ===== */
     .tb-back { position: fixed; inset: 0; z-index: 60; background: #4ec0ca;
@@ -5832,6 +6232,12 @@ function renderSetup() {
         { id: 'bowling',     emoji: '🎳',  name: 'Bowlspel',             meta: 'iedereen',      tag: 'NIEUW', locked: false },
         { id: 'connect4',    emoji: '🟡',  name: 'Vier op een Rij',      meta: '1v1',           tag: 'NIEUW', locked: false },
         { id: 'mystery',     emoji: '🎡',  name: 'Mystery Wheel',        meta: 'random',        tag: 'NIEUW', locked: false },
+        // ── nieuwste minigames ──
+        { id: 'lavasteen',   emoji: '🌋',  name: 'Hete Lavasteen',       meta: 'hot potato',    tag: 'NIEUW', locked: false },
+        { id: 'kano',        emoji: '🛶',  name: 'Kano Race',            meta: '1v1 race',      tag: 'NIEUW', locked: false },
+        { id: 'krabben',     emoji: '🦀',  name: 'Krabben Vangen',       meta: 'whack-a-mole',  tag: 'NIEUW', locked: false },
+        { id: 'tiki',        emoji: '🗿',  name: 'Tiki Ritme',           meta: 'memory',        tag: 'NIEUW', locked: false },
+        { id: 'brug',        emoji: '⚖️',  name: 'Brug Balans',          meta: 'gyro',          tag: 'NIEUW', locked: false },
     ];
 
     for (const mg of MINIGAMES) {
@@ -6067,6 +6473,31 @@ async function launchStandaloneMinigame(id) {
             await launchStandaloneMinigame(pickedId);
             return; // renderSetup already called by inner launch
         }
+    } else if (id === 'lavasteen' && G.players.length >= 2) {
+        const loser = await playHeteLavasteen({ players: G.players, drinks: 4 });
+        if (loser) {
+            await showModal({
+                emoji: '🌋', title: `${loser.name} drinkt!`,
+                body: [`De lavasteen ontplofte in jouw hand. Neem 4 slokken. Proost! 🥂`],
+                actions: [{ label: 'Klaar', value: true }],
+            });
+        }
+    } else if (id === 'kano' && G.players.length >= 2) {
+        const a = G.players[0], b = G.players[1];
+        const loser = await playKanoRace({ playerA: a, playerB: b, drinks: 4 });
+        if (loser) {
+            await showModal({
+                emoji: '🛶', title: `${loser.name} drinkt!`,
+                body: [`Te traag aan de peddel. Neem 4 slokken. Proost! 🥂`],
+                actions: [{ label: 'Klaar', value: true }],
+            });
+        }
+    } else if (id === 'krabben' && G.players.length >= 1) {
+        await playKrabbenVangen({ players: G.players, drinks: 2 });
+    } else if (id === 'tiki' && G.players.length >= 1) {
+        await playTikiRitme({ players: G.players, drinks: 3 });
+    } else if (id === 'brug' && G.players.length >= 1) {
+        await playBrugBalans({ players: G.players, drinks: 3 });
     }
 
     G.players = stash;
@@ -10018,6 +10449,46 @@ function playPaddleDuel({ playerA, playerB, targetScore = 3, drinks = 4 } = {}) 
 function playKrokodil({ playerA, playerB, drinks = 4, teethCount = 18 } = {}) {
     return new Promise(resolve => {
         const ui = document.getElementById('game-ui');
+        // ── 3D SCENE INTEGRATIE ─────────────────────────────────
+        // Vulkaan-eiland scene wordt zichtbaar achter de krokodil
+        // graphic. Camera schuift naar een laag wateroppervlak shot
+        // met de vulkaan in de verte — krijgt zo een dreigende
+        // "lagune" sfeer die past bij het krokodil-thema.
+        const hiddenChrome = hideMinigameChrome();
+        const savedCam = {
+            pos: camera.position.clone(),
+            fov: camera.fov,
+            target: controls.target.clone(),
+            autoRotate: controls.autoRotate,
+            enabled: controls.enabled,
+        };
+        controls.autoRotate = false;
+        controls.enabled = false;
+        camera.fov = 55;
+        camera.updateProjectionMatrix();
+        // Laag-bij-water shot, vulkaan op afstand
+        const KROKO_CAM_POS = new THREE.Vector3(30, 3, 48);
+        const KROKO_CAM_TGT = new THREE.Vector3(0, 10, 0);
+        const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
+        const camTo = { pos: KROKO_CAM_POS, tgt: KROKO_CAM_TGT };
+        let camLerpT = 0;
+        const camLerpDur = 0.9;
+        const PREV_HOOK = window.__deGameHook;
+        window.__deGameHook = (time) => {
+            if (camLerpT < 1) {
+                const dt = 0.016;
+                camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
+                const k = camLerpT;
+                const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
+                camera.position.lerpVectors(camFrom.pos, camTo.pos, e);
+                controls.target.lerpVectors(camFrom.tgt, camTo.tgt, e);
+            } else {
+                camera.position.copy(camTo.pos);
+                controls.target.copy(camTo.tgt);
+            }
+            camera.lookAt(controls.target);
+        };
+
         const back = el('div', { className: 'kroko-back' });
 
         const head = el('div', { className: 'kroko-head' });
@@ -10124,12 +10595,966 @@ function playKrokodil({ playerA, playerB, drinks = 4, teethCount = 18 } = {}) {
         updateTurn();
 
         function finish(loser) {
+            // 3D scene herstellen
+            window.__deGameHook = PREV_HOOK;
+            camera.fov = savedCam.fov;
+            camera.position.copy(savedCam.pos);
+            camera.updateProjectionMatrix();
+            controls.target.copy(savedCam.target);
+            controls.autoRotate = savedCam.autoRotate;
+            controls.enabled = savedCam.enabled;
+            camera.lookAt(controls.target);
+            back.style.transition = 'opacity 0.3s ease';
+            back.style.opacity = '0';
+            setTimeout(() => {
+                back.remove();
+                restoreMinigameChrome(hiddenChrome);
+                resolve(loser);
+            }, 300);
+        }
+    });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   1. De Hete Lavasteen — Hot Potato
+   ════════════════════════════════════════════════════════════════════
+   State machine:
+     START       — eerste speler vasthoudt, knop "Geef door"
+     PASSING     — taps wisselen speler; verborgen timer telt door
+     EXPLODE     — timer eindigt, huidige speler verliest
+                   visueel: rook + boom + result-card → resolve()
+   ════════════════════════════════════════════════════════════════════ */
+function playHeteLavasteen({ players = G.players, drinks = 4 } = {}) {
+    return new Promise(resolve => {
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'lava-back' });
+        const head = el('div', { className: 'lava-head' });
+        head.append(el('h2', {}, '🌋 De Hete Lavasteen'));
+        // Speler-badge
+        const turn = el('div', { className: 'lava-turn' });
+        const turnDot = el('span', { className: 'dot' });
+        const turnName = el('span', { className: 'name' });
+        turn.append(el('span', { style: { fontSize: '13px', opacity: '0.7' } }, 'Vasthoudt:'),
+                    turnDot, turnName);
+        head.append(turn);
+        // Stage met de steen
+        const stage = el('div', { className: 'lava-stage' });
+        const rock = el('div', { className: 'lava-rock' });
+        rock.style.setProperty('--heat', '0');
+        stage.append(rock);
+        // Tap-knop (zit absoluut in de stage)
+        const tap = el('button', { className: 'lava-tap', type: 'button' }, 'Geef door 👆');
+        stage.append(tap);
+        // Subtle hint onderaan
+        const tip = el('div', { style: {
+            textAlign: 'center', fontSize: '13px', opacity: '0.65', padding: '6px 14px' } },
+            "Tik om de telefoon door te geven. Wie 'm vasthoudt als de steen ontploft, drinkt.");
+        back.append(head, stage, tip);
+        ui.append(back);
+
+        // ── STATE ──
+        let curIdx = 0;
+        // Verborgen timer 8-16 seconden (escaleert visueel naar het einde)
+        const TOTAL_MS = 8000 + Math.random() * 8000;
+        const startedAt = performance.now();
+        let phase = 'passing';     // passing | exploded | done
+        let rafId = 0;
+
+        function setPlayer(i) {
+            curIdx = i;
+            const p = players[curIdx];
+            turnDot.style.background = p.color.css;
+            turnDot.style.boxShadow = '0 0 8px ' + p.color.css;
+            turnName.style.color = p.color.css;
+            turnName.textContent = p.name;
+            turn.style.setProperty('--pcol', p.color.css);
+        }
+        setPlayer(0);
+
+        function tick() {
+            if (phase !== 'passing') return;
+            const elapsed = performance.now() - startedAt;
+            const ratio = Math.min(1, elapsed / TOTAL_MS);
+            rock.style.setProperty('--heat', ratio.toFixed(3));
+            if (elapsed >= TOTAL_MS) {
+                explode();
+            } else {
+                rafId = requestAnimationFrame(tick);
+            }
+        }
+        function passToNext() {
+            if (phase !== 'passing') return;
+            setPlayer((curIdx + 1) % players.length);
+            // Tactiele tap feedback — kleine puls
+            tap.style.transform = 'translateX(-50%) scale(0.92)';
+            setTimeout(() => { tap.style.transform = ''; }, 100);
+        }
+        function explode() {
+            if (phase !== 'passing') return;
+            phase = 'exploded';
+            const loser = players[curIdx];
+            // Visuele klap
+            const boom = el('div', { className: 'lava-explosion' });
+            stage.append(boom);
+            rock.style.opacity = '0';
+            rock.style.transform = 'scale(0)';
+            rock.style.transition = 'all 0.3s ease-out';
+            tap.style.display = 'none';
+            // Resultaat-card
+            setTimeout(() => {
+                boom.remove();
+                const result = el('div', { className: 'lava-result',
+                    style: { '--pcol': loser.color.css } });
+                result.append(
+                    el('h2', {}, '💥 BOEM!'),
+                    el('p', {}, `${loser.name} houdt 'm vast`),
+                    el('p', { style: { fontSize: '18px', marginTop: '8px', fontWeight: '900' } },
+                        `${drinks} slokken 🍻`),
+                );
+                stage.append(result);
+                setTimeout(() => finish(loser), 2400);
+            }, 600);
+        }
+        function finish(loser) {
+            if (phase === 'done') return;
+            phase = 'done';
+            cancelAnimationFrame(rafId);
             back.style.transition = 'opacity 0.3s ease';
             back.style.opacity = '0';
             setTimeout(() => { back.remove(); resolve(loser); }, 300);
         }
+        tap.addEventListener('click', passToNext);
+        tap.addEventListener('touchstart', e => { e.preventDefault(); passToNext(); },
+            { passive: false });
+        rafId = requestAnimationFrame(tick);
     });
 }
+
+
+/* ════════════════════════════════════════════════════════════════════
+   2. De Kano Race — split-screen tap race
+   ════════════════════════════════════════════════════════════════════
+   Top helft = playerA, bot helft = playerB. Tap = velocity boost.
+   Velocity decays (water friction). Position += velocity * dt.
+   Winnaar = eerste die finish bereikt.
+   ════════════════════════════════════════════════════════════════════ */
+function playKanoRace({ playerA, playerB, drinks = 4 } = {}) {
+    return new Promise(resolve => {
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'kano-back' });
+        // Zone bouwen helper
+        function buildZone(player, klass) {
+            const z = el('div', { className: 'kano-zone ' + klass });
+            const island = el('div', { className: 'kano-island' });
+            const finish = el('div', { className: 'kano-finish' });
+            const boat = el('div', { className: 'kano-boat', 'data-c': '1' });
+            boat.style.setProperty('--bcol', player.color.css);
+            const name = el('div', { className: 'kano-name' }, player.name);
+            name.style.setProperty('--pcol', player.color.css);
+            const taps = el('div', { className: 'kano-taps' }, 'TAP!');
+            const prog = el('div', { className: 'kano-progress' });
+            const progBar = el('div');
+            prog.append(progBar);
+            progBar.parentElement.style.setProperty('--pcol', player.color.css);
+            z.append(island, finish, boat, name, taps, prog);
+            return { zone: z, boat, progBar };
+        }
+        const A = buildZone(playerA, 'top');
+        const B = buildZone(playerB, 'bot');
+        back.append(A.zone, B.zone);
+        // Overlay
+        const overlay = el('div', { className: 'kano-overlay show' });
+        const oTitle = el('h2', {}, '🛶 Kano Race');
+        const oText = el('p', {}, `${playerA.name} (boven) vs ${playerB.name} (onder). Tik zo snel mogelijk op JOUW helft! Eerste bij de finish wint.`);
+        const oBtn = el('button', { className: 'btn-pill gold' }, '▶ Start');
+        const oSkip = el('button', { className: 'btn-pill' }, 'Skip');
+        overlay.append(oTitle, oText, oBtn, oSkip);
+        back.append(overlay);
+        ui.append(back);
+
+        // ── STATE ──
+        // pos = 0 (start) → 1 (finish). vel in pos-units/sec.
+        // Eindzone: finish ligt op top:60px, kano start op bottom:80px.
+        // We mappen pos:0 = bottom:80px en pos:1 = bottom: (zoneHeight - 100px) ~ finish.
+        const state = {
+            posA: 0, velA: 0, posB: 0, velB: 0,
+            running: false, finished: false,
+        };
+        const TAP_BOOST = 0.060;     // 6% van afstand per tap (op vel)
+        const FRICTION  = 0.985;     // exponentiele decay per ms (subtiel)
+        const TAP_DECAY_MS = 16.67;
+        let lastT = 0;
+        let rafId = 0;
+        let tapsA = 0, tapsB = 0;
+
+        function updateVisual() {
+            const aH = A.zone.clientHeight;
+            const bH = B.zone.clientHeight;
+            // Bot edge gaat van 80px (start) tot aH-90 (finish near top)
+            // Maar A is geroteerd 180°, dus voor A werkt het visueel hetzelfde:
+            // we zetten gewoon style.bottom op de boat.
+            const aBot = 80 + (aH - 170) * state.posA;
+            const bBot = 80 + (bH - 170) * state.posB;
+            A.boat.style.bottom = aBot + 'px';
+            B.boat.style.bottom = bBot + 'px';
+            A.progBar.style.width = (state.posA * 100).toFixed(1) + '%';
+            B.progBar.style.width = (state.posB * 100).toFixed(1) + '%';
+        }
+        function tick(t) {
+            if (!state.running) return;
+            const dt = lastT ? Math.min(0.05, (t - lastT) / 1000) : 0;
+            lastT = t;
+            // Friction (exponential)
+            const friFac = Math.pow(FRICTION, dt * 60);
+            state.velA *= friFac;
+            state.velB *= friFac;
+            // Apply velocity to position
+            state.posA = Math.min(1, state.posA + state.velA * dt);
+            state.posB = Math.min(1, state.posB + state.velB * dt);
+            updateVisual();
+            // Win conditie
+            const aDone = state.posA >= 1;
+            const bDone = state.posB >= 1;
+            if (aDone || bDone) {
+                state.finished = true;
+                state.running = false;
+                let winner, loser;
+                if (aDone && bDone) {
+                    // gelijkstand — degene met meeste taps wint? gebruik posA/posB extra
+                    winner = tapsA >= tapsB ? playerA : playerB;
+                    loser  = winner === playerA ? playerB : playerA;
+                } else {
+                    winner = aDone ? playerA : playerB;
+                    loser  = aDone ? playerB : playerA;
+                }
+                showResult(winner, loser);
+                return;
+            }
+            rafId = requestAnimationFrame(tick);
+        }
+        function showResult(winner, loser) {
+            overlay.classList.add('show');
+            overlay.replaceChildren(
+                el('h2', { style: { color: winner.color.css } }, `🏆 ${winner.name} wint!`),
+                el('p', {}, `${loser.name} drinkt ${drinks} slokken 🍻`),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    on: { click: () => finish(loser) } }, 'Klaar'),
+            );
+            setTimeout(() => finish(loser), 5000);
+        }
+        function finish(loser) {
+            if (state.finished === 'closed') return;
+            state.finished = 'closed';
+            state.running = false;
+            cancelAnimationFrame(rafId);
+            back.style.transition = 'opacity 0.3s ease';
+            back.style.opacity = '0';
+            setTimeout(() => { back.remove(); resolve(loser); }, 300);
+        }
+
+        // ── INPUT: tap-zones gescheiden ──
+        function onTapA(e) { e.preventDefault(); if (!state.running) return;
+            state.velA += TAP_BOOST; tapsA++; pulseBoat(A.boat); }
+        function onTapB(e) { e.preventDefault(); if (!state.running) return;
+            state.velB += TAP_BOOST; tapsB++; pulseBoat(B.boat); }
+        function pulseBoat(b) {
+            const cur = b.style.transform || 'translateX(-50%)';
+            b.style.transform = 'translateX(-50%) scale(1.05)';
+            setTimeout(() => { b.style.transform = ''; }, 60);
+        }
+        A.zone.addEventListener('touchstart', onTapA, { passive: false });
+        B.zone.addEventListener('touchstart', onTapB, { passive: false });
+        A.zone.addEventListener('mousedown', onTapA);
+        B.zone.addEventListener('mousedown', onTapB);
+
+        oBtn.addEventListener('click', () => {
+            overlay.classList.remove('show');
+            state.running = true;
+            lastT = 0;
+            rafId = requestAnimationFrame(tick);
+        });
+        oSkip.addEventListener('click', () => finish(null));
+        updateVisual();
+    });
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   3. Krabben Vangen — Whack-a-Mole crabs
+   ════════════════════════════════════════════════════════════════════
+   Per speler 30-seconden run. Krabben spawnen in willekeurige holes,
+   blijven 0.7-1.4s, dan duiken ze weg. Tap = +1 score + zandwolk.
+   Hoogste score wint.
+   ════════════════════════════════════════════════════════════════════ */
+function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
+    return new Promise(resolve => {
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'krab-back' });
+        const head = el('div', { className: 'krab-head' });
+        head.append(el('h2', {}, '🦀 Krabben Vangen'));
+        // HUD
+        const hud = el('div', { className: 'krab-hud' });
+        const pChip = el('div', { className: 'krab-chip' });
+        const pLbl = el('div', { className: 'lbl' }, 'Speler');
+        const pVal = el('div', { className: 'val' }, '–');
+        pChip.append(pLbl, pVal);
+        const tChip = el('div', { className: 'krab-chip' });
+        tChip.append(el('div', { className: 'lbl' }, 'Tijd'));
+        const tVal = el('div', { className: 'val' }, '30');
+        tChip.append(tVal);
+        const sChip = el('div', { className: 'krab-chip' });
+        sChip.append(el('div', { className: 'lbl' }, 'Score'));
+        const sVal = el('div', { className: 'val' }, '0');
+        sChip.append(sVal);
+        hud.append(pChip, tChip, sChip);
+        // Stage
+        const stage = el('div', { className: 'krab-stage' });
+        back.append(head, hud, stage);
+        ui.append(back);
+
+        // ── STATE ──
+        const ROUND_MS = 30000;
+        const HOLES = 8;           // aantal gaten
+        const holes = [];          // {x, y, busy, el}
+        const scores = [];         // {player, score}
+        let curIdx = 0;
+        let score = 0;
+        let phase = 'intro';       // intro | playing | done
+        let phaseStart = 0;
+        let crabSpawnTimer = 0;
+        let crabSpawnInterval = 0.55;
+        const activeCrabs = [];    // {hole, el, expireAt}
+
+        // Plaats gaten in een patroon (verspreid maar niet recht-toe-recht-aan)
+        function layoutHoles() {
+            const w = stage.clientWidth, h = stage.clientHeight;
+            const gx = [0.20, 0.50, 0.80, 0.30, 0.70, 0.20, 0.50, 0.80];
+            const gy = [0.18, 0.18, 0.18, 0.45, 0.45, 0.72, 0.72, 0.72];
+            holes.length = 0;
+            // verwijder oude
+            stage.querySelectorAll('.krab-hole').forEach(e => e.remove());
+            for (let i = 0; i < HOLES; i++) {
+                const hx = gx[i] * w, hy = gy[i] * h;
+                const hole = el('div', { className: 'krab-hole',
+                    style: { left: hx + 'px', top: hy + 'px' } });
+                stage.append(hole);
+                holes.push({ x: hx, y: hy, busy: false, el: hole });
+            }
+        }
+        function spawnCrab() {
+            // Random vrij gat kiezen
+            const free = holes.filter(h => !h.busy);
+            if (free.length === 0) return;
+            const hole = free[Math.floor(Math.random() * free.length)];
+            hole.busy = true;
+            const crab = el('div', { className: 'krab-crab',
+                style: { left: hole.x + 'px', top: hole.y + 'px' } }, '🦀');
+            stage.append(crab);
+            requestAnimationFrame(() => crab.classList.add('show'));
+            // expire na random tijd
+            const lifeMs = 700 + Math.random() * 700;
+            const obj = { hole, el: crab, expireAt: performance.now() + lifeMs, hit: false };
+            activeCrabs.push(obj);
+            crab.addEventListener('touchstart', e => { e.preventDefault(); onHit(obj); },
+                { passive: false });
+            crab.addEventListener('mousedown', e => onHit(obj));
+        }
+        function onHit(c) {
+            if (c.hit || phase !== 'playing') return;
+            c.hit = true;
+            score++;
+            sVal.textContent = String(score);
+            c.el.classList.add('hit');
+            // Zandwolk
+            const dust = el('div', { className: 'krab-dust',
+                style: { left: c.hole.x + 'px', top: c.hole.y + 'px' } });
+            stage.append(dust);
+            setTimeout(() => dust.remove(), 600);
+            // Krab verdwijnt sneller
+            setTimeout(() => {
+                c.el.remove(); c.hole.busy = false;
+                const idx = activeCrabs.indexOf(c);
+                if (idx >= 0) activeCrabs.splice(idx, 1);
+            }, 350);
+        }
+        function expireCrab(c) {
+            c.el.classList.remove('show');
+            setTimeout(() => {
+                c.el.remove(); c.hole.busy = false;
+                const idx = activeCrabs.indexOf(c);
+                if (idx >= 0) activeCrabs.splice(idx, 1);
+            }, 200);
+        }
+        function startRun(playerIdx) {
+            curIdx = playerIdx;
+            const p = players[curIdx];
+            pVal.textContent = p.name;
+            pVal.style.color = p.color.css;
+            pChip.style.setProperty('--pcol', p.color.css);
+            sVal.textContent = '0';
+            score = 0;
+            // Cleanup old crabs/holes
+            activeCrabs.forEach(c => c.el.remove());
+            activeCrabs.length = 0;
+            holes.forEach(h => h.busy = false);
+            // Banner
+            const banner = el('div', { className: 'krab-banner',
+                style: { '--pcol': p.color.css } });
+            banner.append(
+                el('h2', { style: { color: p.color.css } }, `${p.name}`),
+                el('p', {}, 'Tik zoveel mogelijk krabben in 30 seconden'),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    style: { marginTop: '10px' },
+                    on: { click: () => {
+                        banner.remove();
+                        phase = 'playing';
+                        phaseStart = performance.now();
+                        crabSpawnTimer = 0;
+                        if (!holes.length) layoutHoles();
+                    }} }, '▶ Start'),
+            );
+            stage.append(banner);
+            phase = 'intro';
+        }
+        function endRun() {
+            phase = 'between';
+            scores.push({ player: players[curIdx], score });
+            activeCrabs.forEach(c => c.el.remove());
+            activeCrabs.length = 0;
+            holes.forEach(h => h.busy = false);
+            const p = players[curIdx];
+            const banner = el('div', { className: 'krab-banner',
+                style: { '--pcol': p.color.css } });
+            banner.append(
+                el('h2', {}, 'Klaar!'),
+                el('div', { className: 'big', style: { color: p.color.css } }, String(score)),
+                el('p', {}, `krabben gevangen door ${p.name}`),
+            );
+            stage.append(banner);
+            setTimeout(() => {
+                banner.remove();
+                if (curIdx < players.length - 1) startRun(curIdx + 1);
+                else showFinal();
+            }, 2200);
+        }
+        function showFinal() {
+            phase = 'done';
+            const sorted = [...scores].sort((a, b) => b.score - a.score);
+            const topS = sorted[0].score;
+            const winners = sorted.filter(s => s.score === topS);
+            const losers = sorted.filter(s => s.score < topS);
+            const winName = winners.map(w => w.player.name).join(' & ');
+            const banner = el('div', { className: 'krab-banner',
+                style: { '--pcol': winners[0].player.color.css } });
+            const ranking = el('div', { style: {
+                margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '6px' } });
+            sorted.forEach((s, i) => {
+                ranking.append(el('div', { style: {
+                    display: 'flex', justifyContent: 'space-between', gap: '12px',
+                    padding: '6px 12px', borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid ' + s.player.color.css,
+                    opacity: s.score === topS ? '1' : '0.65' } },
+                    el('span', {}, `${i+1}. ${s.player.name}`),
+                    el('span', { style: { color: s.player.color.css, fontWeight: '900' } },
+                        String(s.score)),
+                ));
+            });
+            banner.append(
+                el('h2', {}, '🏆 Eindstand'),
+                ranking,
+                el('p', {}, losers.length === 0 ? 'Gelijkspel — proost!' :
+                    `${losers.map(l => l.player.name).join(', ')} drinkt elk ${drinks} 🍻`),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    style: { marginTop: '10px' },
+                    on: { click: () => finish(sorted) } }, 'Klaar'),
+            );
+            stage.append(banner);
+            setTimeout(() => finish(sorted), 8000);
+        }
+        function finish(sorted) {
+            if (phase === 'closed') return;
+            phase = 'closed';
+            cancelAnimationFrame(rafId);
+            back.style.transition = 'opacity 0.3s ease';
+            back.style.opacity = '0';
+            setTimeout(() => { back.remove(); resolve(sorted || null); }, 300);
+        }
+
+        let rafId = 0, lastT = 0;
+        function tick(t) {
+            const dt = lastT ? (t - lastT) / 1000 : 0;
+            lastT = t;
+            if (phase === 'playing') {
+                const elapsed = performance.now() - phaseStart;
+                const remaining = Math.max(0, ROUND_MS - elapsed);
+                tVal.textContent = Math.ceil(remaining / 1000).toString();
+                // Spawn ritme versnelt: 0.55s → 0.30s
+                const t01 = elapsed / ROUND_MS;
+                crabSpawnInterval = 0.55 - t01 * 0.25;
+                crabSpawnTimer += dt;
+                if (crabSpawnTimer >= crabSpawnInterval) {
+                    crabSpawnTimer -= crabSpawnInterval;
+                    spawnCrab();
+                }
+                // Expire crabs
+                const now = performance.now();
+                for (let i = activeCrabs.length - 1; i >= 0; i--) {
+                    if (!activeCrabs[i].hit && now >= activeCrabs[i].expireAt) {
+                        expireCrab(activeCrabs[i]);
+                    }
+                }
+                if (elapsed >= ROUND_MS) endRun();
+            }
+            rafId = requestAnimationFrame(tick);
+        }
+        // Wacht tot stage layout heeft, dan starten
+        setTimeout(() => {
+            layoutHoles();
+            window.addEventListener('resize', () => layoutHoles());
+            startRun(0);
+            rafId = requestAnimationFrame(tick);
+        }, 50);
+    });
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   4. Tiki Ritme — Simon Says met Tiki-maskers
+   ════════════════════════════════════════════════════════════════════
+   Per speler: sequence van Tiki-maskers herhalen. Elke ronde +1 lengte.
+   Fout = einde voor deze speler, level = score.
+   Hoogste level wint.
+   ════════════════════════════════════════════════════════════════════ */
+function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
+    return new Promise(resolve => {
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'tiki-back' });
+        const head = el('div', { className: 'tiki-head' });
+        head.append(el('h2', {}, '🗿 Tiki Ritme'));
+        const status = el('div', { className: 'tiki-status' });
+        const pChip = el('div', { className: 'tiki-chip' });
+        pChip.append(el('div', { className: 'lbl' }, 'Speler'));
+        const pVal = el('div', { className: 'val' }, '–');
+        pChip.append(pVal);
+        const lChip = el('div', { className: 'tiki-chip' });
+        lChip.append(el('div', { className: 'lbl' }, 'Level'));
+        const lVal = el('div', { className: 'val' }, '1');
+        lChip.append(lVal);
+        status.append(pChip, lChip);
+        const tip = el('div', { className: 'tiki-tip' }, "Onthoud de volgorde en tik 'm terug");
+        // 4 maskers
+        const stage = el('div', { className: 'tiki-stage' });
+        const COLORS = ['#a87a4a', '#c8501a', '#3a8a4a', '#a85aa8'];   // 4 base colors
+        const SYMBOLS = ['🗿', '🗿', '🗿', '🗿'];
+        const masks = [];
+        for (let i = 0; i < 4; i++) {
+            const m = el('div', { className: 'tiki-mask',
+                'data-i': String(i),
+                style: { '--litcol': COLORS[i] } }, SYMBOLS[i]);
+            masks.push(m);
+            stage.append(m);
+        }
+        back.append(head, status, tip, stage);
+        ui.append(back);
+
+        // ── STATE ──
+        const sequences = [];          // {player, sequence: number[], level}
+        let curIdx = 0;
+        let curSeq = [];               // huidige sequence voor deze speler
+        let level = 0;                 // hoeveel je succesvol terug hebt gespeeld
+        let inputIdx = 0;              // waar staat de speler in zijn input
+        let phase = 'intro';           // intro | showing | listening | failed | between | done
+        let locked = false;            // taps geblokkeerd tijdens showing
+
+        function setPlayer(i) {
+            curIdx = i;
+            const p = players[curIdx];
+            pVal.textContent = p.name;
+            pVal.style.color = p.color.css;
+            pChip.style.setProperty('--pcol', p.color.css);
+            lChip.style.setProperty('--pcol', p.color.css);
+            curSeq = [];
+            level = 0;
+            lVal.textContent = '1';
+        }
+        function flashMask(i, dur = 500) {
+            const m = masks[i];
+            m.classList.add('lit');
+            // Eenvoudig "sound" effect via WebAudio (sine-tone per index)
+            playTone(220 + i * 80, dur);
+            return new Promise(r => setTimeout(() => {
+                m.classList.remove('lit');
+                setTimeout(r, 120);
+            }, dur));
+        }
+        let audioCtx = null;
+        function playTone(freq, dur) {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.type = 'triangle';
+                o.frequency.value = freq;
+                g.gain.setValueAtTime(0, audioCtx.currentTime);
+                g.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.03);
+                g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + dur/1000);
+                o.connect(g); g.connect(audioCtx.destination);
+                o.start(); o.stop(audioCtx.currentTime + dur/1000 + 0.05);
+            } catch (e) {}
+        }
+        async function showSequence() {
+            phase = 'showing';
+            locked = true;
+            stage.classList.add('tiki-locked');
+            tip.textContent = 'Kijk goed...';
+            await new Promise(r => setTimeout(r, 600));
+            for (const idx of curSeq) {
+                await flashMask(idx, 460);
+            }
+            phase = 'listening';
+            locked = false;
+            stage.classList.remove('tiki-locked');
+            inputIdx = 0;
+            tip.textContent = 'Jouw beurt — tik in dezelfde volgorde';
+        }
+        function nextLevel() {
+            // Voeg willekeurige tik toe
+            curSeq.push(Math.floor(Math.random() * 4));
+            lVal.textContent = String(curSeq.length);
+            showSequence();
+        }
+        function onTap(i) {
+            if (locked || phase !== 'listening') return;
+            // Flash de getikte mask (zonder geluid om timing te houden)
+            const m = masks[i];
+            m.classList.add('lit');
+            playTone(220 + i * 80, 220);
+            setTimeout(() => m.classList.remove('lit'), 220);
+            const expected = curSeq[inputIdx];
+            if (i !== expected) {
+                fail();
+                return;
+            }
+            inputIdx++;
+            if (inputIdx >= curSeq.length) {
+                // Level klaar
+                level = curSeq.length;
+                tip.textContent = 'Goed!';
+                setTimeout(nextLevel, 700);
+            }
+        }
+        function fail() {
+            phase = 'failed';
+            locked = true;
+            stage.classList.add('tiki-locked');
+            playTone(120, 800);
+            tip.textContent = '❌ Fout!';
+            sequences.push({ player: players[curIdx], level });
+            const p = players[curIdx];
+            const banner = el('div', { className: 'tiki-banner',
+                style: { '--pcol': p.color.css } });
+            banner.append(
+                el('h2', {}, `${p.name}`),
+                el('div', { className: 'big' }, `Level ${level}`),
+                el('p', {}, level === 0 ? 'Niet eens 1 onthouden... 😅' :
+                            `${level} tikken in volgorde geweldig!`),
+            );
+            stage.append(banner);
+            setTimeout(() => {
+                banner.remove();
+                if (curIdx < players.length - 1) {
+                    setPlayer(curIdx + 1);
+                    setTimeout(nextLevel, 400);
+                } else {
+                    showFinal();
+                }
+            }, 2200);
+        }
+        function showFinal() {
+            phase = 'done';
+            const sorted = [...sequences].sort((a, b) => b.level - a.level);
+            const topL = sorted[0].level;
+            const losers = sorted.filter(s => s.level < topL);
+            const banner = el('div', { className: 'tiki-banner',
+                style: { '--pcol': sorted[0].player.color.css } });
+            const ranking = el('div', { style: {
+                margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '6px' } });
+            sorted.forEach((s, i) => {
+                ranking.append(el('div', { style: {
+                    display: 'flex', justifyContent: 'space-between', gap: '12px',
+                    padding: '6px 12px', borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid ' + s.player.color.css,
+                    opacity: s.level === topL ? '1' : '0.65' } },
+                    el('span', {}, `${i+1}. ${s.player.name}`),
+                    el('span', { style: { color: s.player.color.css, fontWeight: '900' } },
+                        `lvl ${s.level}`),
+                ));
+            });
+            banner.append(
+                el('h2', {}, '🏆 Eindstand'),
+                ranking,
+                el('p', {}, losers.length === 0 ? 'Gelijkspel — proost!' :
+                    `${losers.map(l => l.player.name).join(', ')} drinkt elk ${drinks} 🍻`),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    style: { marginTop: '10px' },
+                    on: { click: () => finish(sorted) } }, 'Klaar'),
+            );
+            stage.append(banner);
+            setTimeout(() => finish(sorted), 9000);
+        }
+        function finish(sorted) {
+            if (phase === 'closed') return;
+            phase = 'closed';
+            back.style.transition = 'opacity 0.3s ease';
+            back.style.opacity = '0';
+            setTimeout(() => { back.remove(); resolve(sorted || null); }, 300);
+        }
+
+        masks.forEach((m, i) => {
+            m.addEventListener('touchstart', e => { e.preventDefault(); onTap(i); },
+                { passive: false });
+            m.addEventListener('mousedown', () => onTap(i));
+        });
+
+        // Start eerste speler
+        setPlayer(0);
+        setTimeout(nextLevel, 600);
+    });
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   5. Brug Balans — gyroscoop balanceer-game
+   ════════════════════════════════════════════════════════════════════
+   Personage loopt automatisch over een brug. Telefoon-tilt (gamma) →
+   helling van het personage. Buiten threshold = val in lava.
+   Survival-time = score. Hoogste wint.
+   ════════════════════════════════════════════════════════════════════ */
+function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
+    return new Promise(resolve => {
+        const ui = document.getElementById('game-ui');
+        const back = el('div', { className: 'brug-back' });
+        const head = el('div', { className: 'brug-head' });
+        head.append(el('h2', {}, '⚖️ Brug Balans'));
+        const hud = el('div', { className: 'brug-hud' });
+        const pChip = el('div', { className: 'tiki-chip' });
+        pChip.append(el('div', { className: 'lbl' }, 'Speler'));
+        const pVal = el('div', { className: 'val' }, '–');
+        pChip.append(pVal);
+        const sChip = el('div', { className: 'tiki-chip' });
+        sChip.append(el('div', { className: 'lbl' }, 'Tijd'));
+        const sVal = el('div', { className: 'val' }, '0.0s');
+        sChip.append(sVal);
+        hud.append(pChip, sChip);
+        const stage = el('div', { className: 'brug-stage' });
+        const bridge = el('div', { className: 'brug-bridge' });
+        const char = el('div', { className: 'brug-char' }, '🧗');
+        const meter = el('div', { className: 'brug-tilt-meter' });
+        const center = el('div', { className: 'center' });
+        const pin = el('div', { className: 'pin' });
+        meter.append(center, pin);
+        stage.append(bridge, char, meter);
+        back.append(head, hud, stage);
+        ui.append(back);
+
+        // ── STATE ──
+        const RUN_MAX_MS = 45000;       // hard cap zodat het nooit oneindig duurt
+        const THRESHOLD = 45;           // graden tilt → val
+        const scores = [];              // {player, time}
+        let curIdx = 0;
+        let phase = 'permission';       // permission | ready | running | failed | between | done
+        let gamma = 0;                  // huidige tilt (left-right)
+        let leanAngle = 0;              // werkelijke karakter-helling (gladgemaakt)
+        let runStart = 0;
+        let lastEvent = 0;
+        let rafId = 0;
+
+        // ── DeviceOrientation ──
+        function onOrient(e) {
+            // gamma: left-right tilt, -90 → 90
+            if (e.gamma != null) {
+                gamma = Math.max(-90, Math.min(90, e.gamma));
+                lastEvent = performance.now();
+            }
+        }
+        async function requestGyroPermission() {
+            // iOS Safari 13+: requestPermission() vereist user-gesture
+            if (typeof DeviceOrientationEvent !== 'undefined' &&
+                typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const res = await DeviceOrientationEvent.requestPermission();
+                    if (res === 'granted') {
+                        window.addEventListener('deviceorientation', onOrient);
+                        return true;
+                    }
+                    return false;
+                } catch (e) { return false; }
+            } else {
+                window.addEventListener('deviceorientation', onOrient);
+                return true;
+            }
+        }
+        function showPermission() {
+            const card = el('div', { className: 'brug-perm' });
+            card.append(
+                el('h3', {}, '📱 Telefoon-sensor nodig'),
+                el('p', {}, 'Brug Balans gebruikt de gyroscoop. Geef toestemming om door te gaan.'),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    on: { click: async () => {
+                        const ok = await requestGyroPermission();
+                        card.remove();
+                        if (ok) {
+                            phase = 'ready';
+                            startRun(0);
+                        } else {
+                            // Geen permissie → skip
+                            const c2 = el('div', { className: 'brug-perm' });
+                            c2.append(
+                                el('h3', {}, '⚠️ Geen toestemming'),
+                                el('p', {}, 'Geen sensor-toegang. Minigame overgeslagen.'),
+                                el('button', { className: 'btn-pill', type: 'button',
+                                    on: { click: () => finish(null) } }, 'OK'),
+                            );
+                            stage.append(c2);
+                        }
+                    }} }, '✓ Toestaan'),
+                el('button', { className: 'btn-pill', type: 'button',
+                    on: { click: () => finish(null) } }, 'Skip'),
+            );
+            stage.append(card);
+        }
+        function startRun(i) {
+            curIdx = i;
+            const p = players[curIdx];
+            pVal.textContent = p.name;
+            pVal.style.color = p.color.css;
+            pChip.style.setProperty('--pcol', p.color.css);
+            sChip.style.setProperty('--pcol', p.color.css);
+            // Reset character
+            char.style.transform = 'translate(-50%, -50%) rotate(0deg)';
+            char.style.left = '50%';
+            char.style.opacity = '1';
+            leanAngle = 0;
+            // Banner
+            const banner = el('div', { className: 'brug-banner',
+                style: { '--pcol': p.color.css } });
+            banner.append(
+                el('h2', { style: { color: p.color.css } }, `${p.name}`),
+                el('p', {}, 'Houd je telefoon zo recht mogelijk om de brug te overleven'),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    style: { marginTop: '10px' },
+                    on: { click: () => {
+                        banner.remove();
+                        phase = 'running';
+                        runStart = performance.now();
+                        lastEvent = performance.now();
+                    }} }, '▶ Start'),
+            );
+            stage.append(banner);
+            phase = 'ready';
+        }
+        function endRun(survivedMs) {
+            phase = 'between';
+            scores.push({ player: players[curIdx], time: survivedMs });
+            // Visual fail
+            char.style.transition = 'all 0.6s ease-in';
+            char.style.transform = `translate(-50%, 220%) rotate(${gamma > 0 ? 90 : -90}deg)`;
+            char.style.opacity = '0';
+            const p = players[curIdx];
+            setTimeout(() => {
+                const banner = el('div', { className: 'brug-banner',
+                    style: { '--pcol': p.color.css } });
+                banner.append(
+                    el('h2', {}, 'Gevallen!'),
+                    el('div', { className: 'big', style: { color: p.color.css } },
+                        (survivedMs / 1000).toFixed(1) + 's'),
+                    el('p', {}, `${p.name} overleefde`),
+                );
+                stage.append(banner);
+                setTimeout(() => {
+                    banner.remove();
+                    char.style.transition = '';
+                    if (curIdx < players.length - 1) startRun(curIdx + 1);
+                    else showFinal();
+                }, 2000);
+            }, 600);
+        }
+        function showFinal() {
+            phase = 'done';
+            const sorted = [...scores].sort((a, b) => b.time - a.time);
+            const topT = sorted[0].time;
+            const losers = sorted.filter(s => s.time < topT);
+            const banner = el('div', { className: 'brug-banner',
+                style: { '--pcol': sorted[0].player.color.css } });
+            const ranking = el('div', { style: {
+                margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '6px' } });
+            sorted.forEach((s, i) => {
+                ranking.append(el('div', { style: {
+                    display: 'flex', justifyContent: 'space-between', gap: '12px',
+                    padding: '6px 12px', borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid ' + s.player.color.css,
+                    opacity: s.time === topT ? '1' : '0.65' } },
+                    el('span', {}, `${i+1}. ${s.player.name}`),
+                    el('span', { style: { color: s.player.color.css, fontWeight: '900' } },
+                        (s.time/1000).toFixed(1) + 's'),
+                ));
+            });
+            banner.append(
+                el('h2', {}, '🏆 Eindstand'),
+                ranking,
+                el('p', {}, losers.length === 0 ? 'Gelijkspel — proost!' :
+                    `${losers.map(l => l.player.name).join(', ')} drinkt elk ${drinks} 🍻`),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    style: { marginTop: '10px' },
+                    on: { click: () => finish(sorted) } }, 'Klaar'),
+            );
+            stage.append(banner);
+            setTimeout(() => finish(sorted), 9000);
+        }
+        function finish(sorted) {
+            if (phase === 'closed') return;
+            phase = 'closed';
+            cancelAnimationFrame(rafId);
+            window.removeEventListener('deviceorientation', onOrient);
+            back.style.transition = 'opacity 0.3s ease';
+            back.style.opacity = '0';
+            setTimeout(() => { back.remove(); resolve(sorted || null); }, 300);
+        }
+
+        function tick() {
+            rafId = requestAnimationFrame(tick);
+            if (phase !== 'running') return;
+            // Smooth lean naar gamma
+            leanAngle += (gamma - leanAngle) * 0.25;
+            // Pin in meter (gamma -45..45 → 0..100%)
+            const pinPct = Math.max(0, Math.min(100, (gamma + THRESHOLD) / (2*THRESHOLD) * 100));
+            pin.style.left = pinPct + '%';
+            // Karakter rotatie + lichte horizontale wankel
+            const lean = Math.max(-THRESHOLD * 1.2, Math.min(THRESHOLD * 1.2, leanAngle));
+            const xOff = (lean / THRESHOLD) * 40;     // ±40px
+            char.style.transform =
+                `translate(calc(-50% + ${xOff}px), -50%) rotate(${lean.toFixed(1)}deg)`;
+            // Tijd
+            const elapsed = performance.now() - runStart;
+            sVal.textContent = (elapsed / 1000).toFixed(1) + 's';
+            // Check fail
+            if (Math.abs(leanAngle) >= THRESHOLD || elapsed >= RUN_MAX_MS) {
+                phase = 'failed';
+                endRun(elapsed);
+            }
+            // Geen orientation events in 2 seconden? device draait misschien niet
+            if (performance.now() - lastEvent > 2000 && elapsed > 1000) {
+                // Negeer — kan gewoon stil houden zijn (ok)
+            }
+        }
+        rafId = requestAnimationFrame(tick);
+        showPermission();
+    });
+}
+
 
 /* ============================================================
    Schnaps ruft an — "Schnaps is calling"
@@ -10359,6 +11784,11 @@ const MYSTERY_OPTIONS = [
     { id: 'hoofdsteden', emoji: '🏙️', label: 'Hoofdsteden',  color: '#5aaaff' },
     { id: 'bowling',     emoji: '🎳', label: 'Bowlspel',     color: '#1a7adb' },
     { id: 'connect4',    emoji: '🟡', label: '4 op een Rij', color: '#ffcc1a' },
+    { id: 'lavasteen',   emoji: '🌋', label: 'Lavasteen',    color: '#ff5a3a' },
+    { id: 'kano',        emoji: '🛶', label: 'Kano Race',    color: '#5acdff' },
+    { id: 'krabben',     emoji: '🦀', label: 'Krabben',      color: '#ff8a3a' },
+    { id: 'tiki',        emoji: '🗿', label: 'Tiki Ritme',   color: '#c89a4a' },
+    { id: 'brug',        emoji: '⚖️', label: 'Brug Balans',  color: '#ffaa3a' },
 ];
 
 function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Wheel', subtitle = 'Welke minigame wordt het?' } = {}) {
@@ -11328,6 +12758,76 @@ async function runMinigameOnTile(id, player) {
             winner.bonusDice = (winner.bonusDice || 0) + 1;
             refreshHUD();
         }
+    }
+    else if (id === 'lavasteen' && G.players.length >= 2) {
+        const d = slokken(4);
+        const go = await showModal({
+            emoji: '🌋', title: 'Hete Lavasteen!',
+            body: ['Iedereen geeft de telefoon door door te tikken.',
+                   `Wie de steen vasthoudt wanneer 'ie ontploft, drinkt ${d}.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        const loser = await playHeteLavasteen({ players: G.players, drinks: d });
+        if (loser) {
+            await showModal({
+                emoji: '💥', title: `${loser.name} drinkt!`,
+                body: [`De steen ontplofte in jouw hand. Neem ${d} slokken 🍻`],
+                actions: [{ label: 'Klaar', value: true }],
+            });
+        }
+    }
+    else if (id === 'kano' && G.players.length >= 2) {
+        const opp = pickOpp();
+        const d = slokken(4);
+        const go = await showModal({
+            emoji: '🛶', title: 'Kano Race!',
+            body: [`${player.name} (boven) vs ${opp.name} (onder).`,
+                   `Tik zo snel mogelijk op JOUW helft. Verliezer drinkt ${d}.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        const loser = await playKanoRace({ playerA: player, playerB: opp, drinks: d });
+        if (loser) {
+            await showModal({
+                emoji: '🛶', title: `${loser.name} drinkt!`,
+                body: [`Te traag aan de peddel. Neem ${d} slokken 🍻`],
+                actions: [{ label: 'Klaar', value: true }],
+            });
+        }
+    }
+    else if (id === 'krabben') {
+        const d = slokken(2);
+        const go = await showModal({
+            emoji: '🦀', title: 'Krabben Vangen!',
+            body: ['Iedereen krijgt 30 seconden om zoveel mogelijk krabben te tikken.',
+                   `Laagste score(s) drinken ${d} 🍻.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        await playKrabbenVangen({ players: G.players, drinks: d });
+    }
+    else if (id === 'tiki') {
+        const d = slokken(3);
+        const go = await showModal({
+            emoji: '🗿', title: 'Tiki Ritme!',
+            body: ['Herhaal de volgorde van de Tiki-maskers. Elke ronde komt er één bij.',
+                   `Wie het laagste level haalt, drinkt ${d} 🍻.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        await playTikiRitme({ players: G.players, drinks: d });
+    }
+    else if (id === 'brug') {
+        const d = slokken(3);
+        const go = await showModal({
+            emoji: '⚖️', title: 'Brug Balans!',
+            body: ['Houd je telefoon zo recht mogelijk om de brug te overleven.',
+                   `Kortste tijd(en) drinken ${d} 🍻.`],
+            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+        });
+        if (!go) return;
+        await playBrugBalans({ players: G.players, drinks: d });
     }
 }
 
