@@ -11323,6 +11323,7 @@ function onRollDice() {
             palette: 'lava',
         }).then(async () => {
             advanceTurn();
+            await maybeRunAllPlayerRoundGame();
             G.phase = 'idle';
             refreshHUD();
             // Schnaps could still call after a skip-turn
@@ -11463,6 +11464,7 @@ function onRollDice() {
                 });
                 // Beurt eindigt zonder beweging
                 advanceTurn();
+                await maybeRunAllPlayerRoundGame();
                 G.phase = 'idle';
                 refreshHUD();
                 await maybeFireSchnapsCall();
@@ -11512,6 +11514,61 @@ function advanceTurn() {
         if (G.volcanoActive > 0) G.volcanoActive--;
         updateVolcanoBanner();
     }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ROUND-END ALL-PLAYER MINIGAME TRIGGER
+// ════════════════════════════════════════════════════════════════
+//  Alle-spelers minigames (volcano, tappy, bowling, lavasteen, etc.)
+//  worden niet meer getriggerd door een tile op het bord. In plaats
+//  daarvan vuren ze automatisch aan het einde van een ronde-blok,
+//  zodat het tempo onafhankelijk van het aantal spelers vergelijk-
+//  baar blijft: ongeveer 8 individuele beurten per groeps-minigame.
+//
+//    Spelers   Rondes tussen minigames   Beurten tussen
+//      8                1                       8
+//      4                2                       8
+//      2                4                       8
+//      3                3                       9
+//      5/6/7            2                       10-14
+//
+//  Anti-repeat shuffled pool: alle 7 minigames worden in willekeur-
+//  ige volgorde afgewerkt voor er een herhaling komt.
+// ════════════════════════════════════════════════════════════════
+async function maybeRunAllPlayerRoundGame() {
+    if (G.players.length < 2) return;
+    // Alleen triggeren wanneer de ronde NET is gewikkeld
+    // (advanceTurn heeft G.turnIdx naar 0 gerold).
+    if (G.turnIdx !== 0) return;
+    if (G._roundsSinceAllPlayer === undefined) G._roundsSinceAllPlayer = 0;
+    G._roundsSinceAllPlayer++;
+    const threshold = Math.max(1, Math.ceil(8 / G.players.length));
+    if (G._roundsSinceAllPlayer < threshold) return;
+    G._roundsSinceAllPlayer = 0;
+
+    // Anti-repeat shuffled pool — werkt alle minigames af voor
+    // herhaling. Fisher-Yates shuffle wanneer leeg.
+    if (!G._allPlayerPool || G._allPlayerPool.length === 0) {
+        const pool = [...ALL_PLAYER_GAMES];
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        G._allPlayerPool = pool;
+    }
+    const id = G._allPlayerPool.shift();
+
+    G.phase = 'event';
+    refreshHUD();
+    await showStamp({
+        emoji: '🎉', big: 'GROEPSMINIGAME!',
+        sub: 'Iedereen doet mee — einde ronde-blok!',
+        palette: 'gold', auto: true, duration: 1600,
+    });
+    // De dispatcher heeft een 'player' param nodig maar voor all-player
+    // games doet 't er niet toe wie — gebruik de eerste in de lijst.
+    await runMinigameOnTile(id, G.players[0]);
+    G.phase = 'idle';
 }
 
 function updateVolcanoBanner() {
@@ -14810,6 +14867,14 @@ function playSchnapsCall({ player = null, mode = 'standalone' } = {}) {
    chosen minigame id ('krokodil','paddle','tappy','volcano',
    'raft','roulette','blackjack','hoofdsteden') or null if skipped.
    ============================================================ */
+// Welke minigames worden door ALLE spelers tegelijk gespeeld?
+// Die triggeren NIET meer via een tile op het bord, maar automatisch
+// aan het einde van een ronde-blok (zie maybeRunAllPlayerRoundGame).
+const ALL_PLAYER_GAMES = [
+    'tappy', 'volcano', 'bowling',
+    'lavasteen', 'krabben', 'tiki', 'brug',
+];
+
 const MYSTERY_OPTIONS = [
     { id: 'krokodil',    emoji: '🐊', label: 'Krokodil',     color: '#b87aff' },
     { id: 'paddle',      emoji: '🏓', label: 'Paddle Duel',  color: '#4af2ff' },
@@ -16580,8 +16645,12 @@ async function onLandedOnTile(player) {
             palette: 'purple', auto: true, duration: 1200,
         });
         // Filter wheel options based on player count: 1v1 games need 2+
+        // PLUS: alle-spelers minigames (volcano/tappy/bowling/lavasteen/...)
+        // worden NOOIT via de tile-wheel gekozen — die spelen we apart
+        // aan het einde van een ronde-blok.
         const playerOk = G.players.length >= 2;
         const options = MYSTERY_OPTIONS.filter(o => {
+            if (ALL_PLAYER_GAMES.includes(o.id)) return false;
             if (!playerOk) return ['roulette','blackjack','hoofdsteden'].includes(o.id);
             return true;
         });
@@ -16620,6 +16689,7 @@ async function onLandedOnTile(player) {
         });
     } else {
         advanceTurn();
+        await maybeRunAllPlayerRoundGame();
     }
     G.phase = 'idle';
     refreshHUD();
