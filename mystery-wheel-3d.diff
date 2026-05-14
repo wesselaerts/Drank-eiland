@@ -1,0 +1,1141 @@
+--- /mnt/user-data/uploads/index.html	2026-05-14 17:13:57.879765000 +0000
++++ /home/claude/work/index.html	2026-05-14 17:48:57.821301070 +0000
+@@ -1904,62 +1904,60 @@
+     }
+ 
+     /* =============================================================
+-       Mystery Wheel (mw-) — universal minigame picker
++       Mystery Wheel 3D (mw-) — universal minigame picker
++       =============================================================
++       Het rad zelf is een echt 3D object in de bordspel-scène, op
++       Bowl Eiland in een bamboe strand-kraam. Deze .mw-* overlay is
++       transparant zodat de 3D scène doorheen zichtbaar blijft —
++       alleen header (titel/sub), tip, skip-knop en eind-resultaat
++       worden via DOM gerenderd.
+        ============================================================= */
+-    .mw-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
+-      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+-      background:
+-        radial-gradient(ellipse at 50% 30%, #5a1a8a 0%, #2a0a4a 45%, #0a0820 100%);
++    .mw-back { position: fixed; inset: 0; z-index: 60; overflow: hidden;
++      display: flex; flex-direction: column; color: #fff;
++      animation: fadeIn .25s ease; touch-action: none;
++      user-select: none; -webkit-tap-highlight-color: transparent;
+       padding-top: env(safe-area-inset-top);
+       padding-bottom: env(safe-area-inset-bottom);
+-      touch-action: manipulation; }
+-    .mw-back::before { content:""; position: absolute; inset: -10%; pointer-events: none;
+-      background: radial-gradient(circle at 30% 20%, rgba(255,80,200,0.20), transparent 40%),
+-                  radial-gradient(circle at 70% 80%, rgba(120,80,255,0.22), transparent 50%);
+-      animation: mw-shimmer 6s ease-in-out infinite alternate; }
+-    @keyframes mw-shimmer { from { opacity: 0.6; } to { opacity: 1; } }
+-    .mw-header { position: relative; z-index: 2; padding: 10px 16px 4px; text-align: center; }
++      background:
++        radial-gradient(ellipse at 50% 110%, rgba(90,26,138,0.25) 0%, rgba(42,10,74,0.10) 35%, transparent 70%),
++        linear-gradient(180deg, rgba(5,8,32,0.50) 0%, rgba(5,8,32,0.05) 22%, rgba(5,8,32,0.05) 78%, rgba(5,8,32,0.55) 100%); }
++    .mw-header { position: relative; z-index: 2; padding: 14px 16px 4px; text-align: center;
++      pointer-events: none; }
+     .mw-title { font-size: 22px; font-weight: 900; letter-spacing: 0.5px;
+       text-shadow: 0 2px 0 #000, 0 0 22px #d950ff; }
+-    .mw-sub { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+-    .mw-stage { flex: 1; position: relative; z-index: 1; display: flex;
+-      align-items: center; justify-content: center; padding: 8px; min-height: 0; }
+-    .mw-wheel-wrap { position: relative; width: min(82vw, 380px); aspect-ratio: 1/1;
+-      max-height: 60vh; }
+-    .mw-wheel { position: absolute; inset: 0; border-radius: 50%;
+-      box-shadow: 0 0 0 6px #ffd54a, 0 0 0 9px #b86c00, 0 0 50px rgba(217,80,255,0.55);
+-      transform: rotate(0deg); /* transition wordt door JS gestuurd */
+-      overflow: hidden; touch-action: none; cursor: grab; }
+-    .mw-wheel.spinning { cursor: grabbing; }
+-    .mw-seg { position: absolute; inset: 0; transform-origin: 50% 50%; }
+-    .mw-seg .label { position: absolute; left: 50%; top: 14%; transform: translateX(-50%);
+-      font-size: 13px; font-weight: 900; color: #fff; text-shadow: 0 1px 0 #000, 0 0 6px rgba(0,0,0,0.6);
+-      text-align: center; max-width: 80px; line-height: 1.1; pointer-events: none; }
+-    .mw-seg .label .emo { display: block; font-size: 24px; margin-bottom: 2px; }
+-    .mw-pointer { position: absolute; left: 50%; top: -16px; transform: translateX(-50%);
+-      width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent;
+-      border-top: 28px solid #ffd54a; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.6)); z-index: 3; }
+-    .mw-pointer::after { content: ""; position: absolute; left: 50%; top: -26px; transform: translateX(-50%);
+-      width: 16px; height: 16px; border-radius: 50%; background: #ffd54a;
+-      box-shadow: 0 0 12px #ffd54a, inset 0 -3px 0 #b86c00; }
+-    .mw-hub { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+-      width: 26%; aspect-ratio: 1/1; border-radius: 50%;
+-      background: radial-gradient(circle at 35% 35%, #ffe78a, #ffaa1a 60%, #b86c00 100%);
+-      box-shadow: inset 0 -6px 0 #b86c00, 0 0 20px rgba(255,200,80,0.6);
+-      display: flex; align-items: center; justify-content: center;
+-      font-size: 36px; pointer-events: none; z-index: 2; }
++    .mw-sub { font-size: 14px; opacity: 0.85; margin-top: 4px;
++      text-shadow: 0 1px 0 #000; }
++    /* De .mw-stage vangt de swipe-events op die het 3D rad draaien.
++       Hij is volledig transparant maar pakt pointer-events op. */
++    .mw-stage { flex: 1; position: relative; z-index: 1;
++      touch-action: none; cursor: grab; }
++    .mw-stage.spinning { cursor: grabbing; }
++    /* Tip-balk onderaan met swipe-hint */
++    .mw-tip { position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%);
++      padding: 8px 18px; border-radius: 999px; font-size: 13px; font-weight: 700;
++      background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.2);
++      backdrop-filter: blur(4px); pointer-events: none;
++      box-shadow: 0 4px 14px rgba(0,0,0,0.4); white-space: nowrap;
++      animation: mw-pulse 1.6s ease-in-out infinite; }
++    @keyframes mw-pulse {
++      0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.95; }
++      50%      { transform: translateX(-50%) translateY(-4px); opacity: 1.0; }
++    }
++    .mw-tip.gone { animation: none; opacity: 0; transition: opacity 0.3s ease; }
+     .mw-foot { display: flex; gap: 10px; justify-content: center; padding: 10px 14px 6px;
+       position: relative; z-index: 3; flex-shrink: 0; }
+     .mw-back .btn-pill { min-height: 52px; padding: 0 26px; border-radius: 999px;
+-      border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.1);
++      border: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.55);
+       color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+-      -webkit-tap-highlight-color: transparent; }
++      -webkit-tap-highlight-color: transparent; backdrop-filter: blur(4px); }
+     .mw-back .btn-pill.gold { background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+       color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
+     .mw-back .btn-pill:active { transform: translateY(2px); }
++    .mw-back .btn-pill:disabled { opacity: 0.45; cursor: default; }
++    /* Eind-resultaat banner — toont gekozen minigame + Start-knop */
+     .mw-result { position: absolute; inset: 0; display: flex; align-items: center;
+       justify-content: center; flex-direction: column; gap: 10px;
+-      background: radial-gradient(ellipse at center, rgba(10,8,32,0.85) 0%, rgba(10,8,32,0.98) 80%);
++      background: radial-gradient(ellipse at center, rgba(10,8,32,0.78) 0%, rgba(10,8,32,0.96) 80%);
+       opacity: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 5; padding: 24px; }
+     .mw-result.show { opacity: 1; pointer-events: auto; }
+     .mw-result .ann { font-size: 16px; opacity: 0.7; }
+@@ -4174,6 +4172,529 @@
+ })();
+ 
+ 
++/* ─────────────────────────────────────────────
++   7c. MYSTERY WHEEL — bamboo strand-kraam op Bowl Eiland
++   ─────────────────────────────────────────────
++   Een echt 3D draaibord in een bamboe kraam, op het OOSTELIJKE
++   deel van Bowl Eiland. Camera vliegt vanaf oost (zee-kant) naar
++   west zodat Volkaan Eiland in de verte achter het rad zichtbaar
++   is. Het hele apparaat is verborgen tot playMysteryWheel het
++   activeert, en wordt weer onzichtbaar na de minigame.
++
++   Structure:
++     mysteryStall          (Group) — alle bamboe + dak + sign + axle
++     ├─ posts (4×)         vertikale bamboe palen
++     ├─ beams              horizontale dwarsbalken bovenaan
++     ├─ thatched roof      dubbele schuine "rieten" panelen + nokbalk
++     ├─ backboard          paneel achter het rad
++     ├─ counter            bamboe toonbank vooraan
++     ├─ sign               "MYSTERY WHEEL" bord
++     ├─ axle               horizontale as door rad
++     ├─ pointer (vast)     gouden pijl bovenaan, niet draaiend
++     └─ mysteryWheelSpin   (Group) — alleen DIT roteert om wereld-X
++        ├─ disc back       achterkant (donker hout)
++        ├─ rim             rand-cilinder (donker)
++        ├─ disc front      schijf met segment-textuur (rebuilt per opties)
++        ├─ pegs (N×)       kleine cilinders op rim (op segment-randen)
++        └─ hub             gouden naaf met 🌋 emoji
++   ───────────────────────────────────────────── */
++const MWHEEL = {
++    cx:     BOWL.cx + 6,    // 88 — iets oost van bowling-centrum
++    cz:     BOWL.cz,
++    floorY: BOWL.sandTopY,  // staat op het zand, top y=1.05
++    wheelY: 3.35,           // wereld-Y van de as = midden van rad
++    radius: 1.8,
++    thick:  0.18,
++    postH:  4.6,
++    stallW: 5.2,
++    stallD: 3.2,
++    pegRad: 0.07,
++    pegLen: 0.22,
++};
++
++// Module-level state — lazy gebouwd bij eerste playMysteryWheel call.
++let mysteryStall = null;          // outer group (alles)
++let mysteryWheelSpin = null;      // inner group dat roteert om X-as
++let mysteryWheelFaceMeshes = [];  // wedges + labels + pegs — wegooien als opties veranderen
++let mysteryWheelOptionsKey = '';  // cache-sleutel voor opties (vermijd onnodige rebuilds)
++
++/* makeBambooPost — 1 bamboo paal als Group met ringen */
++function makeBambooPost(height) {
++    const g = new THREE.Group();
++    const lightMat = new THREE.MeshToonMaterial({
++        color: 0xd4b06a, gradientMap: toon });
++    const darkMat = new THREE.MeshToonMaterial({
++        color: 0x8a6428, gradientMap: toon });
++    const pole = new THREE.Mesh(
++        new THREE.CylinderGeometry(0.13, 0.15, height, 10), lightMat);
++    pole.position.y = height / 2;
++    pole.castShadow = true;
++    pole.receiveShadow = true;
++    g.add(pole);
++    addOutline(pole, 1.03);
++    const nodes = 5;
++    for (let i = 1; i <= nodes; i++) {
++        const ring = new THREE.Mesh(
++            new THREE.CylinderGeometry(0.16, 0.16, 0.07, 12), darkMat);
++        ring.position.y = (height / (nodes + 1)) * i;
++        g.add(ring);
++    }
++    return g;
++}
++
++/* makeBambooBeam — horizontale balk tussen twee 2D punten (x,z) op hoogte y */
++function makeBambooBeam(x1, z1, x2, z2, y, radius = 0.12) {
++    const dx = x2 - x1, dz = z2 - z1;
++    const len = Math.hypot(dx, dz);
++    const mat = new THREE.MeshToonMaterial({
++        color: 0xc89e58, gradientMap: toon });
++    const m = new THREE.Mesh(
++        new THREE.CylinderGeometry(radius, radius, len, 8), mat);
++    m.castShadow = true;
++    m.position.set((x1 + x2) / 2, y, (z1 + z2) / 2);
++    m.rotation.z = Math.PI / 2;
++    m.rotation.y = -Math.atan2(dz, dx);
++    return m;
++}
++
++/* makeMysterySignTexture — houten bord met "MYSTERY WHEEL" tekst */
++function makeMysterySignTexture() {
++    const W = 1024, H = 256;
++    const c = document.createElement('canvas');
++    c.width = W; c.height = H;
++    const ctx = c.getContext('2d');
++    const grad = ctx.createLinearGradient(0, 0, 0, H);
++    grad.addColorStop(0, '#c89456');
++    grad.addColorStop(1, '#8e6028');
++    ctx.fillStyle = grad;
++    ctx.fillRect(0, 0, W, H);
++    ctx.strokeStyle = '#3a2410';
++    ctx.lineWidth = 14;
++    ctx.strokeRect(7, 7, W - 14, H - 14);
++    // houtnerf
++    ctx.strokeStyle = 'rgba(50,30,10,0.25)';
++    ctx.lineWidth = 2;
++    for (let i = 0; i < 6; i++) {
++        ctx.beginPath();
++        ctx.moveTo(40, 30 + i * 40);
++        ctx.bezierCurveTo(W * 0.3, 20 + i * 40, W * 0.7, 40 + i * 40, W - 40, 30 + i * 40);
++        ctx.stroke();
++    }
++    ctx.font = 'bold 110px system-ui, -apple-system, sans-serif';
++    ctx.textAlign = 'center';
++    ctx.textBaseline = 'middle';
++    ctx.fillStyle = '#fff7e0';
++    ctx.strokeStyle = '#2a1800';
++    ctx.lineWidth = 10;
++    ctx.lineJoin = 'round';
++    ctx.strokeText('🎡 MYSTERY WHEEL', W / 2, H / 2);
++    ctx.fillText('🎡 MYSTERY WHEEL', W / 2, H / 2);
++    const tex = new THREE.CanvasTexture(c);
++    tex.anisotropy = 4;
++    return tex;
++}
++
++/* makeMysteryWheelFaceTexture — tekent het rad-vlak (wedges + labels)
++   op een vierkant canvas dat we als textuur op de front-disc gebruiken.
++
++   CONVENTIES (zie ook winnerIndex):
++   - Canvas (0,0) = links-boven, Y groeit naar BENEDEN.
++   - Het rad wordt op een CircleGeometry gemapd, met mesh.rotation.y=+π/2
++     zodat zijn normaal langs wereld +X (oost, richting camera) wijst.
++   - Daarmee komt canvas TOP (Y=0) overeen met wereld TOP (+Y), en
++     canvas RIGHT (X=W) met viewer's RIGHT (= wereld -Z). Geen mirror.
++   - Segment i is GECENTREERD op canvas hoek α_i = -π/2 + i*segAng
++     en strekt van α_i - segAng/2 tot α_i + segAng/2.
++     (α=-π/2 = canvas TOP; canvas hoek toeneemt = visual CW.)
++   - Bij rotation.x = 0 zit segment 0's CENTRUM dus precies onder de
++     pijl bovenaan.
++*/
++function makeMysteryWheelFaceTexture(options) {
++    const SZ = 1024;
++    const c = document.createElement('canvas');
++    c.width = SZ; c.height = SZ;
++    const ctx = c.getContext('2d');
++    const cx = SZ / 2, cy = SZ / 2;
++    const R  = SZ / 2 - 8;
++    const N  = options.length;
++    const segAng = (Math.PI * 2) / N;
++
++    // achtergrond transparant houden (de back-disc vult de rest)
++    ctx.clearRect(0, 0, SZ, SZ);
++
++    // donkere buitenring achter de segmenten (geeft "ingelegd" gevoel)
++    ctx.beginPath();
++    ctx.arc(cx, cy, R + 4, 0, Math.PI * 2);
++    ctx.fillStyle = '#2a1a08';
++    ctx.fill();
++
++    // ── WEDGES ──
++    for (let i = 0; i < N; i++) {
++        const aMid = -Math.PI / 2 + i * segAng;
++        const aStart = aMid - segAng / 2;
++        const aEnd   = aMid + segAng / 2;
++        ctx.beginPath();
++        ctx.moveTo(cx, cy);
++        ctx.arc(cx, cy, R, aStart, aEnd, false);
++        ctx.closePath();
++        // fill met segment-kleur
++        ctx.fillStyle = options[i].color;
++        ctx.fill();
++        // donkere segmentlijn
++        ctx.strokeStyle = 'rgba(0,0,0,0.55)';
++        ctx.lineWidth = 4;
++        ctx.stroke();
++        // glans-overlay (radiaal naar buiten lichter)
++        const radial = ctx.createRadialGradient(cx, cy, R * 0.15, cx, cy, R);
++        radial.addColorStop(0, 'rgba(255,255,255,0.25)');
++        radial.addColorStop(0.55, 'rgba(255,255,255,0.05)');
++        radial.addColorStop(1, 'rgba(0,0,0,0.18)');
++        ctx.beginPath();
++        ctx.moveTo(cx, cy);
++        ctx.arc(cx, cy, R, aStart, aEnd, false);
++        ctx.closePath();
++        ctx.fillStyle = radial;
++        ctx.fill();
++    }
++
++    // ── LABELS (emoji + tekst, geroteerd zodat het radiaal leest) ──
++    for (let i = 0; i < N; i++) {
++        const aMid = -Math.PI / 2 + i * segAng;
++        const labR = R * 0.62;
++        const lx = cx + labR * Math.cos(aMid);
++        const ly = cy + labR * Math.sin(aMid);
++        ctx.save();
++        ctx.translate(lx, ly);
++        // canvas-rotatie: positieve hoek = visual CW.
++        // We willen dat de tekst van "binnen" naar "buiten" leest, met de
++        // bodem van de letters naar het CENTRUM. Bij segment 0 (top) is
++        // aMid = -π/2; tekst moet horizontaal staan. ctx.rotate(aMid + π/2)
++        // geeft daar 0. Bij segment rechts (aMid = 0) krijgen we π/2 →
++        // tekst leest naar beneden vanaf rechts (= van buiten naar binnen
++        // gelezen, "voor de kijker rechts" tilt-head-rechts). Klassieke
++        // prijzenrad look.
++        ctx.rotate(aMid + Math.PI / 2);
++        ctx.textAlign = 'center';
++        ctx.textBaseline = 'middle';
++        // EMOJI (groter, boven het label)
++        ctx.font = 'bold 72px "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif';
++        ctx.fillStyle = '#ffffff';
++        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
++        ctx.lineWidth = 5;
++        ctx.lineJoin = 'round';
++        // emoji vertikaal iets richting buitenrand
++        ctx.strokeText(options[i].emoji, 0, -R * 0.18);
++        ctx.fillText(options[i].emoji, 0, -R * 0.18);
++        // LABEL TEKST onder de emoji
++        ctx.font = 'bold 34px system-ui, -apple-system, sans-serif';
++        ctx.fillStyle = '#ffffff';
++        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
++        ctx.lineWidth = 6;
++        ctx.strokeText(options[i].label, 0, R * 0.10);
++        ctx.fillText(options[i].label, 0, R * 0.10);
++        ctx.restore();
++    }
++
++    // dunne donkere rand om hele schijf (visuele afsluiting)
++    ctx.beginPath();
++    ctx.arc(cx, cy, R - 2, 0, Math.PI * 2);
++    ctx.strokeStyle = 'rgba(0,0,0,0.55)';
++    ctx.lineWidth = 6;
++    ctx.stroke();
++
++    const tex = new THREE.CanvasTexture(c);
++    tex.anisotropy = 4;
++    return tex;
++}
++
++/* buildMysteryStallOnce — bouwt alle PERMANENTE delen van de kraam
++   (palen, dak, sign, axle, pointer, backboard, counter, achter-disc,
++   rim) één keer. Het rad-vlak (wedges + labels + pegs + hub) wordt
++   los gebouwd door applyMysteryOptionsToWheel(). */
++function buildMysteryStallOnce() {
++    if (mysteryStall) return;
++
++    const stall = new THREE.Group();
++    stall.position.set(MWHEEL.cx, MWHEEL.floorY, MWHEEL.cz);
++    stall.visible = false;
++    scene.add(stall);
++    mysteryStall = stall;
++
++    const halfW = MWHEEL.stallW / 2;
++    const halfD = MWHEEL.stallD / 2;
++    const topY  = MWHEEL.postH;
++
++    // ── 4 hoekpalen ──
++    for (const [px, pz] of [[-halfW, -halfD], [-halfW, halfD],
++                            [ halfW, -halfD], [ halfW,  halfD]]) {
++        const post = makeBambooPost(MWHEEL.postH);
++        post.position.set(px, 0, pz);
++        stall.add(post);
++    }
++
++    // ── Bovenbalken (frame onder dak) ──
++    stall.add(makeBambooBeam(-halfW, -halfD,  halfW, -halfD, topY));   // front (oost)
++    stall.add(makeBambooBeam(-halfW,  halfD,  halfW,  halfD, topY));   // back
++    stall.add(makeBambooBeam(-halfW, -halfD, -halfW,  halfD, topY));   // west zijkant
++    stall.add(makeBambooBeam( halfW, -halfD,  halfW,  halfD, topY));   // oost zijkant
++
++    // ── Schuin "rieten" dak (twee panelen + nokbalk) ──
++    const thatchDarkMat = new THREE.MeshToonMaterial({
++        color: 0x7a5520, gradientMap: toon });
++    const thatchLightMat = new THREE.MeshToonMaterial({
++        color: 0xa68238, gradientMap: toon });
++    const roofGeo = new THREE.BoxGeometry(MWHEEL.stallW + 0.7, 0.14, halfD + 0.35);
++    const roofF = new THREE.Mesh(roofGeo, thatchDarkMat);
++    roofF.position.set(0, topY + 0.62, -halfD * 0.5);
++    roofF.rotation.x = -Math.PI / 7;
++    roofF.castShadow = true;
++    stall.add(roofF);
++    addOutline(roofF, 1.012);
++    const roofB = new THREE.Mesh(roofGeo, thatchDarkMat);
++    roofB.position.set(0, topY + 0.62, halfD * 0.5);
++    roofB.rotation.x = Math.PI / 7;
++    roofB.castShadow = true;
++    stall.add(roofB);
++    addOutline(roofB, 1.012);
++    // Nokbalk
++    const ridge = new THREE.Mesh(
++        new THREE.CylinderGeometry(0.10, 0.10, MWHEEL.stallW + 0.8, 8),
++        new THREE.MeshToonMaterial({ color: 0x5a3f18, gradientMap: toon }));
++    ridge.rotation.z = Math.PI / 2;
++    ridge.position.set(0, topY + 1.05, 0);
++    ridge.castShadow = true;
++    stall.add(ridge);
++    // Lichte riet-strepen
++    for (const zSide of [-1, 1]) {
++        const stripe = new THREE.Mesh(
++            new THREE.BoxGeometry(MWHEEL.stallW + 0.5, 0.05, 0.16),
++            thatchLightMat);
++        stripe.position.set(0, topY + 0.55 + 0.04, zSide * halfD * 0.35);
++        stripe.rotation.x = zSide < 0 ? -Math.PI / 7 : Math.PI / 7;
++        stall.add(stripe);
++    }
++
++    // ── Backboard (paneel achter rad, hangt aan back-palen) ──
++    const backboardMat = new THREE.MeshToonMaterial({
++        color: 0x9a6a2e, gradientMap: toon });
++    const backboard = new THREE.Mesh(
++        new THREE.BoxGeometry(MWHEEL.stallW - 0.6, MWHEEL.postH - 0.8, 0.08),
++        backboardMat);
++    backboard.position.set(0, (MWHEEL.postH - 0.8) / 2 + 0.4, halfD - 0.08);
++    backboard.castShadow = true;
++    backboard.receiveShadow = true;
++    stall.add(backboard);
++    addOutline(backboard, 1.008);
++
++    // ── Counter (bamboe toonbank vóór de kraam) ──
++    const counterMat = new THREE.MeshToonMaterial({
++        color: 0xa67838, gradientMap: toon });
++    const counter = new THREE.Mesh(
++        new THREE.BoxGeometry(MWHEEL.stallW - 0.4, 0.18, 0.7),
++        counterMat);
++    counter.position.set(0, 0.95, -halfD - 0.15);
++    counter.castShadow = true;
++    counter.receiveShadow = true;
++    stall.add(counter);
++    addOutline(counter, 1.012);
++    for (const xSide of [-1, 1]) {
++        const leg = new THREE.Mesh(
++            new THREE.CylinderGeometry(0.07, 0.07, 0.95, 8), counterMat);
++        leg.position.set(xSide * (halfW - 0.4), 0.47, -halfD - 0.15);
++        stall.add(leg);
++    }
++
++    // ── Sign-bord boven dak ──
++    const signMat = new THREE.MeshBasicMaterial({
++        map: makeMysterySignTexture(), transparent: false });
++    const sign = new THREE.Mesh(
++        new THREE.PlaneGeometry(3.9, 0.95), signMat);
++    sign.position.set(0, topY + 1.85, -halfD * 0.3);
++    sign.rotation.x = -Math.PI / 9;
++    stall.add(sign);
++    for (const xs of [-1, 1]) {
++        const stick = new THREE.Mesh(
++            new THREE.CylinderGeometry(0.05, 0.05, 1.6, 6),
++            new THREE.MeshToonMaterial({ color: 0xc89456, gradientMap: toon }));
++        stick.position.set(xs * 1.9, topY + 1.0, -halfD * 0.3 + 0.4);
++        stick.rotation.z = xs * -0.08;
++        stall.add(stick);
++    }
++
++    // ── Axle (horizontaal langs wereld-X, voor de backboard) ──
++    const axleMat = new THREE.MeshToonMaterial({
++        color: 0x3a2810, gradientMap: toon,
++        emissive: 0x1a1208, emissiveIntensity: 0.2 });
++    const axleLen = 1.2;
++    const axle = new THREE.Mesh(
++        new THREE.CylinderGeometry(0.09, 0.09, axleLen, 10), axleMat);
++    axle.rotation.z = Math.PI / 2;
++    axle.position.set(0, MWHEEL.wheelY, halfD - 0.4);
++    axle.castShadow = true;
++    stall.add(axle);
++    const axleCap = new THREE.Mesh(
++        new THREE.SphereGeometry(0.13, 12, 10),
++        new THREE.MeshToonMaterial({ color: 0xffd54a, gradientMap: toon,
++            emissive: 0x885500, emissiveIntensity: 0.4 }));
++    axleCap.position.set(-axleLen / 2 + 0.05, MWHEEL.wheelY, halfD - 0.4);
++    stall.add(axleCap);
++
++    // ── Pointer (vast, niet draaiend) — gouden pijl bovenaan ──
++    const pointerMat = new THREE.MeshToonMaterial({
++        color: 0xffd54a, gradientMap: toon,
++        emissive: 0x885500, emissiveIntensity: 0.55 });
++    const pointer = new THREE.Mesh(
++        new THREE.ConeGeometry(0.18, 0.42, 4), pointerMat);
++    pointer.rotation.x = Math.PI;
++    pointer.rotation.y = Math.PI / 4;
++    pointer.position.set(0, MWHEEL.wheelY + MWHEEL.radius + 0.18,
++                         halfD - 0.4 - 0.05);
++    pointer.castShadow = true;
++    stall.add(pointer);
++    addOutline(pointer, 1.08);
++    const pointerBall = new THREE.Mesh(
++        new THREE.SphereGeometry(0.13, 12, 10), pointerMat);
++    pointerBall.position.set(0, MWHEEL.wheelY + MWHEEL.radius + 0.45,
++                             halfD - 0.4 - 0.05);
++    stall.add(pointerBall);
++
++    // ── Spin-group: alles wat MEE-ROTEERT om wereld-X ──
++    const spin = new THREE.Group();
++    spin.position.set(0, MWHEEL.wheelY, halfD - 0.4);
++    stall.add(spin);
++    mysteryWheelSpin = spin;
++
++    // Achterkant van rad (permanent — niet opties-afhankelijk)
++    const backDiscMat = new THREE.MeshToonMaterial({
++        color: 0x5a3a18, gradientMap: toon });
++    const backDisc = new THREE.Mesh(
++        new THREE.CircleGeometry(MWHEEL.radius, 64), backDiscMat);
++    backDisc.rotation.y = -Math.PI / 2;
++    backDisc.position.x = -MWHEEL.thick / 2;
++    spin.add(backDisc);
++
++    // Rim (open cilinder rond rad) — donker hout
++    const rimMat = new THREE.MeshToonMaterial({
++        color: 0x3a2410, gradientMap: toon });
++    const rim = new THREE.Mesh(
++        new THREE.CylinderGeometry(MWHEEL.radius * 1.02,
++                                    MWHEEL.radius * 1.02,
++                                    MWHEEL.thick, 64, 1, true),
++        rimMat);
++    rim.rotation.z = Math.PI / 2;
++    spin.add(rim);
++
++    // Gouden naaf in midden (permanent — niet opties-afhankelijk)
++    const hubMat = new THREE.MeshToonMaterial({
++        color: 0xffd54a, gradientMap: toon,
++        emissive: 0xb86c00, emissiveIntensity: 0.5 });
++    const hub = new THREE.Mesh(
++        new THREE.CylinderGeometry(MWHEEL.radius * 0.18,
++                                    MWHEEL.radius * 0.18,
++                                    MWHEEL.thick + 0.04, 24),
++        hubMat);
++    hub.rotation.z = Math.PI / 2;
++    spin.add(hub);
++    addOutline(hub, 1.06);
++    // Mini-emoji op de naaf (canvas-sprite, blijft zichtbaar bij elke draai)
++    const hubCanv = document.createElement('canvas');
++    hubCanv.width = 256; hubCanv.height = 256;
++    const hctx = hubCanv.getContext('2d');
++    hctx.font = 'bold 180px "Apple Color Emoji", "Segoe UI Emoji", system-ui';
++    hctx.textAlign = 'center';
++    hctx.textBaseline = 'middle';
++    hctx.fillText('🌋', 128, 138);
++    const hubTex = new THREE.CanvasTexture(hubCanv);
++    const hubFaceMat = new THREE.MeshBasicMaterial({
++        map: hubTex, transparent: true });
++    const hubFace = new THREE.Mesh(
++        new THREE.CircleGeometry(MWHEEL.radius * 0.17, 24), hubFaceMat);
++    hubFace.rotation.y = Math.PI / 2;
++    hubFace.position.x = MWHEEL.thick / 2 + 0.003;
++    spin.add(hubFace);
++}
++
++/* applyMysteryOptionsToWheel — herbouwt het rad-vlak voor de gegeven
++   optie-lijst. Wedges/labels (canvas-texture op front-disc) + pegs op
++   rim. Wordt elke playMysteryWheel-call aangeroepen, maar bewaakt
++   redundante rebuilds via mysteryWheelOptionsKey. */
++function applyMysteryOptionsToWheel(options) {
++    if (!mysteryWheelSpin) return;
++    // cache-check
++    const key = options.map(o => o.id + ':' + o.color).join('|');
++    if (key === mysteryWheelOptionsKey && mysteryWheelFaceMeshes.length > 0) {
++        return;
++    }
++    mysteryWheelOptionsKey = key;
++
++    // Verwijder oude meshes
++    for (const m of mysteryWheelFaceMeshes) {
++        mysteryWheelSpin.remove(m);
++        if (m.geometry) m.geometry.dispose();
++        if (m.material) {
++            if (m.material.map) m.material.map.dispose();
++            m.material.dispose();
++        }
++    }
++    mysteryWheelFaceMeshes.length = 0;
++
++    // Front-disc met canvas-texture
++    const faceTex = makeMysteryWheelFaceTexture(options);
++    const faceMat = new THREE.MeshToonMaterial({
++        map: faceTex, gradientMap: toon, transparent: true,
++        side: THREE.FrontSide });
++    const faceGeo = new THREE.CircleGeometry(MWHEEL.radius, 64);
++    const faceDisc = new THREE.Mesh(faceGeo, faceMat);
++    faceDisc.rotation.y = Math.PI / 2;            // normaal langs +X (oost)
++    faceDisc.position.x = MWHEEL.thick / 2 + 0.002;
++    faceDisc.castShadow = false;
++    faceDisc.receiveShadow = false;
++    mysteryWheelSpin.add(faceDisc);
++    mysteryWheelFaceMeshes.push(faceDisc);
++
++    // Pegs op rim (op segment-RANDEN — N stuks tussen N segmenten)
++    const N = options.length;
++    const segAng = (Math.PI * 2) / N;
++    const pegMat = new THREE.MeshToonMaterial({
++        color: 0xe6c98a, gradientMap: toon,
++        emissive: 0x3a2a10, emissiveIntensity: 0.2 });
++    for (let i = 0; i < N; i++) {
++        // Peg op segment-RAND tussen segment i en (i-1) — die rand zit
++        // op canvas-hoek α_i_start = -π/2 + i*segAng - segAng/2.
++        // In wereld: positie op (0, sin(β), -cos(β)) waarbij β =
++        // π/2 - (segment-start canvas hoek + π/2) = -segment_start_canvas
++        // ... simpeler: bij rotation.x=0, pegs staan op vaste posities
++        // rond de rim. We plaatsen ze op de RANDEN tussen segmenten:
++        //   wereld hoek vanaf TOP (CW positief) = i*segAng (rand voor seg i)
++        //   wereld positie (vóór spin) = (0, R*cos(α_w), R*sin(α_w)·(-1))
++        // waarbij α_w = i*segAng. Maar omdat spin op rotation.x werkt en
++        // pegs in mysteryWheelSpin zitten, gebruiken we LOCAL coords:
++        //   local pos vóór spin == wereld pos vóór spin
++        const aFromTop = i * segAng;  // CW vanaf top
++        const py = Math.cos(aFromTop) * (MWHEEL.radius - 0.02);
++        const pz = Math.sin(aFromTop) * (MWHEEL.radius - 0.02);
++        // bovenste peg (i=0) MOET op canvas TOP staan, NIET op een rand.
++        // We willen pegs op de randen TUSSEN segmenten — die zitten op
++        // canvas-hoek -π/2 ± segAng/2, dus aFromTop verschoven met halve
++        // segment. Pas i*segAng aan naar (i+0.5)*segAng:
++        const aRand = (i + 0.5) * segAng;
++        const ry = Math.cos(aRand) * (MWHEEL.radius - 0.02);
++        const rz = Math.sin(aRand) * (MWHEEL.radius - 0.02);
++        const peg = new THREE.Mesh(
++            new THREE.CylinderGeometry(MWHEEL.pegRad, MWHEEL.pegRad,
++                                        MWHEEL.pegLen, 8), pegMat);
++        peg.rotation.z = Math.PI / 2;          // as langs X (steekt vooruit)
++        peg.position.set(MWHEEL.thick / 2 + MWHEEL.pegLen / 2 - 0.04,
++                         ry, rz);
++        peg.castShadow = true;
++        mysteryWheelSpin.add(peg);
++        mysteryWheelFaceMeshes.push(peg);
++        // Vermijd unused-var warning (py/pz waren intermediate)
++        void py; void pz;
++    }
++}
++
++
+ // ── Bushes (instanced) ──
+ const bushGeo = new THREE.SphereGeometry(0.55, 8, 6);
+ const BUSH_COUNT = 70;
+@@ -14299,207 +14820,290 @@
+ 
+ function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Wheel', subtitle = 'Welke minigame wordt het?' } = {}) {
+     return new Promise(resolve => {
+-        const ui = document.getElementById('game-ui');
++        // ════════════════════════════════════════════════════════
++        //  A. SETUP — chrome verbergen, camera bewaren, kraam bouwen
++        // ════════════════════════════════════════════════════════
++        const uiRoot = document.getElementById('game-ui');
++        const hiddenChrome = hideMinigameChrome();
++        const savedCam = {
++            pos: camera.position.clone(),
++            fov: camera.fov,
++            target: controls.target.clone(),
++            autoRotate: controls.autoRotate,
++            enabled: controls.enabled,
++        };
++        controls.autoRotate = false;
++        controls.enabled = false;
++        camera.fov = 50;
++        camera.updateProjectionMatrix();
++
++        // Bouw stall (1× lazy) + pas opties toe (rebuild wedges/labels/pegs
++        // alleen als opties veranderd zijn)
++        buildMysteryStallOnce();
++        applyMysteryOptionsToWheel(options);
++        // Reset spin-stand zodat segment 0 weer boven start
++        if (mysteryWheelSpin) mysteryWheelSpin.rotation.x = 0;
++        if (mysteryStall)     mysteryStall.visible = true;
++
++        // Debug: log naar console zodat we kunnen checken of stall echt
++        // gebouwd is en zichtbaar staat. Helpt bij troubleshooting.
++        console.log('[MysteryWheel] stall built:', !!mysteryStall,
++            'visible:', mysteryStall?.visible,
++            'world pos:', mysteryStall?.position,
++            'wheel children:', mysteryWheelSpin?.children?.length);
++
++        // ════════════════════════════════════════════════════════
++        //  B. CAMERA — vanaf oost van Bowl Eiland kijken richting west,
++        //  vulkaan op de achtergrond, kraam centraal in beeld.
++        //
++        //  LET OP: MWHEEL.wheelY is een LOKALE Y binnen de stall (die
++        //  zelf op floorY staat). De WERELD-Y van het rad is dus
++        //  floorY + wheelY. Camera-coördinaten zijn altijd wereld.
++        // ════════════════════════════════════════════════════════
++        const wheelWorldY = MWHEEL.floorY + MWHEEL.wheelY;
++        const CAM_TGT = {
++            pos: new THREE.Vector3(MWHEEL.cx + 12.5, wheelWorldY + 1.7, MWHEEL.cz),
++            tgt: new THREE.Vector3(MWHEEL.cx - 9.5, wheelWorldY - 0.3,  MWHEEL.cz),
++        };
++        const camFrom = {
++            pos: camera.position.clone(),
++            tgt: controls.target.clone(),
++        };
++        const CAM_LERP_DUR = 0.95;
++        let camT = 0;
++
++        // ════════════════════════════════════════════════════════
++        //  C. DOM OVERLAY — transparant, alleen header + skip + tip
++        //  + eind-resultaat (3D scène blijft zichtbaar achter)
++        // ════════════════════════════════════════════════════════
+         const back = el('div', { className: 'mw-back' });
++
+         const header = el('div', { className: 'mw-header' });
+         header.append(
+             el('div', { className: 'mw-title' }, title),
+             el('div', { className: 'mw-sub' }, subtitle),
+         );
+ 
++        // Stage = transparante swipe-vanger over de hele middenruimte
+         const stage = el('div', { className: 'mw-stage' });
+-        const wrap = el('div', { className: 'mw-wheel-wrap' });
+-        const pointer = el('div', { className: 'mw-pointer' });
+-        const wheel = el('div', { className: 'mw-wheel' });
+-        const hub = el('div', { className: 'mw-hub' }, '🌋');
+-
+-        const N = options.length;
+-        const segAngle = 360 / N;
+-
+-        // Build the wheel as a single radial-gradient background of conic segments.
+-        // Then place each label inside its own rotated container.
+-        const stops = options.map((o, i) => {
+-            const from = i * segAngle;
+-            const to = (i + 1) * segAngle;
+-            return `${o.color} ${from}deg ${to}deg`;
+-        }).join(', ');
+-        wheel.style.background = `conic-gradient(${stops})`;
+-
+-        for (let i = 0; i < N; i++) {
+-            const seg = el('div', { className: 'mw-seg' });
+-            // rotate the seg container so its label sits in the centre of its slice
+-            seg.style.transform = `rotate(${i * segAngle + segAngle / 2}deg)`;
+-            const lab = el('div', { className: 'label' });
+-            lab.append(
+-                el('span', { className: 'emo' }, options[i].emoji),
+-                document.createTextNode(options[i].label),
+-            );
+-            seg.append(lab);
+-            wheel.append(seg);
+-        }
+ 
+-        wrap.append(pointer, wheel, hub);
+-        stage.append(wrap);
++        // Tip onderaan (verdwijnt na eerste swipe)
++        const tip = el('div', { className: 'mw-tip' },
++            '↔ Veeg over het scherm om het rad te draaien');
++
++        // Eind-resultaat banner (verborgen tot wheel stopt)
++        const result = el('div', { className: 'mw-result' });
+ 
++        // Footer met skip-knop
+         const foot = el('div', { className: 'mw-foot' });
+-        const hintTxt = el('div', { className: 'mw-sub',
+-            style: { fontSize: '13px', opacity: '0.75', textAlign: 'center',
+-                     padding: '4px 0' } },
+-            '↻ Veeg over het rad om te draaien');
+         const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
+-        foot.append(hintTxt, skipBtn);
+-
+-        const result = el('div', { className: 'mw-result' });
+-        stage.append(result);
++        foot.append(skipBtn);
+ 
++        stage.append(tip, result);
+         back.append(header, stage, foot);
+-        ui.append(back);
++        uiRoot.append(back);
+ 
+         // ════════════════════════════════════════════════════════
+-        //  SWIPE-DRIVEN SPIN PHYSICS
++        //  D. SPIN STATE — fysica van het 3D rad
+         // ════════════════════════════════════════════════════════
+-        // Gebruiker veegt over het rad. Tijdens het slepen draait
+-        // het rad mee met de vinger (angular tracking vanuit het
+-        // wiel-centrum). Op release wordt de angular velocity berekend
+-        // uit het laatste sample-venster, en blijft het rad uitlopen
+-        // met friction tot het stopt.
+-        let angle = 0;             // graden — huidige rotatie
+-        let angVel = 0;            // graden/seconde
++        // angle (rad) = wheelSpin.rotation.x. Positieve waarden roteren
++        // het rad CCW vanuit kamera-POV (top schuift naar viewer's LEFT).
++        // We berekenen winnaar door angle modulo 2π → segment-index.
++        let angle = 0;
++        let angVel = 0;            // rad/sec
++        const FRICTION_PER_FRAME = 0.985;
++        const STOP_THRESHOLD = 0.15;   // rad/sec
++        const MAX_ANG_VEL = 32;        // rad/sec cap
++        let spinning = false;
++        let spun = false;
++        let winnerSettling = false;
++        let snapStartAngle = 0;
++        let snapTargetAngle = 0;
++        let snapT = 0;
++        const SNAP_DUR = 0.45;
++
++        // Pointer-tracking
+         let dragging = false;
+-        let touchId = null;
+-        let angleSamples = [];     // {a, t} voor velocity-meting op release
+-        let spinning = false;      // running na release tot stilstand
+-        let spun = false;          // voorkomt meerdere worpen
+-        const FRICTION = 0.985;    // per frame (~60fps), zorgt voor mooie deceleratie
+-        const MIN_VEL = 8;         // graden/sec — stop-drempel
+-        let rafId = null;
++        let dragPid = null;
++        let lastX = 0;
++        let lastT = 0;
++        let velSamples = [];
+ 
+-        function getPoint(e) {
+-            if (e.touches && e.touches.length > 0)
+-                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+-            if (e.changedTouches && e.changedTouches.length > 0)
+-                return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+-            return { x: e.clientX, y: e.clientY };
+-        }
+-        function angleAt(x, y) {
+-            const r = wheel.getBoundingClientRect();
+-            const cx = r.left + r.width / 2;
+-            const cy = r.top + r.height / 2;
+-            return Math.atan2(y - cy, x - cx) * 180 / Math.PI;
+-        }
+-        function applyRotation() {
+-            wheel.style.transform = `rotate(${angle}deg)`;
++        // ════════════════════════════════════════════════════════
++        //  E. WINNER CALC
++        // ════════════════════════════════════════════════════════
++        // Bij rotation.x = 0 zit segment 0's centrum bovenaan (onder pointer).
++        // Na rotatie θ verschuiven alle segmenten. Het segment onder de
++        // pointer is degene waarvan het centrum nu op canvas-hoek -π/2+θ ligt.
++        // Segment i centrum is op -π/2 + i*segAng. Dus i = round(θ/segAng)
++        // mod N, half-adjusted via floor((θ+segAng/2)/segAng).
++        function computeWinnerIdx(theta) {
++            const N = options.length;
++            const segAng = (Math.PI * 2) / N;
++            let x = ((theta + segAng / 2) % (Math.PI * 2)
++                     + (Math.PI * 2)) % (Math.PI * 2);
++            return Math.floor(x / segAng) % N;
++        }
++        // Het EXACT centrum van segment i komt onder pointer bij
++        // angle = i*segAng (mod 2π). Voor snap-to-center: vind het
++        // dichtsbijzijnde i*segAng-multiple bij huidige angle.
++        function nearestSegmentCenterAngle(theta, targetIdx) {
++            const N = options.length;
++            const segAng = (Math.PI * 2) / N;
++            const targetMod = targetIdx * segAng;
++            const k = Math.round((theta - targetMod) / (Math.PI * 2));
++            return targetMod + k * (Math.PI * 2);
+         }
+-        function onDown(e) {
+-            if (spun) return;
+-            // Tijdens een lopende uitloop kan de gebruiker opnieuw veegen om
+-            // het rad bij te boosten — leuk maar veroorzaakt complexiteit.
+-            // Voor nu: alleen bij stilstand een nieuwe swipe.
+-            if (spinning) return;
+-            const p = getPoint(e);
++
++        // ════════════════════════════════════════════════════════
++        //  F. POINTER EVENTS — swipe op stage = spin
++        // ════════════════════════════════════════════════════════
++        // Horizontale swipe levert angular velocity op. Convention:
++        // drag RIGHT (Δx > 0) → top van rad moet ook naar rechts bewegen
++        // (CW in kamera-view) → NEGATIVE rotation.x increment → angVel < 0.
++        // Sensitivity: ~ 220 pixels/sec drag = 1 rad/sec spin.
++        const PIX_TO_RAD_PER_SEC = 1 / 220;
++
++        function onPointerDown(e) {
++            if (spun || winnerSettling) return;
++            if (dragging) return;
+             dragging = true;
+-            touchId = e.touches ? e.touches[0].identifier : -1;
+-            const a = angleAt(p.x, p.y);
+-            angleSamples = [{ a: a - angle, t: performance.now() }];
+-            wheel.classList.add('spinning');
++            dragPid = e.pointerId;
++            stage.classList.add('spinning');
++            try { stage.setPointerCapture?.(e.pointerId); } catch (err) {}
++            lastX = e.clientX;
++            lastT = performance.now();
++            velSamples = [];
++            tip.classList.add('gone');
+             e.preventDefault?.();
+         }
+-        function onMove(e) {
+-            if (!dragging) return;
+-            let p;
+-            if (e.touches) {
+-                let t = null;
+-                for (const tt of e.touches) if (tt.identifier === touchId) { t = tt; break; }
+-                if (!t) return;
+-                p = { x: t.clientX, y: t.clientY };
+-            } else { p = getPoint(e); }
+-            const a = angleAt(p.x, p.y);
++        function onPointerMove(e) {
++            if (!dragging || e.pointerId !== dragPid) return;
+             const now = performance.now();
+-            // Bewaar laatste 250ms aan samples; basis-angle (a - angle)
+-            // is constant zolang het wiel meedraait — we hebben echter
+-            // de RUWE finger-angle nodig voor velocity. Sla daarom de
+-            // angle-delta op + tijd.
+-            // We tracken de "world angle" van de vinger en doen wrap.
+-            let prev = angleSamples[angleSamples.length - 1];
+-            let baseAngle = prev.a;     // referentie van vinger
+-            let da = a - baseAngle - (angle - 0);  // bij eerste sample = 0
+-            // Eenvoudiger: zet wheel rotation = (a - initialFingerAngle) + initialWheelAngle
+-            // Initial offset uit eerste sample
+-            if (angleSamples.length === 1) {
+-                // initialize: zet baseline
+-                angleSamples[0].fingerStart = a;
+-                angleSamples[0].wheelStart = angle;
+-            }
+-            const init = angleSamples[0];
+-            let target = init.wheelStart + (a - init.fingerStart);
+-            // Onthoud delta vs. vorige zodat we wrap-around netjes doen
+-            let raw = target - angle;
+-            if (raw > 180) raw -= 360;
+-            if (raw < -180) raw += 360;
+-            angle += raw;
+-            applyRotation();
+-            angleSamples.push({ a, t: now });
+-            // Houd alleen samples van laatste 250ms
+-            while (angleSamples.length > 2 &&
+-                now - angleSamples[1].t > 250) angleSamples.shift();
++            const dx = e.clientX - lastX;
++            const dt = (now - lastT) / 1000;
++            if (dt > 0) {
++                // Live update angle terwijl gebruiker sleept (geeft directe feedback)
++                angle -= dx * PIX_TO_RAD_PER_SEC * 4;
++                velSamples.push({ vx: dx / dt, t: now });
++                while (velSamples.length > 1 && now - velSamples[0].t > 200) {
++                    velSamples.shift();
++                }
++            }
++            lastX = e.clientX;
++            lastT = now;
++            if (mysteryWheelSpin) mysteryWheelSpin.rotation.x = angle;
+             e.preventDefault?.();
+         }
+-        function onUp(e) {
+-            if (!dragging) return;
++        function onPointerUp(e) {
++            if (!dragging || (e.pointerId !== dragPid && e.pointerId !== undefined)) return;
+             dragging = false;
+-            wheel.classList.remove('spinning');
+-            // Bereken angular velocity uit laatste samples (≥2 nodig)
+-            if (angleSamples.length >= 2) {
+-                const s0 = angleSamples[0];
+-                const sN = angleSamples[angleSamples.length - 1];
+-                let dAngle = sN.a - s0.a;
+-                if (dAngle > 180) dAngle -= 360;
+-                if (dAngle < -180) dAngle += 360;
+-                const dT = (sN.t - s0.t) / 1000;
+-                if (dT > 0.01) angVel = dAngle / dT;
+-            }
+-            // Te trage swipe? Geef boost zodat het wiel altijd genoeg draait
+-            if (Math.abs(angVel) < 100) {
+-                // Lichte boost zodat het wiel toch een fatsoenlijke draai maakt
+-                angVel = (angVel >= 0 ? 1 : -1) * (300 + Math.random() * 200);
+-            }
+-            // Max-cap zodat het niet onspeelbaar snel wordt
+-            angVel = Math.max(-1800, Math.min(1800, angVel));
+-            // Start uitloop-fysica
++            stage.classList.remove('spinning');
++            try { stage.releasePointerCapture?.(dragPid); } catch (err) {}
++            dragPid = null;
++
++            // Gemiddelde horizontale snelheid over laatste samples
++            let avgVx = 0;
++            if (velSamples.length > 0) {
++                let sum = 0;
++                for (const s of velSamples) sum += s.vx;
++                avgVx = sum / velSamples.length;
++            }
++            // Convert px/s naar rad/s; minteken: drag rechts → CW = negative
++            let v = -avgVx * PIX_TO_RAD_PER_SEC;
++
++            // Boost als te traag
++            if (Math.abs(v) < 4.5) {
++                const dir = v >= 0 ? 1 : -1;
++                v = dir * (5.5 + Math.random() * 4.5);
++                if (Math.abs(avgVx) < 30) {
++                    v = (Math.random() < 0.5 ? 1 : -1) * (6 + Math.random() * 4);
++                }
++            }
++            v = Math.max(-MAX_ANG_VEL, Math.min(MAX_ANG_VEL, v));
++
++            angVel = v;
+             spinning = true;
+             spun = true;
+             skipBtn.disabled = true;
+-            startSpinPhysics();
+             e.preventDefault?.();
+         }
+-        function startSpinPhysics() {
+-            let last = performance.now();
+-            const tick = (now) => {
+-                const dt = Math.min(0.05, (now - last) / 1000);
+-                last = now;
++        stage.addEventListener('pointerdown', onPointerDown);
++        stage.addEventListener('pointermove', onPointerMove);
++        stage.addEventListener('pointerup',   onPointerUp);
++        stage.addEventListener('pointercancel', onPointerUp);
++
++        skipBtn.addEventListener('click', () => {
++            if (spun) return;
++            finish(null);
++        });
++
++        // ════════════════════════════════════════════════════════
++        //  G. ANIMATIE-LOOP — eigen RAF voor camera-fly-in + spin
++        // ════════════════════════════════════════════════════════
++        let alive = true;
++        let lastFrameT = performance.now();
++        let rafId = null;
++
++        function smoothstep(t) { return t * t * (3 - 2 * t); }
++
++        function tick(now) {
++            if (!alive) return;
++            const dt = Math.min(0.05, (now - lastFrameT) / 1000);
++            lastFrameT = now;
++
++            // 1) Camera-lerp tijdens fly-in
++            //    BELANGRIJK: controls.enabled is false, dus
++            //    controls.update() in de main loop oriënteert de
++            //    camera NIET vanzelf. We moeten elk frame zelf
++            //    camera.lookAt(controls.target) aanroepen — zelfde
++            //    patroon als playBowling gebruikt.
++            if (camT < 1) {
++                camT = Math.min(1, camT + dt / CAM_LERP_DUR);
++                const k = smoothstep(camT);
++                camera.position.lerpVectors(camFrom.pos, CAM_TGT.pos, k);
++                controls.target.lerpVectors(camFrom.tgt, CAM_TGT.tgt, k);
++            }
++            camera.lookAt(controls.target);
++
++            // 2) Spin-fysica (na release, voor stop)
++            if (spinning && !winnerSettling) {
+                 angle += angVel * dt;
+-                // Per frame friction; we converteren ROW-friction naar
+-                // dt-afhankelijke versie via pow.
+-                const friFac = Math.pow(FRICTION, dt * 60);
++                const friFac = Math.pow(FRICTION_PER_FRAME, dt * 60);
+                 angVel *= friFac;
+-                applyRotation();
+-                if (Math.abs(angVel) < MIN_VEL) {
++                if (Math.abs(angVel) < STOP_THRESHOLD) {
+                     spinning = false;
+-                    return announceWinner();
++                    const winIdx = computeWinnerIdx(angle);
++                    snapStartAngle  = angle;
++                    snapTargetAngle = nearestSegmentCenterAngle(angle, winIdx);
++                    snapT = 0;
++                    winnerSettling = true;
++                }
++                if (mysteryWheelSpin) mysteryWheelSpin.rotation.x = angle;
++            }
++
++            // 3) Snap-to-center
++            if (winnerSettling) {
++                snapT = Math.min(1, snapT + dt / SNAP_DUR);
++                const k = smoothstep(snapT);
++                const a = snapStartAngle + (snapTargetAngle - snapStartAngle) * k;
++                if (mysteryWheelSpin) mysteryWheelSpin.rotation.x = a;
++                if (snapT >= 1) {
++                    winnerSettling = false;
++                    angle = snapTargetAngle;
++                    announceWinner();
+                 }
+-                rafId = requestAnimationFrame(tick);
+-            };
++            }
++
+             rafId = requestAnimationFrame(tick);
+         }
++        rafId = requestAnimationFrame(tick);
++
++        // ════════════════════════════════════════════════════════
++        //  H. WINNER-ANNOUNCE — eindbanner met emoji + Start-knop
++        // ════════════════════════════════════════════════════════
+         function announceWinner() {
+-            // Pointer zit op 12 uur (0deg, top). Een segment met centrum
+-            // op A° wijst naar de pointer wanneer het rad over -A° staat.
+-            // Bereken huidige rotatie modulo 360 en map naar segment-idx.
+-            let r = ((angle % 360) + 360) % 360;
+-            // Segment-centra zitten op i*segAngle + segAngle/2.
+-            // Pointer zit op (360 - r) modulo 360.
+-            const pointerAngle = (360 - r) % 360;
+-            const winIdx = Math.floor(pointerAngle / segAngle);
++            const winIdx = computeWinnerIdx(angle);
+             const opt = options[winIdx];
+             result.style.setProperty('--glo', opt.color);
+             clear(result);
+@@ -14507,24 +15111,41 @@
+                 el('div', { className: 'ann' }, 'En het wordt…'),
+                 el('div', { className: 'emo-big' }, opt.emoji),
+                 el('div', { className: 'pick' }, opt.label),
+-                el('button', { className: 'btn-pill gold', type: 'button',
++                el('button', {
++                    className: 'btn-pill gold',
++                    type: 'button',
+                     style: { marginTop: '10px' },
+-                    on: { click: () => finish(opt.id) } }, '▶️ Start!'),
++                    on: { click: () => finish(opt.id) },
++                }, '▶️ Start!'),
+             );
+             result.classList.add('show');
+         }
+-        wheel.addEventListener('touchstart', onDown, { passive: false });
+-        wheel.addEventListener('touchmove',  onMove, { passive: false });
+-        wheel.addEventListener('touchend',   onUp,   { passive: false });
+-        wheel.addEventListener('touchcancel',onUp,   { passive: false });
+-        wheel.addEventListener('mousedown',  onDown);
+-        window.addEventListener('mousemove', onMove);
+-        window.addEventListener('mouseup',   onUp);
+-
+-        skipBtn.addEventListener('click', () => finish(null));
+ 
++        // ════════════════════════════════════════════════════════
++        //  I. FINISH — cleanup
++        // ════════════════════════════════════════════════════════
+         function finish(id) {
++            alive = false;
+             if (rafId) cancelAnimationFrame(rafId);
++
++            stage.removeEventListener('pointerdown', onPointerDown);
++            stage.removeEventListener('pointermove', onPointerMove);
++            stage.removeEventListener('pointerup',   onPointerUp);
++            stage.removeEventListener('pointercancel', onPointerUp);
++
++            if (mysteryStall) mysteryStall.visible = false;
++
++            // Camera + controls herstellen
++            camera.fov = savedCam.fov;
++            camera.position.copy(savedCam.pos);
++            camera.updateProjectionMatrix();
++            controls.target.copy(savedCam.target);
++            controls.autoRotate = savedCam.autoRotate;
++            controls.enabled = savedCam.enabled;
++            camera.lookAt(controls.target);
++
++            restoreMinigameChrome(hiddenChrome);
++
+             back.style.transition = 'opacity 0.3s ease';
+             back.style.opacity = '0';
+             setTimeout(() => { back.remove(); resolve(id); }, 300);
