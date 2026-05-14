@@ -1,5 +1,5 @@
 --- /mnt/user-data/uploads/index.html	2026-05-14 18:01:04.149813000 +0000
-+++ /home/claude/work/index.html	2026-05-14 18:42:49.460942246 +0000
++++ /home/claude/work/index.html	2026-05-14 18:59:19.485001096 +0000
 @@ -4202,12 +4202,12 @@
      cx:     BOWL.cx + 6,    // 88 — iets oost van bowling-centrum
      cz:     BOWL.cz,
@@ -260,7 +260,134 @@
          side: THREE.FrontSide });
      const faceGeo = new THREE.CircleGeometry(MWHEEL.radius, 64);
      const faceDisc = new THREE.Mesh(faceGeo, faceMat);
-@@ -11314,6 +11323,7 @@
+@@ -5519,6 +5528,126 @@
+     layoutTokensOnTile(player.tileIdx);
+ }
+ 
++// ════════════════════════════════════════════════════════════════
++//  JAIL / BANANA BRIG PAWN MANAGEMENT
++// ════════════════════════════════════════════════════════════════
++//  Banana Brig satelliet staat op wereld (4, 0, -19) met grass-top
++//  y=2.4. De stenen plateau zit op y=2.65, de bamboe-kooi op y=2.85
++//  met radius 1.55 en hoogte 2.4 — binnenruimte ruim genoeg voor
++//  meerdere pawns.
++//
++//  Een vastzittende speler's token gaat NAAR de jail-positie (binnen
++//  de kooi), terwijl player.tileIdx blijft staan op de skull-tegel
++//  waar 'ie verbannen werd. Bij ontsnappen vliegt de pawn terug naar
++//  die tegel om vervolgens normaal te bewegen.
++//
++//  Bij meerdere gevangen spelers worden ze in een klein cirkeltje
++//  binnen de kooi gerangschikt.
++// ════════════════════════════════════════════════════════════════
++const JAIL_WORLD_POS = new THREE.Vector3(4, 3.0, -19);
++
++function jailPositionFor(player) {
++    const jailed = G.players.filter(p => p.inPrison);
++    const idx = jailed.indexOf(player);
++    if (idx === -1 || jailed.length <= 1) return JAIL_WORLD_POS.clone();
++    const angle = (idx / jailed.length) * Math.PI * 2;
++    const r = 0.5;
++    return new THREE.Vector3(
++        JAIL_WORLD_POS.x + Math.cos(angle) * r,
++        JAIL_WORLD_POS.y,
++        JAIL_WORLD_POS.z + Math.sin(angle) * r,
++    );
++}
++
++function layoutJailedTokens() {
++    const jailed = G.players.filter(p => p.inPrison);
++    jailed.forEach((p, idx) => {
++        const angle = jailed.length <= 1 ? 0 : (idx / jailed.length) * Math.PI * 2;
++        const r = jailed.length <= 1 ? 0 : 0.5;
++        p.token.position.set(
++            JAIL_WORLD_POS.x + Math.cos(angle) * r,
++            JAIL_WORLD_POS.y,
++            JAIL_WORLD_POS.z + Math.sin(angle) * r,
++        );
++    });
++}
++
++function animateTokenToJail(player, durMs = 800, arcH = 2.0) {
++    return new Promise(resolve => {
++        const startPos = player.token.position.clone();
++        const endPos = jailPositionFor(player);
++        const startTime = performance.now();
++        const step = (now) => {
++            const k = Math.min(1, (now - startTime) / durMs);
++            const ease = 1 - Math.pow(1 - k, 2.5);
++            player.token.position.lerpVectors(startPos, endPos, ease);
++            player.token.position.y += Math.sin(k * Math.PI) * arcH;
++            if (k < 1) requestAnimationFrame(step);
++            else {
++                player.token.position.copy(endPos);
++                layoutJailedTokens();
++                resolve();
++            }
++        };
++        requestAnimationFrame(step);
++    });
++}
++
++function animateTokenFromJail(player, durMs = 800, arcH = 2.0) {
++    return new Promise(resolve => {
++        const startPos = player.token.position.clone();
++        const endPos = tileWorldPos[player.tileIdx].clone();
++        endPos.y += 0.25;
++        const startTime = performance.now();
++        const step = (now) => {
++            const k = Math.min(1, (now - startTime) / durMs);
++            const ease = 1 - Math.pow(1 - k, 2.5);
++            player.token.position.lerpVectors(startPos, endPos, ease);
++            player.token.position.y += Math.sin(k * Math.PI) * arcH;
++            if (k < 1) requestAnimationFrame(step);
++            else {
++                player.token.position.copy(endPos);
++                layoutTokensOnTile(player.tileIdx);
++                layoutJailedTokens();
++                resolve();
++            }
++        };
++        requestAnimationFrame(step);
++    });
++}
++
++function lerpCameraTo(toPos, toTgt, durMs = 700) {
++    return new Promise(resolve => {
++        const fromPos = camera.position.clone();
++        const fromTgt = controls.target.clone();
++        const t0 = performance.now();
++        const step = (now) => {
++            const k = Math.min(1, (now - t0) / durMs);
++            const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
++            camera.position.lerpVectors(fromPos, toPos, e);
++            controls.target.lerpVectors(fromTgt, toTgt, e);
++            if (k < 1) requestAnimationFrame(step);
++            else resolve();
++        };
++        requestAnimationFrame(step);
++    });
++}
++
++// Dramatische zoom op Banana Brig — voor POV op de gevangen speler
++async function zoomCameraToJail(durMs = 700) {
++    const camTo = new THREE.Vector3(
++        JAIL_WORLD_POS.x + 4,
++        JAIL_WORLD_POS.y + 3,
++        JAIL_WORLD_POS.z + 5,
++    );
++    const tgtTo = new THREE.Vector3(
++        JAIL_WORLD_POS.x,
++        JAIL_WORLD_POS.y + 0.5,
++        JAIL_WORLD_POS.z,
++    );
++    await lerpCameraTo(camTo, tgtTo, durMs);
++}
++
+ // ── UI: helper ──
+ const ui = document.getElementById('game-ui');
+ function el(tag, props={}, children=[]) {
+@@ -11314,6 +11443,7 @@
              palette: 'lava',
          }).then(async () => {
              advanceTurn();
@@ -268,15 +395,62 @@
              G.phase = 'idle';
              refreshHUD();
              // Schnaps could still call after a skip-turn
-@@ -11454,6 +11464,7 @@
+@@ -11330,6 +11460,23 @@
+     const useBonus = (player.bonusDice || 0) > 0;
+     const diceCount = useBonus ? 2 : 1;
+ 
++    // ── Gevangenis POV: zoom camera in op Banana Brig zodat je de pawn
++    //    in de kooi ziet terwijl 'ie probeert te ontsnappen. De dice-
++    //    iframe is semi-transparant, dus de jail-view is zichtbaar
++    //    áchter de dobbelstenen — extra dramatisch. Saved-state wordt
++    //    in finish() gerestored (lerp terug naar bord). ─────────────
++    let savedCamForJail = null;
++    if (player.inPrison) {
++        savedCamForJail = {
++            pos: camera.position.clone(),
++            tgt: controls.target.clone(),
++            autoRotate: controls.autoRotate,
++        };
++        controls.autoRotate = false;
++        // Fire-and-forget: zoomt parallel met iframe-setup
++        zoomCameraToJail(500);
++    }
++
+     // Build the iframe overlay (semi-transparent table, host page peeks through)
+     const back = el('div', { className: 'dice-iframe-back' });
+     const headerBar = el('div', { className: 'dice-iframe-header' });
+@@ -11441,6 +11588,15 @@
+                     sub: `${player.name} gooit ${total} en breekt uit Banana Brig!`,
+                     palette: 'gold',
                  });
++                // Animeer pawn FYSIEK uit de kooi terug naar de skull-tegel
++                // (waar 'ie verbannen werd), zodat moveTokenAlong vanaf daar
++                // normaal kan rollen.
++                await animateTokenFromJail(player, 750, 2.2);
++                // Camera terug naar bord-overzicht
++                if (savedCamForJail) {
++                    await lerpCameraTo(savedCamForJail.pos, savedCamForJail.tgt, 600);
++                    controls.autoRotate = savedCamForJail.autoRotate;
++                }
+                 // Vervolg normaal: bewegen + onLandedOnTile
+                 G.phase = 'moving';
+                 moveTokenAlong(player, total, () => onLandedOnTile(player));
+@@ -11452,8 +11608,14 @@
+                     sub: `${player.name} gooide ${total} — te laag, blijft vast. Drinkt ${d} 🍻`,
+                     palette: 'dark',
+                 });
++                // Camera terug naar bord-overzicht voor de volgende speler
++                if (savedCamForJail) {
++                    await lerpCameraTo(savedCamForJail.pos, savedCamForJail.tgt, 600);
++                    controls.autoRotate = savedCamForJail.autoRotate;
++                }
                  // Beurt eindigt zonder beweging
                  advanceTurn();
 +                await maybeRunAllPlayerRoundGame();
                  G.phase = 'idle';
                  refreshHUD();
                  await maybeFireSchnapsCall();
-@@ -11505,6 +11516,61 @@
+@@ -11505,6 +11667,65 @@
      }
  }
  
@@ -310,25 +484,29 @@
 +    if (G._roundsSinceAllPlayer < threshold) return;
 +    G._roundsSinceAllPlayer = 0;
 +
-+    // Anti-repeat shuffled pool — werkt alle minigames af voor
-+    // herhaling. Fisher-Yates shuffle wanneer leeg.
-+    if (!G._allPlayerPool || G._allPlayerPool.length === 0) {
-+        const pool = [...ALL_PLAYER_GAMES];
-+        for (let i = pool.length - 1; i > 0; i--) {
-+            const j = Math.floor(Math.random() * (i + 1));
-+            [pool[i], pool[j]] = [pool[j], pool[i]];
-+        }
-+        G._allPlayerPool = pool;
-+    }
-+    const id = G._allPlayerPool.shift();
-+
 +    G.phase = 'event';
 +    refreshHUD();
 +    await showStamp({
 +        emoji: '🎉', big: 'GROEPSMINIGAME!',
-+        sub: 'Iedereen doet mee — einde ronde-blok!',
-+        palette: 'gold', auto: true, duration: 1600,
++        sub: 'Iedereen doet mee — draai aan het rad!',
++        palette: 'gold', auto: true, duration: 1400,
 +    });
++
++    // Spin het Mystery Wheel op bowl-eiland, maar met ALLEEN de
++    // groeps-minigames erop. Het rad bepaalt visueel welk spel
++    // we doen — geen anti-repeat pool meer, gewoon willekeurig
++    // (wheel-randomness is onderdeel van het tafereel).
++    const id = await playMysteryWheel({
++        options:  ALL_PLAYER_WHEEL_OPTIONS,
++        title:    '🎡 Groeps-Rad',
++        subtitle: 'Welk spel doen we met z\'n allen?',
++    });
++    if (!id) {
++        // Wheel skip/abort — geen minigame
++        G.phase = 'idle';
++        return;
++    }
++
 +    // De dispatcher heeft een 'player' param nodig maar voor all-player
 +    // games doet 't er niet toe wie — gebruik de eerste in de lijst.
 +    await runMinigameOnTile(id, G.players[0]);
@@ -338,22 +516,28 @@
  function updateVolcanoBanner() {
      let banner = document.getElementById('vol-banner');
      if (G.volcanoActive > 0) {
-@@ -14801,6 +14867,14 @@
+@@ -14801,6 +15022,20 @@
     chosen minigame id ('krokodil','paddle','tappy','volcano',
     'raft','roulette','blackjack','hoofdsteden') or null if skipped.
     ============================================================ */
 +// Welke minigames worden door ALLE spelers tegelijk gespeeld?
 +// Die triggeren NIET meer via een tile op het bord, maar automatisch
 +// aan het einde van een ronde-blok (zie maybeRunAllPlayerRoundGame).
-+const ALL_PLAYER_GAMES = [
-+    'tappy', 'volcano', 'bowling',
-+    'lavasteen', 'krabben', 'tiki', 'brug',
++// Krab Vangen is uit BETA opgewaardeerd naar groeps-minigame; de
++// andere BETA-spellen (lavasteen, tiki, brug) blijven alleen
++// handmatig speelbaar via het minigame-menu.
++const ALL_PLAYER_WHEEL_OPTIONS = [
++    { id: 'tappy',   emoji: '🐦', label: 'Tappy Bird',  color: '#ff7ad6' },
++    { id: 'volcano', emoji: '🌋', label: 'Volcano Hop', color: '#3aff9e' },
++    { id: 'bowling', emoji: '🎳', label: 'Bowlspel',    color: '#1a7adb' },
++    { id: 'krabben', emoji: '🦀', label: 'Krab Vangen', color: '#ff5a3a' },
 +];
++const ALL_PLAYER_GAMES = ALL_PLAYER_WHEEL_OPTIONS.map(o => o.id);
 +
  const MYSTERY_OPTIONS = [
      { id: 'krokodil',    emoji: '🐊', label: 'Krokodil',     color: '#b87aff' },
      { id: 'paddle',      emoji: '🏓', label: 'Paddle Duel',  color: '#4af2ff' },
-@@ -14857,23 +14931,30 @@
+@@ -14857,23 +15092,30 @@
              'spin children:', mysteryWheelSpin?.children?.length);
  
          // ════════════════════════════════════════════════════════
@@ -392,7 +576,7 @@
  
          console.log('[MysteryWheel] camera snapped to',
              CAM_POS.toArray(), 'looking at', CAM_TGT.toArray());
-@@ -15045,22 +15126,29 @@
+@@ -15045,22 +15287,29 @@
          });
  
          // ════════════════════════════════════════════════════════
@@ -428,7 +612,7 @@
              camera.position.copy(CAM_POS);
              controls.target.copy(CAM_TGT);
              camera.lookAt(controls.target);
-@@ -15093,10 +15181,7 @@
+@@ -15093,10 +15342,7 @@
                      announceWinner();
                  }
              }
@@ -440,7 +624,7 @@
  
          // ════════════════════════════════════════════════════════
          //  H. WINNER-ANNOUNCE — eindbanner met emoji + Start-knop
-@@ -15125,7 +15210,8 @@
+@@ -15125,7 +15371,8 @@
          // ════════════════════════════════════════════════════════
          function finish(id) {
              alive = false;
@@ -450,7 +634,7 @@
  
              stage.removeEventListener('pointerdown', onPointerDown);
              stage.removeEventListener('pointermove', onPointerMove);
-@@ -15143,6 +15229,8 @@
+@@ -15143,6 +15390,8 @@
              controls.enabled = savedCam.enabled;
              controls.enableDamping = savedCam.enableDamping;
              camera.lookAt(controls.target);
@@ -459,7 +643,123 @@
  
              restoreMinigameChrome(hiddenChrome);
  
-@@ -16557,8 +16645,12 @@
+@@ -16321,15 +16570,47 @@
+         });
+         if (swap) {
+             const pIdx = player.tileIdx, sIdx = swap.tileIdx;
++            const pWasJailed = player.inPrison;
++            const sWasJailed = swap.inPrison;
+             await showStamp({
+                 emoji: '✨🔁✨', big: `${player.name} ↔ ${swap.name}`,
+                 sub: `Beiden drinken ${d} 🍻`,
+                 palette: 'purple',
+             });
+-            teleportTokenTo(player, sIdx);
+-            teleportTokenTo(swap, pIdx);
+-            refreshHUD();
+-            if (player.tileIdx >= TILE_COUNT - 1) return onLandedOnTile(player);
++
++            // Speciaal geval: precies EEN van de twee zit in de gevangenis.
++            // De wisselkaart laat ze letterlijk van plek wisselen — vrije
++            // speler komt vast, gevangen speler komt vrij op tegel van
++            // de ander. Token-animaties (bogen tussen jail en tile).
++            if (pWasJailed !== sWasJailed) {
++                const wasJailed = pWasJailed ? player : swap;   // wordt vrij
++                const wasFree   = pWasJailed ? swap   : player; // gaat vast
++
++                // Swap inPrison flags
++                wasJailed.inPrison = false;
++                wasFree.inPrison   = true;
++                // Swap tileIdx (zoals normale UFO-swap)
++                player.tileIdx = sIdx;
++                swap.tileIdx   = pIdx;
++
++                // Beweeg pawns. animateTokenFromJail leest player.tileIdx
++                // (nu de nieuwe waarde) → token landt op de juiste tegel.
++                await Promise.all([
++                    animateTokenFromJail(wasJailed, 800, 2.5),
++                    animateTokenToJail(wasFree, 800, 2.5),
++                ]);
++                refreshHUD();
++                // Vrijgekomen speler kan op finish-tegel landen
++                if (!player.inPrison && player.tileIdx >= TILE_COUNT - 1) {
++                    return onLandedOnTile(player);
++                }
++            } else {
++                // Beide vrij of beide vast → normale tegel-swap
++                teleportTokenTo(player, sIdx);
++                teleportTokenTo(swap, pIdx);
++                refreshHUD();
++                if (player.tileIdx >= TILE_COUNT - 1) return onLandedOnTile(player);
++            }
+         }
+     }
+     // ─── SKULL — pitchzwarte tegel die je naar Banana Brig verbant
+@@ -16381,33 +16662,9 @@
+             requestAnimationFrame(step);
+         });
+ 
+-        // 3. Tiki Wheel spint → kiest een eiland (voor nu altijd Banana Brig)
+-        const islandId = await showTikiWheel({
+-            subtitle: `${player.name} wordt naar een eiland gestuurd…`,
+-        });
+-
+-        if (!islandId) {
+-            // Skip gekozen → camera terug, geen straf
+-            await new Promise(r => {
+-                const camFrom = camera.position.clone();
+-                const tgtFrom = controls.target.clone();
+-                const finalTile = tileWorldPos[player.tileIdx].clone();
+-                const t0 = performance.now();
+-                const dur = 600;
+-                const step = (now) => {
+-                    const k = Math.min(1, (now - t0) / dur);
+-                    const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+-                    camera.position.lerpVectors(camFrom, savedCamPos, e);
+-                    controls.target.lerpVectors(tgtFrom, finalTile, e);
+-                    if (k < 1) requestAnimationFrame(step); else r();
+-                };
+-                requestAnimationFrame(step);
+-            });
+-            controls.autoRotate = wasAutoRotate;
+-            return;
+-        }
+-
+-        // 4. Camera zoomt in op het Banana Brig satelliet-eiland.
++        // 3. Camera zoomt direct in op het Banana Brig satelliet-eiland.
++        //    (De Tiki Wheel-tussenstap is weggehaald — voor nu is Banana
++        //    Brig de enige speelbare straf, het rad voegde alleen ruis toe.)
+         //    Positie van Banana Brig satelliet is (4, -19), top y ≈ 2.4.
+         const bbX = 4, bbZ = -19, bbY = 2.4;
+         await new Promise(r => {
+@@ -16427,19 +16684,19 @@
+             requestAnimationFrame(step);
+         });
+ 
+-        // Stamp: hier zit je vast, gooi 4+ om vrij te komen
++        // 4. Markeer de speler als gevangen + animeer de pawn fysiek IN
++        //    de kooi (zodat je 'm daar echt ziet staan).
++        player.inPrison = true;
++        await animateTokenToJail(player, 900, 2.5);
++        refreshHUD();
++
++        // 5. Stamp: hier zit je vast, gooi 4+ om vrij te komen
+         await showStamp({
+             emoji: '🍌🔒', big: 'BANANA BRIG',
+             sub: `${player.name} zit nu vast — gooi 4 of hoger om uit te breken!`,
+             palette: 'gold',
+         });
+ 
+-        // 5. Markeer de speler als gevangen. De prison-check zit in onRollDice().
+-        //    De token blijft visueel op de zwarte skull-tegel staan; de kooi op
+-        //    het eiland is puur sfeer.
+-        player.inPrison = true;
+-        refreshHUD();
+-
+         // 6. Camera zwaait terug naar het bord
+         await new Promise(r => {
+             const camFrom = camera.position.clone();
+@@ -16557,8 +16814,12 @@
              palette: 'purple', auto: true, duration: 1200,
          });
          // Filter wheel options based on player count: 1v1 games need 2+
@@ -472,7 +772,7 @@
              if (!playerOk) return ['roulette','blackjack','hoofdsteden'].includes(o.id);
              return true;
          });
-@@ -16597,6 +16689,7 @@
+@@ -16597,6 +16858,7 @@
          });
      } else {
          advanceTurn();
