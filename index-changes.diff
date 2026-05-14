@@ -1,5 +1,5 @@
 --- /home/claude/drank-eiland/repo/index.html	2026-05-13 11:14:04.239115824 +0000
-+++ /home/claude/work/index.html	2026-05-14 08:05:22.907528143 +0000
++++ /home/claude/work/index.html	2026-05-14 08:26:53.812896150 +0000
 @@ -150,6 +150,12 @@
      .mg-card .tag { position: absolute; top: 8px; right: 8px; font-size: 10px;
        padding: 3px 7px; border-radius: 99px; background: rgba(255,255,255,0.15);
@@ -776,7 +776,7 @@
      .mw-seg { position: absolute; inset: 0; transform-origin: 50% 50%; }
      .mw-seg .label { position: absolute; left: 50%; top: 14%; transform: translateX(-50%);
        font-size: 13px; font-weight: 900; color: #fff; text-shadow: 0 1px 0 #000, 0 0 6px rgba(0,0,0,0.6);
-@@ -2667,6 +3343,261 @@
+@@ -2667,6 +3343,248 @@
  }
  
  
@@ -794,9 +794,9 @@
 +       (richting hoofdeiland)        (camera kant)
 +   ───────────────────────────────────────────── */
 +const BOWL = {
-+    cx: 55, cz: 0,           // verder weg in zee (was 36)
++    cx: 82, cz: 0,           // ietsje verder oost zodat baan langer naar speler-kant kan
 +    alleyW: 3.0,
-+    alleyL: 14,
++    alleyL: 26,              // langere baan (was 22) — strekt tot strandrand
 +    alleyTopY: 1.25,
 +    alleyH:    0.15,
 +    gutterW:   0.65,
@@ -811,12 +811,20 @@
 +    pinSpacing: 0.55,
 +};
 +const bowlingPins = [];
++// Bowling-apparatus is een aparte group die we tijdens het bowling-
++// spel zichtbaar maken en daarna weer verbergen. Het ZAND-eiland
++// blijft permanent staan (zandblobs, palmen, gras, rotsen) zodat
++// we het in de toekomst kunnen hergebruiken voor andere minigames.
++let bowlingApparatus = null;
 +
 +(function buildBowlingIsland() {
++    // ── PERMANENT EILAND ──────────────────────────────────────
++    // Sand, rocks, foam, palms, grass — alles wat NIET met bowling
++    // te maken heeft maar het eiland-decor vormt.
 +    const grp = new THREE.Group();
 +    scene.add(grp);
 +
-+    // ── 1. Onderwater rotsbasis langs de hele peninsula ───────
++    // 1. Onderwater rotsbasis
 +    function rockBlob(x, z, r1, r2, h, y) {
 +        const m = new THREE.Mesh(
 +            deformCylinder(new THREE.CylinderGeometry(r1, r2, h, 16), 0.7),
@@ -826,13 +834,11 @@
 +        grp.add(m);
 +        return m;
 +    }
-+    rockBlob(47, 0,  7.0, 8.5, 3.0, -1.1);
-+    rockBlob(55, 0,  8.0, 9.5, 3.0, -1.1);
-+    rockBlob(63, 0,  6.5, 8.0, 3.0, -1.1);
++    rockBlob(BOWL.cx - 9, 0,  7.5, 9.0, 3.0, -1.1);
++    rockBlob(BOWL.cx,     0,  8.5, 10.0, 3.0, -1.1);
++    rockBlob(BOWL.cx + 11, 0,  7.5, 9.0, 3.0, -1.1);    // matched sandE
 +
-+    // ── 2. Zand — bredere blobs (Z extent ±9) zodat palmen
-+    //         echt aan de rand van het eiland kunnen staan,
-+    //         ver weg van de POV-cone van de speler ─────────
++    // 2. Zand-blobs — breder eiland zodat langere baan past
 +    function sandBlob(x, z, r1, r2, h = 1.2, y = 0.45, deform = 0.50) {
 +        const m = new THREE.Mesh(
 +            deformCylinder(new THREE.CylinderGeometry(r1, r2, h, 18), deform),
@@ -842,52 +848,72 @@
 +        grp.add(m);
 +        return m;
 +    }
-+    const sandW = sandBlob(47, 0,    7.0, 9.0);
++    const sandW = sandBlob(BOWL.cx - 9, 0,    7.5, 9.5);
 +    addOutline(sandW, 1.018);
-+    const sandM = sandBlob(55, -0.5, 7.5, 9.5);
++    const sandM = sandBlob(BOWL.cx,     -0.5, 8.0, 10.0);
 +    addOutline(sandM, 1.020);
-+    const sandE = sandBlob(63, 0.5,  6.5, 8.5);
++    // Oost-blob iets verder oost zodat de gras-knol erop past
++    const sandE = sandBlob(BOWL.cx + 11, 0.5,  7.5, 9.5);
 +    addOutline(sandE, 1.018);
-+    // Kleinere uitstulpsels voor onregelmatige randen
-+    sandBlob(50, -7.0, 2.5, 2.9, 0.95, 0.40, 0.65);
-+    sandBlob(52,  7.5, 2.7, 3.1, 0.95, 0.40, 0.60);
-+    sandBlob(59, -7.5, 2.3, 2.7, 0.90, 0.40, 0.70);
-+    sandBlob(61,  7.0, 2.5, 2.9, 0.95, 0.40, 0.60);
-+    sandBlob(65, -2.5, 2.0, 2.4, 0.85, 0.40, 0.65);
++    sandBlob(BOWL.cx - 6,  -7.5, 2.7, 3.1, 0.95, 0.40, 0.65);
++    sandBlob(BOWL.cx - 4,   7.5, 2.9, 3.3, 0.95, 0.40, 0.60);
++    sandBlob(BOWL.cx + 4,  -7.5, 2.5, 2.9, 0.90, 0.40, 0.70);
++    sandBlob(BOWL.cx + 6,   7.5, 2.7, 3.1, 0.95, 0.40, 0.60);
++    sandBlob(BOWL.cx + 12, -2.5, 2.2, 2.6, 0.85, 0.40, 0.65);
 +
-+    // ── 3. Extra graspaadje achter de bowler ────────────────
-+    // Plat, geen palmen erop meer (die zaten in beeld) — alleen
-+    // wat lage struiken voor decoratie.
++    // 3. Grasplek (decor) — verder naar achteren zodat de bal
++    //    NIET in het gras spawnt. Bowler staat aan oost-rand van
++    //    de baan (x ≈ BOWL.cx + alleyL/2 = ~95), gras hoort daar
++    //    achter te staan (oost).
 +    const grassMound = new THREE.Mesh(
-+        deformCylinder(new THREE.CylinderGeometry(3.5, 4.2, 0.6, 14), 0.4),
++        deformCylinder(new THREE.CylinderGeometry(3.0, 3.6, 0.6, 14), 0.4),
 +        MAT.grass);
-+    grassMound.position.set(65, 1.35, 0);
++    grassMound.position.set(BOWL.cx + 17, 1.35, 0);   // was +10
 +    grassMound.castShadow = true; grassMound.receiveShadow = true;
 +    grp.add(grassMound);
 +    addOutline(grassMound, 1.02);
 +
-+    // ── 4. Natte zandrand bij de waterlijn (verspreid) ────────
-+    function wetRing(x, z, ir, or_) {
-+        const m = new THREE.Mesh(
-+            new THREE.RingGeometry(ir, or_, 24),
-+            MAT.sandWet);
-+        m.rotation.x = -Math.PI / 2;
-+        m.position.set(x, 1.08, z);
-+        grp.add(m);
++    // 4. Foam-ringen langs de waterlijn (animated). De "natte
++    //    zand"-ringen die hier eerst stonden zijn verwijderd —
++    //    die zagen er uit als rare donkere beige banden op het
++    //    eiland en pasten niet bij de stijl.
++    const foamW = addFoamRing(grp, 7.7, 9.2);
++    foamW.position.set(BOWL.cx - 9, 0.12, 0); animatedFoam.push(foamW);
++    const foamM = addFoamRing(grp, 8.2, 9.9);
++    foamM.position.set(BOWL.cx, 0.12, -0.5); animatedFoam.push(foamM);
++    const foamE = addFoamRing(grp, 7.7, 9.2);
++    foamE.position.set(BOWL.cx + 11, 0.12, 0.5); animatedFoam.push(foamE);
++
++    // 5. Palmen ALLEEN aan buitenrand (ver van POV-cone)
++    makePalm(BOWL.cx - 7, 1.40, -8.5, 0.85, 0.15);
++    makePalm(BOWL.cx - 5, 1.40,  9.0, 0.90, -0.18);
++    makePalm(BOWL.cx,     1.40, -9.0, 0.95, 0.20);
++    makePalm(BOWL.cx + 1, 1.40,  8.5, 0.85, -0.15);
++    makePalm(BOWL.cx + 4, 1.40, -8.5, 0.80, 0.22);
++    makePalm(BOWL.cx + 6, 1.40,  9.0, 0.90, -0.20);
++
++    // Bushes — losse decoratie
++    const bushMat = new THREE.MeshToonMaterial({
++        color: 0x4a8a3a, gradientMap: toon });
++    for (const [bxOff, bz] of [[-6, -6.5], [-3, 6.5], [4, -6.5],
++                               [7, 6.0], [10, -3.0], [10, 3.0]]) {
++        const yOff = (bxOff >= 9) ? 1.65 : 1.35;
++        const bush = new THREE.Mesh(
++            new THREE.SphereGeometry(0.55, 10, 8), bushMat);
++        bush.scale.set(1.2, 0.8, 1.2);
++        bush.position.set(BOWL.cx + bxOff, yOff, bz);
++        bush.castShadow = true;
++        grp.add(bush);
 +    }
-+    wetRing(47, 0,    7.4, 9.2);
-+    wetRing(55, -0.5, 7.9, 9.7);
-+    wetRing(63, 0.5,  6.9, 8.7);
 +
-+    // Foam-ringen langs de 3 hoofdblobs
-+    const foamW = addFoamRing(grp, 7.2, 8.7);
-+    foamW.position.set(47, 0.12, 0); animatedFoam.push(foamW);
-+    const foamM = addFoamRing(grp, 7.7, 9.4);
-+    foamM.position.set(55, 0.12, -0.5); animatedFoam.push(foamM);
-+    const foamE = addFoamRing(grp, 6.7, 8.2);
-+    foamE.position.set(63, 0.12, 0.5); animatedFoam.push(foamE);
++    // ── BOWLING APPARATUS (verbergbare group) ─────────────────
++    // Alle bowling-specifieke geometrie. Verborgen by default —
++    // wordt zichtbaar als playBowling start, weg na finish.
++    bowlingApparatus = new THREE.Group();
++    bowlingApparatus.visible = false;
++    scene.add(bowlingApparatus);
 +
-+    // ── 5. Houten bowling-baan (volledig hout) ────────────────
++    // Houten bowling-baan (LANGER nu, 22 units ipv 14)
 +    const alleyMat = new THREE.MeshToonMaterial({
 +        color: 0xd4a86a, gradientMap: toon,
 +        emissive: 0x6d4c2a, emissiveIntensity: 0.05,
@@ -897,9 +923,8 @@
 +        alleyMat);
 +    alley.position.set(BOWL.cx, BOWL.alleyTopY - BOWL.alleyH / 2, BOWL.cz);
 +    alley.castShadow = true; alley.receiveShadow = true;
-+    grp.add(alley);
++    bowlingApparatus.add(alley);
 +
-+    // Donkere zijwanden — geven de plank-rand een schaduw
 +    const sideWallMat = new THREE.MeshToonMaterial({
 +        color: 0x6d4c2a, gradientMap: toon });
 +    for (const zSide of [-1, 1]) {
@@ -909,10 +934,9 @@
 +        wall.position.set(BOWL.cx,
 +            BOWL.alleyTopY - BOWL.alleyH / 2,
 +            BOWL.cz + zSide * (BOWL.alleyW / 2 + 0.02));
-+        grp.add(wall);
++        bowlingApparatus.add(wall);
 +    }
 +
-+    // Plank-strepen op het oppervlak (langs X, gespreid in Z)
 +    const lineMat = new THREE.MeshToonMaterial({ color: 0x6d4c2a, gradientMap: toon });
 +    for (let i = -2; i <= 2; i++) {
 +        if (i === 0) continue;
@@ -921,10 +945,10 @@
 +            lineMat);
 +        line.position.set(BOWL.cx, BOWL.alleyTopY + 0.005,
 +            BOWL.cz + i * (BOWL.alleyW / 5));
-+        grp.add(line);
++        bowlingApparatus.add(line);
 +    }
 +
-+    // ── 6. Gutters (groeven) langs beide zijden, geen bumpers ─
++    // Gutters
 +    const gutterMat = new THREE.MeshToonMaterial({
 +        color: 0x5a3a1a, gradientMap: toon,
 +        emissive: 0x1a0a05, emissiveIntensity: 0.05 });
@@ -936,17 +960,16 @@
 +            BOWL.gutterTopY - BOWL.gutterH / 2,
 +            BOWL.cz + zSide * (BOWL.alleyW / 2 + BOWL.gutterW / 2));
 +        gutter.castShadow = true; gutter.receiveShadow = true;
-+        grp.add(gutter);
-+        // Buitenwand van de gutter — kleine richel die hem afsluit
++        bowlingApparatus.add(gutter);
 +        const wall = new THREE.Mesh(
 +            new THREE.BoxGeometry(BOWL.alleyL + 0.02, BOWL.alleyH, 0.04),
 +            sideWallMat);
 +        wall.position.set(BOWL.cx, BOWL.alleyTopY - BOWL.alleyH / 2,
 +            BOWL.cz + zSide * (BOWL.alleyW / 2 + BOWL.gutterW + 0.02));
-+        grp.add(wall);
++        bowlingApparatus.add(wall);
 +    }
 +
-+    // ── 7. 10 Pinnen aan de WEST-kant (richting hoofdeiland) ──
++    // 10 Pinnen — pin 1 vooraan (oost-kant, dichtst bij speler)
 +    const pinBodyMat = new THREE.MeshToonMaterial({
 +        color: 0xfff5e0, gradientMap: toon,
 +        emissive: 0xc89a4a, emissiveIntensity: 0.10,
@@ -976,15 +999,6 @@
 +        g.add(stripe);
 +        return g;
 +    }
-+
-+    // Klassieke 10-pin layout: pin 1 (zOff=0) is de HEAD PIN
-+    // vooraan, dichtst bij de speler. Daarachter rijen van 2, 3
-+    // en uiteindelijk 4 pinnen. In onze wereld is de speler aan
-+    // de oostkant (hoge X), dus pin 1 staat op de HOOGSTE X van
-+    // het cluster. Het cluster strekt zich naar het westen uit.
-+    //   Array-indices die later naar pin-indicator mappen:
-+    //     idx 0 = pin 1, idx 1-2 = pin 2,3, idx 3-5 = pin 4,5,6,
-+    //     idx 6-9 = pin 7,8,9,10 (back row)
 +    const triangle = [
 +        [0, 0],
 +        [-0.5, 1], [0.5, 1],
@@ -995,42 +1009,15 @@
 +    for (let i = 0; i < triangle.length; i++) {
 +        const [xOff, zOff] = triangle[i];
 +        const pin = makePin();
-+        // Hoge X (front) → pin 1. zOff loopt naar achter (lagere X).
 +        const px = triangleStartX - zOff * BOWL.pinSpacing * 0.95;
 +        const pz = BOWL.cz + xOff * BOWL.pinSpacing;
 +        pin.position.set(px, BOWL.pinBaseY, pz);
 +        pin.userData.basePos = pin.position.clone();
 +        pin.userData.baseQuat = pin.quaternion.clone();
 +        pin.userData.fallen = false;
-+        pin.userData.pinNum = i + 1;       // standaard pin-nummer 1-10
-+        grp.add(pin);
++        pin.userData.pinNum = i + 1;
++        bowlingApparatus.add(pin);
 +        bowlingPins.push(pin);
-+    }
-+
-+    // ── 8. Palmen ALLEEN aan de buitenrand van het eiland ───
-+    // Verwijderd: alle palmen op of vlak bij de grassmound
-+    // (zaten in de POV-cone wanneer je bowlt). Nu staan ze
-+    // ver weg op z=±8 of meer, langs de buitenrand van de blobs.
-+    makePalm(48, 1.40, -8.0, 0.85, 0.15);
-+    makePalm(50, 1.40,  8.5, 0.90, -0.18);
-+    makePalm(54, 1.40, -8.5, 0.95, 0.20);
-+    makePalm(56, 1.40,  8.0, 0.85, -0.15);
-+    makePalm(59, 1.40, -8.0, 0.80, 0.22);
-+    makePalm(61, 1.40,  8.5, 0.90, -0.20);
-+
-+    // Bushes — laag, niet in de POV
-+    const bushMat = new THREE.MeshToonMaterial({
-+        color: 0x4a8a3a, gradientMap: toon });
-+    // Alleen aan de buitenrand, niet midden achter de speler
-+    for (const [bx, bz] of [[49, -6.5], [52, 6.5], [59, -6.5],
-+                            [62, 6.0], [65, -3.0], [65, 3.0]]) {
-+        const yOff = (bx >= 64) ? 1.65 : 1.35;
-+        const bush = new THREE.Mesh(
-+            new THREE.SphereGeometry(0.55, 10, 8), bushMat);
-+        bush.scale.set(1.2, 0.8, 1.2);
-+        bush.position.set(bx, yOff, bz);
-+        bush.castShadow = true;
-+        grp.add(bush);
 +    }
 +})();
 +
@@ -1038,7 +1025,7 @@
  // ── Bushes (instanced) ──
  const bushGeo = new THREE.SphereGeometry(0.55, 8, 6);
  const BUSH_COUNT = 70;
-@@ -5456,15 +6387,66 @@
+@@ -5456,15 +6374,66 @@
  
  // ── Setup screen ──
  let SETUP_TAB = 'game';
@@ -1110,7 +1097,7 @@
  
      const screen = el('div', { className: 'screen' });
      const title = el('h1', {}, '🌋 Drank Eiland');
-@@ -5498,6 +6480,7 @@
+@@ -5498,6 +6467,7 @@
                  if (updated) {
                      p.avatar = updated;
                      saveAvatar(p.colorIdx, updated);
@@ -1118,7 +1105,7 @@
                      renderGame();
                  }
              });
-@@ -5513,14 +6496,15 @@
+@@ -5513,14 +6483,15 @@
                  // OR keep the current avatar but adopt the new slot's default outfit.
                  const saved = loadAvatars()[next];
                  p.avatar = saved || p.avatar || defaultAvatar(next);
@@ -1136,7 +1123,7 @@
                  row.append(rm);
              }
              card.append(row);
-@@ -5532,6 +6516,7 @@
+@@ -5532,6 +6503,7 @@
                      let c = 0; while (taken.has(c)) c++;
                      draft.push({ name: `Speler ${draft.length + 1}`, colorIdx: c,
                                   avatar: loadAvatarForColor(c) });
@@ -1144,7 +1131,7 @@
                      renderGame();
                  } } }, '+ Speler toevoegen');
              card.append(addBtn);
-@@ -5578,7 +6563,7 @@
+@@ -5578,7 +6550,7 @@
  
      const MINIGAMES = [
          { id: 'avatar',      emoji: '🧑‍🎨', name: 'Avatar Creator',       meta: 'maker',         tag: 'NIEUW', locked: false },
@@ -1153,7 +1140,7 @@
          { id: 'krokodil',    emoji: '🐊',  name: 'Krokodil',             meta: '1v1',           tag: null, locked: false },
          { id: 'paddle',      emoji: '🏓',  name: 'Paddle Duel',          meta: '1v1',           tag: null, locked: false },
          { id: 'flappy',      emoji: '🐦',  name: 'Tappy Bird',           meta: 'iedereen',      tag: null, locked: false },
-@@ -5591,6 +6576,15 @@
+@@ -5591,6 +6563,15 @@
          { id: 'bowling',     emoji: '🎳',  name: 'Bowlspel',             meta: 'iedereen',      tag: 'NIEUW', locked: false },
          { id: 'connect4',    emoji: '🟡',  name: 'Vier op een Rij',      meta: '1v1',           tag: 'NIEUW', locked: false },
          { id: 'mystery',     emoji: '🎡',  name: 'Mystery Wheel',        meta: 'random',        tag: 'NIEUW', locked: false },
@@ -1169,7 +1156,7 @@
      ];
  
      for (const mg of MINIGAMES) {
-@@ -5600,7 +6594,11 @@
+@@ -5600,7 +6581,11 @@
              el('div', { className: 'name' }, mg.name),
              el('div', { className: 'meta' }, mg.meta),
          );
@@ -1182,7 +1169,7 @@
          if (!mg.locked) {
              c.addEventListener('click', () => launchStandaloneMinigame(mg.id));
          }
-@@ -5608,23 +6606,56 @@
+@@ -5608,23 +6593,56 @@
      }
      mgCard.append(mgIntro, mgGrid);
  
@@ -1256,7 +1243,7 @@
  
      mgPanel.append(mgCard, quick);
  
-@@ -5682,26 +6713,29 @@
+@@ -5682,26 +6700,29 @@
          return;
      }
  
@@ -1296,7 +1283,7 @@
                  actions: [{ label: 'Klaar', value: true }],
              });
          }
-@@ -5791,6 +6825,31 @@
+@@ -5791,6 +6812,31 @@
              await launchStandaloneMinigame(pickedId);
              return; // renderSetup already called by inner launch
          }
@@ -1328,7 +1315,7 @@
      }
  
      G.players = stash;
-@@ -6065,6 +7124,44 @@
+@@ -6065,6 +7111,44 @@
      }
  }
  
@@ -1373,7 +1360,7 @@
  function refreshHUD() {
      const cur = G.players[G.turnIdx];
      if (!cur) return;
-@@ -6158,9 +7255,25 @@
+@@ -6158,9 +7242,25 @@
      return skip;
  }
  
@@ -1400,7 +1387,7 @@
          const back = el('div', { className: 'rb-back' });
  
          // Floating header overlay with title + VS chips matching player colors
-@@ -6191,6 +7304,10 @@
+@@ -6191,6 +7291,10 @@
              done = true;
              window.removeEventListener('message', onMsg);
              back.remove();
@@ -1411,7 +1398,7 @@
              if (winner) {
                  const loser = winner === playerA ? playerB : playerA;
                  await showModal({ emoji: '🏴‍☠️',
-@@ -6232,12 +7349,32 @@
+@@ -6232,12 +7336,32 @@
  
          // Send the player config to the iframe. We do this both on load
          // and whenever the iframe says "hello", so the timing always works.
@@ -1446,7 +1433,7 @@
                  }, '*');
              } catch (e) { /* cross-origin — ignore */ }
          }
-@@ -6282,6 +7419,832 @@
+@@ -6282,6 +7406,832 @@
      });
  }
  
@@ -2279,7 +2266,7 @@
  /* ============================================================
     playBowling — Bowlspel (iframe)
     ============================================================
-@@ -6292,26 +8255,22 @@
+@@ -6292,26 +8242,22 @@
     wins; losers drink.
     Returns: { winner: <player>, score: <number>, ranking: [...] }
     ============================================================ */
@@ -2318,7 +2305,7 @@
  
          const wrap = el('div', { className: 'bw-canvas-wrap' });
          const iframe = el('iframe', {
-@@ -6319,8 +8278,7 @@
+@@ -6319,8 +8265,7 @@
              scrolling: 'no' });
          wrap.append(iframe);
  
@@ -2328,7 +2315,7 @@
  
          let done = false;
          async function finish(winner, winnerScore) {
-@@ -6328,6 +8286,7 @@
+@@ -6328,6 +8273,7 @@
              done = true;
              window.removeEventListener('message', onMsg);
              back.remove();
@@ -2336,7 +2323,7 @@
              if (winner) {
                  const losers = players.filter(p => p !== winner);
                  const loserNames = losers.map(p => p.name).join(', ');
-@@ -6408,17 +8367,922 @@
+@@ -6408,17 +8354,978 @@
      });
  }
  
@@ -2374,6 +2361,9 @@
 +        controls.enabled = false;
 +        camera.fov = 60;
 +        camera.updateProjectionMatrix();
++        // Toon de baan + gutters + pinnen — die zijn normaal verborgen
++        // zodat het eiland leeg is voor andere minigames.
++        if (bowlingApparatus) bowlingApparatus.visible = true;
 +
 +        // ════════════════════════════════════════════════════════
 +        //  B. CONSTANTEN
@@ -2400,14 +2390,38 @@
 +        const DRAG_FOR_MAX = 220;
 +
 +        // ════════════════════════════════════════════════════════
-+        //  C. CAMERA — vanaf oost kijken richting pinnen + vulkaan
++        //  C. CAMERA — vanaf oost kijken, VOLGT de bal tijdens roll
 +        // ════════════════════════════════════════════════════════
-+        // Camera staat hoog achter speler, kijkt naar -X richting.
-+        // Look-target zit voorbij de pinnen zodat het vulkaan-eiland
-+        // groot in beeld komt op de achtergrond.
++        // De camera staat achter de bal (relatieve offset), kijkt
++        // langs -X richting de pinnen. Tijdens het rollen volgt 'ie
++        // de bal mee zodat de speler altijd "achter de bowler" zit.
++        // Net als de originele 2D-bowling app voelt deze tracking
++        // veel natuurlijker dan een statische camera.
++        const CAM_OFFSET = {
++            // Achter de bal (relatief): +6 op X, hoogte 4.2, geen Z-offset
++            posOffX: 6, posY: 4.2, posZ: 0,
++            // Look-target: 8 voor de bal (-X), iets lager Y voor
++            // gevoel van "kijken langs de baan"
++            tgtOffX: -8, tgtY: 2.5, tgtZ: 0,
++        };
++        function camPosForBall(bx) {
++            return new THREE.Vector3(bx + CAM_OFFSET.posOffX,
++                CAM_OFFSET.posY, BOWL.cz + CAM_OFFSET.posZ);
++        }
++        function camTgtForBall(bx) {
++            return new THREE.Vector3(bx + CAM_OFFSET.tgtOffX,
++                CAM_OFFSET.tgtY, BOWL.cz + CAM_OFFSET.tgtZ);
++        }
++        // Initiële camera-target: achter ball-start positie
 +        const CAM_BOWL = {
-+            pos: new THREE.Vector3(ALLEY_NEAR_X + 6, 5.5, BOWL.cz),
-+            tgt: new THREE.Vector3(BOWL.cx - 8, 4.0, BOWL.cz),
++            pos: camPosForBall(BALL_START_X),
++            tgt: camTgtForBall(BALL_START_X),
++        };
++        // Tweede target: pin-cam (zoom voorbij waar de bal eindigt
++        // om de impact mooi te tonen)
++        const CAM_PIN = {
++            pos: new THREE.Vector3(ALLEY_FAR_X + 4.5, 3.5, BOWL.cz + 0.4),
++            tgt: new THREE.Vector3(ALLEY_FAR_X - 1, 1.5, BOWL.cz),
 +        };
 +        const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
 +        let camLerpT = 0;
@@ -3056,13 +3070,37 @@
 +            phaseT += dt;
 +            // Splash-ring updates
 +            updateSplashRings(time);
-+            // Camera lerp tussen runs / op intro
++            // Camera tracking — afhankelijk van fase
++            //   1. Entry-lerp: gewone smooth lerp van startpositie naar
++            //      CAM_BOWL (gebruikt camLerpT zoals voorheen).
++            //   2. Rolling: camera VOLGT de bal — positie en target
++            //      lerpen elke frame naar de bal-relatieve positie.
++            //      Lerp-rate is dt * 3.0 zoals in de oude app.
++            //   3. Result_wait: korte zoom op pin-cam zodat impact
++            //      duidelijk wordt, dan terug naar CAM_BOWL voor
++            //      volgende worp.
 +            if (camLerpT < 1) {
 +                camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
 +                const k = camLerpT;
 +                const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
 +                camera.position.lerpVectors(camFrom.pos, CAM_BOWL.pos, e);
 +                controls.target.lerpVectors(camFrom.tgt, CAM_BOWL.tgt, e);
++                camera.lookAt(controls.target);
++            } else if (phase === 'rolling' && ball) {
++                // Volg de bal met soepele lerp. Camera Z blijft vast op
++                // BOWL.cz zodat we niet zigzaggen als de bal curveert.
++                const targetPos = camPosForBall(ball.position.x);
++                const targetTgt = camTgtForBall(ball.position.x);
++                const k = Math.min(1, dt * 3.0);
++                camera.position.lerp(targetPos, k);
++                controls.target.lerp(targetTgt, k);
++                camera.lookAt(controls.target);
++            } else if (phase === 'result_wait' || phase === 'result') {
++                // Houd camera ongeveer waar 'ie nu is — lerp licht naar
++                // pin-cam zodat impact-shot zichtbaar wordt
++                const k = Math.min(1, dt * 1.8);
++                camera.position.lerp(CAM_PIN.pos, k);
++                controls.target.lerp(CAM_PIN.tgt, k);
 +                camera.lookAt(controls.target);
 +            }
 +            // Bal rolling fysica + gutters + water-val
@@ -3100,10 +3138,12 @@
 +                        p.vx *= 0.92;
 +                    }
 +                } else {
-+                    // Op zand of in zee
-+                    const dx = ball.position.x - BOWL.cx;
++                    // Op zand of in zee. Eiland is enigszins
++                    // oost-georiënteerd (oost-blob ligt verder weg)
++                    // dus we offsetten het ellips-center oostwaarts.
++                    const dx = ball.position.x - (BOWL.cx + 2);
 +                    const dz = ball.position.z;
-+                    const onSand = (dx / 11) ** 2 + (dz / 6.5) ** 2 < 1.0;
++                    const onSand = (dx / 14) ** 2 + (dz / 8) ** 2 < 1.0;
 +                    if (onSand) groundY = SAND_TOP_Y;
 +                }
 +                // Verticale fysica (vallen in zee)
@@ -3207,6 +3247,9 @@
 +            splashRings.length = 0;
 +            // Pinnen reset (zodat ze permanent staan)
 +            resetPins();
++            // Verberg het bowling-apparatus zodat het eiland leeg
++            // achterblijft en herbruikbaar is voor andere minigames
++            if (bowlingApparatus) bowlingApparatus.visible = false;
 +            // Camera herstellen
 +            camera.fov = savedCam.fov;
 +            camera.position.copy(savedCam.pos);
@@ -3265,7 +3308,7 @@
          const back = el('div', { className: 'cf-back' });
  
          const header = el('div', { className: 'cf-header' });
-@@ -6445,6 +9309,7 @@
+@@ -6445,6 +9352,7 @@
              done = true;
              window.removeEventListener('message', onMsg);
              back.remove();
@@ -3273,7 +3316,7 @@
              if (isDraw) {
                  await showModal({ emoji: '🤝', title: 'Gelijkspel!',
                      body: ['Niemand drinkt — de goden zijn vandaag neutraal.'],
-@@ -6522,6 +9387,641 @@
+@@ -6522,6 +9430,641 @@
      });
  }
  
@@ -3915,7 +3958,7 @@
  // ── Pip layouts for each die face ──
  const PIP_LAYOUTS = {
      1: [[50,50]],
-@@ -6748,10 +10248,46 @@
+@@ -6748,10 +10291,46 @@
  }
  
  // ── Chwazi finger chooser — picks a random player among those who put a finger down ──
@@ -3963,7 +4006,7 @@
          const back = el('div', { className: 'chwazi-back' });
          const head = el('div', { className: 'chwazi-head' });
          head.append(
-@@ -6762,12 +10298,12 @@
+@@ -6762,12 +10341,12 @@
          const hint = el('div', { className: 'chwazi-hint' });
          hint.append(
              el('span', { className: 'big' }, '👆 Vingers op het scherm'),
@@ -3978,7 +4021,7 @@
          const foot = el('div', { className: 'chwazi-foot' });
          const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
          const pickNowBtn = el('button', { className: 'btn-pill gold', type: 'button' }, 'Kies nu');
-@@ -6783,24 +10319,28 @@
+@@ -6783,24 +10362,28 @@
  
          function addFinger(id, clientX, clientY) {
              if (locked) return;
@@ -4014,7 +4057,7 @@
              updateStatus();
              schedulePick();
          }
-@@ -6818,28 +10358,22 @@
+@@ -6818,28 +10401,22 @@
              if (locked) return; // keep visuals after pick
              f.el.remove();
              fingers.delete(id);
@@ -4050,7 +4093,7 @@
              pickTimer = setTimeout(doPick, delay);
          }
          function doPick() {
-@@ -6851,16 +10385,21 @@
+@@ -6851,16 +10428,21 @@
                  if (f === winner) f.el.classList.add('winner');
                  else f.el.classList.add('loser');
              });
@@ -4077,7 +4120,7 @@
              skipBtn.style.display = 'none';
          }
  
-@@ -6899,9 +10438,21 @@
+@@ -6899,9 +10481,21 @@
  
          function finish(winnerPlayer) {
              clearTimeout(pickTimer);
@@ -4100,7 +4143,7 @@
          }
          skipBtn.addEventListener('click', () => finish(null));
          pickNowBtn.addEventListener('click', () => {
-@@ -6919,7 +10470,10 @@
+@@ -6919,7 +10513,10 @@
  }
  
  // ── Tappy Bird — pass-the-phone; each player plays once; highest score wins ──
@@ -4112,7 +4155,7 @@
      return new Promise(resolve => {
          const ui = document.getElementById('game-ui');
          const back = el('div', { className: 'tb-back' });
-@@ -7116,6 +10670,536 @@
+@@ -7116,6 +10713,536 @@
      });
  }
  
@@ -4649,7 +4692,7 @@
  // ── Volcano Hop — secretly pick a platform; wrong = lightning, last standing wins ──
  function playVolcanoHop({ players = G.players, drinks = 2 } = {}) {
      return new Promise(resolve => {
-@@ -7335,6 +11419,48 @@
+@@ -7335,6 +11462,48 @@
  function playPaddleDuel({ playerA, playerB, targetScore = 3, drinks = 4 } = {}) {
      return new Promise(resolve => {
          const ui = document.getElementById('game-ui');
@@ -4698,7 +4741,7 @@
          const back = el('div', { className: 'pd-back' });
          back.style.setProperty('--colA', playerA.color.css);
          back.style.setProperty('--colB', playerB.color.css);
-@@ -7378,6 +11504,25 @@
+@@ -7378,6 +11547,25 @@
          // Distance from the top/bottom edge of the canvas to the paddles.
          // Larger value = paddle moves away from the iPhone notch / home indicator.
          const PAD_INSET = 70;
@@ -4724,7 +4767,7 @@
          const state = {
              padA: 0.5, padB: 0.5, // x positions 0..1
              ballX: 0, ballY: 0, vx: 0, vy: 0,
-@@ -7388,10 +11533,9 @@
+@@ -7388,10 +11576,9 @@
          function resetBall(dir) {
              state.ballX = W / 2;
              state.ballY = H / 2;
@@ -4738,7 +4781,7 @@
              state.vx = Math.cos(ang) * speed;
              state.vy = Math.sin(ang) * speed;
          }
-@@ -7463,11 +11607,35 @@
+@@ -7463,11 +11650,35 @@
              rafId = requestAnimationFrame(tick);
          }
          function update(dt) {
@@ -4777,7 +4820,7 @@
  
              const padAx = state.padA * W;
              const padBx = state.padB * W;
-@@ -7479,16 +11647,24 @@
+@@ -7479,16 +11690,24 @@
              if (state.vy < 0 && state.ballY - BALL_R <= PAD_Y_TOP + PAD_H/2 && state.ballY > PAD_Y_TOP - PAD_H) {
                  if (Math.abs(state.ballX - padAx) <= padHalfW + BALL_R) {
                      state.ballY = PAD_Y_TOP + PAD_H/2 + BALL_R;
@@ -4806,7 +4849,7 @@
                  }
              }
  
-@@ -7498,11 +11674,37 @@
+@@ -7498,11 +11717,37 @@
                  scoreBot.textContent = state.scoreB;
                  if (state.scoreB >= targetScore) endGame(playerB, playerA);
                  else resetBall(1);
@@ -4844,7 +4887,7 @@
              }
          }
          function draw() {
-@@ -7552,9 +11754,22 @@
+@@ -7552,9 +11797,22 @@
          function finish(loser) {
              cancelAnimationFrame(rafId);
              window.removeEventListener('resize', resize);
@@ -4868,7 +4911,7 @@
          }
  
          oBtn.addEventListener('click', () => {
-@@ -7572,6 +11787,46 @@
+@@ -7572,6 +11830,46 @@
  function playKrokodil({ playerA, playerB, drinks = 4, teethCount = 18 } = {}) {
      return new Promise(resolve => {
          const ui = document.getElementById('game-ui');
@@ -4915,7 +4958,7 @@
          const back = el('div', { className: 'kroko-back' });
  
          const head = el('div', { className: 'kroko-head' });
-@@ -7678,13 +11933,967 @@
+@@ -7678,13 +11976,967 @@
          updateTurn();
  
          function finish(loser) {
@@ -5883,7 +5926,7 @@
  /* ============================================================
     Schnaps ruft an — "Schnaps is calling"
     ============================================================
-@@ -7881,7 +13090,7 @@
+@@ -7881,7 +13133,7 @@
                  refreshHUD();
                  await showResult({
                      emoji: '🐒',
@@ -5892,7 +5935,7 @@
                      sub:   `−${stepsBack} Tegels für ${player.name}`,
                      subClass: 'bad',
                  });
-@@ -7913,6 +13122,10 @@
+@@ -7913,6 +13165,10 @@
      { id: 'hoofdsteden', emoji: '🏙️', label: 'Hoofdsteden',  color: '#5aaaff' },
      { id: 'bowling',     emoji: '🎳', label: 'Bowlspel',     color: '#1a7adb' },
      { id: 'connect4',    emoji: '🟡', label: '4 op een Rij', color: '#ffcc1a' },
@@ -5903,7 +5946,7 @@
  ];
  
  function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Wheel', subtitle = 'Welke minigame wordt het?' } = {}) {
-@@ -7960,9 +13173,12 @@
+@@ -7960,9 +13216,12 @@
          stage.append(wrap);
  
          const foot = el('div', { className: 'mw-foot' });
@@ -5918,7 +5961,7 @@
  
          const result = el('div', { className: 'mw-result' });
          stage.append(result);
-@@ -7970,47 +13186,176 @@
+@@ -7970,47 +13229,176 @@
          back.append(header, stage, foot);
          ui.append(back);
  
@@ -6128,7 +6171,7 @@
              back.style.transition = 'opacity 0.3s ease';
              back.style.opacity = '0';
              setTimeout(() => { back.remove(); resolve(id); }, 300);
-@@ -8482,27 +13827,42 @@
+@@ -8482,27 +13870,42 @@
                drinks: number }
     ============================================================ */
  const CAPITALS = [
@@ -6192,7 +6235,7 @@
  ];
  
  function playHoofdsteden({ player, drinks = null, timeMs = 12000 } = {}) {
-@@ -8515,7 +13875,7 @@
+@@ -8515,7 +13918,7 @@
  
          const header = el('div', { className: 'hf-header' });
          header.append(
@@ -6201,7 +6244,7 @@
              el('div', { className: 'hf-sub' }, 'Typ de juiste hoofdstad voor de timer afloopt!'),
              (() => {
                  const w = el('div', { className: 'hf-who' });
-@@ -8658,7 +14018,42 @@
+@@ -8658,7 +14061,42 @@
     ============================================================ */
  async function runMinigameOnTile(id, player) {
      const others = G.players.filter(p => p !== player);
@@ -6245,7 +6288,7 @@
  
      if (id === 'krokodil' && G.players.length >= 2) {
          const opp = pickOpp();
-@@ -8883,6 +14278,76 @@
+@@ -8883,6 +14321,76 @@
              refreshHUD();
          }
      }
@@ -6322,7 +6365,7 @@
  }
  
  // ── Landing logic ──
-@@ -9156,19 +14621,20 @@
+@@ -9156,19 +14664,20 @@
          const d = slokken(3);
          const go = await showModal({
              emoji: '👆', title: 'Iemand drinkt!',

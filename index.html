@@ -3357,9 +3357,9 @@ for (const sat of satellites) {
        (richting hoofdeiland)        (camera kant)
    ───────────────────────────────────────────── */
 const BOWL = {
-    cx: 55, cz: 0,           // verder weg in zee (was 36)
+    cx: 82, cz: 0,           // ietsje verder oost zodat baan langer naar speler-kant kan
     alleyW: 3.0,
-    alleyL: 14,
+    alleyL: 26,              // langere baan (was 22) — strekt tot strandrand
     alleyTopY: 1.25,
     alleyH:    0.15,
     gutterW:   0.65,
@@ -3374,12 +3374,20 @@ const BOWL = {
     pinSpacing: 0.55,
 };
 const bowlingPins = [];
+// Bowling-apparatus is een aparte group die we tijdens het bowling-
+// spel zichtbaar maken en daarna weer verbergen. Het ZAND-eiland
+// blijft permanent staan (zandblobs, palmen, gras, rotsen) zodat
+// we het in de toekomst kunnen hergebruiken voor andere minigames.
+let bowlingApparatus = null;
 
 (function buildBowlingIsland() {
+    // ── PERMANENT EILAND ──────────────────────────────────────
+    // Sand, rocks, foam, palms, grass — alles wat NIET met bowling
+    // te maken heeft maar het eiland-decor vormt.
     const grp = new THREE.Group();
     scene.add(grp);
 
-    // ── 1. Onderwater rotsbasis langs de hele peninsula ───────
+    // 1. Onderwater rotsbasis
     function rockBlob(x, z, r1, r2, h, y) {
         const m = new THREE.Mesh(
             deformCylinder(new THREE.CylinderGeometry(r1, r2, h, 16), 0.7),
@@ -3389,13 +3397,11 @@ const bowlingPins = [];
         grp.add(m);
         return m;
     }
-    rockBlob(47, 0,  7.0, 8.5, 3.0, -1.1);
-    rockBlob(55, 0,  8.0, 9.5, 3.0, -1.1);
-    rockBlob(63, 0,  6.5, 8.0, 3.0, -1.1);
+    rockBlob(BOWL.cx - 9, 0,  7.5, 9.0, 3.0, -1.1);
+    rockBlob(BOWL.cx,     0,  8.5, 10.0, 3.0, -1.1);
+    rockBlob(BOWL.cx + 11, 0,  7.5, 9.0, 3.0, -1.1);    // matched sandE
 
-    // ── 2. Zand — bredere blobs (Z extent ±9) zodat palmen
-    //         echt aan de rand van het eiland kunnen staan,
-    //         ver weg van de POV-cone van de speler ─────────
+    // 2. Zand-blobs — breder eiland zodat langere baan past
     function sandBlob(x, z, r1, r2, h = 1.2, y = 0.45, deform = 0.50) {
         const m = new THREE.Mesh(
             deformCylinder(new THREE.CylinderGeometry(r1, r2, h, 18), deform),
@@ -3405,52 +3411,72 @@ const bowlingPins = [];
         grp.add(m);
         return m;
     }
-    const sandW = sandBlob(47, 0,    7.0, 9.0);
+    const sandW = sandBlob(BOWL.cx - 9, 0,    7.5, 9.5);
     addOutline(sandW, 1.018);
-    const sandM = sandBlob(55, -0.5, 7.5, 9.5);
+    const sandM = sandBlob(BOWL.cx,     -0.5, 8.0, 10.0);
     addOutline(sandM, 1.020);
-    const sandE = sandBlob(63, 0.5,  6.5, 8.5);
+    // Oost-blob iets verder oost zodat de gras-knol erop past
+    const sandE = sandBlob(BOWL.cx + 11, 0.5,  7.5, 9.5);
     addOutline(sandE, 1.018);
-    // Kleinere uitstulpsels voor onregelmatige randen
-    sandBlob(50, -7.0, 2.5, 2.9, 0.95, 0.40, 0.65);
-    sandBlob(52,  7.5, 2.7, 3.1, 0.95, 0.40, 0.60);
-    sandBlob(59, -7.5, 2.3, 2.7, 0.90, 0.40, 0.70);
-    sandBlob(61,  7.0, 2.5, 2.9, 0.95, 0.40, 0.60);
-    sandBlob(65, -2.5, 2.0, 2.4, 0.85, 0.40, 0.65);
+    sandBlob(BOWL.cx - 6,  -7.5, 2.7, 3.1, 0.95, 0.40, 0.65);
+    sandBlob(BOWL.cx - 4,   7.5, 2.9, 3.3, 0.95, 0.40, 0.60);
+    sandBlob(BOWL.cx + 4,  -7.5, 2.5, 2.9, 0.90, 0.40, 0.70);
+    sandBlob(BOWL.cx + 6,   7.5, 2.7, 3.1, 0.95, 0.40, 0.60);
+    sandBlob(BOWL.cx + 12, -2.5, 2.2, 2.6, 0.85, 0.40, 0.65);
 
-    // ── 3. Extra graspaadje achter de bowler ────────────────
-    // Plat, geen palmen erop meer (die zaten in beeld) — alleen
-    // wat lage struiken voor decoratie.
+    // 3. Grasplek (decor) — verder naar achteren zodat de bal
+    //    NIET in het gras spawnt. Bowler staat aan oost-rand van
+    //    de baan (x ≈ BOWL.cx + alleyL/2 = ~95), gras hoort daar
+    //    achter te staan (oost).
     const grassMound = new THREE.Mesh(
-        deformCylinder(new THREE.CylinderGeometry(3.5, 4.2, 0.6, 14), 0.4),
+        deformCylinder(new THREE.CylinderGeometry(3.0, 3.6, 0.6, 14), 0.4),
         MAT.grass);
-    grassMound.position.set(65, 1.35, 0);
+    grassMound.position.set(BOWL.cx + 17, 1.35, 0);   // was +10
     grassMound.castShadow = true; grassMound.receiveShadow = true;
     grp.add(grassMound);
     addOutline(grassMound, 1.02);
 
-    // ── 4. Natte zandrand bij de waterlijn (verspreid) ────────
-    function wetRing(x, z, ir, or_) {
-        const m = new THREE.Mesh(
-            new THREE.RingGeometry(ir, or_, 24),
-            MAT.sandWet);
-        m.rotation.x = -Math.PI / 2;
-        m.position.set(x, 1.08, z);
-        grp.add(m);
+    // 4. Foam-ringen langs de waterlijn (animated). De "natte
+    //    zand"-ringen die hier eerst stonden zijn verwijderd —
+    //    die zagen er uit als rare donkere beige banden op het
+    //    eiland en pasten niet bij de stijl.
+    const foamW = addFoamRing(grp, 7.7, 9.2);
+    foamW.position.set(BOWL.cx - 9, 0.12, 0); animatedFoam.push(foamW);
+    const foamM = addFoamRing(grp, 8.2, 9.9);
+    foamM.position.set(BOWL.cx, 0.12, -0.5); animatedFoam.push(foamM);
+    const foamE = addFoamRing(grp, 7.7, 9.2);
+    foamE.position.set(BOWL.cx + 11, 0.12, 0.5); animatedFoam.push(foamE);
+
+    // 5. Palmen ALLEEN aan buitenrand (ver van POV-cone)
+    makePalm(BOWL.cx - 7, 1.40, -8.5, 0.85, 0.15);
+    makePalm(BOWL.cx - 5, 1.40,  9.0, 0.90, -0.18);
+    makePalm(BOWL.cx,     1.40, -9.0, 0.95, 0.20);
+    makePalm(BOWL.cx + 1, 1.40,  8.5, 0.85, -0.15);
+    makePalm(BOWL.cx + 4, 1.40, -8.5, 0.80, 0.22);
+    makePalm(BOWL.cx + 6, 1.40,  9.0, 0.90, -0.20);
+
+    // Bushes — losse decoratie
+    const bushMat = new THREE.MeshToonMaterial({
+        color: 0x4a8a3a, gradientMap: toon });
+    for (const [bxOff, bz] of [[-6, -6.5], [-3, 6.5], [4, -6.5],
+                               [7, 6.0], [10, -3.0], [10, 3.0]]) {
+        const yOff = (bxOff >= 9) ? 1.65 : 1.35;
+        const bush = new THREE.Mesh(
+            new THREE.SphereGeometry(0.55, 10, 8), bushMat);
+        bush.scale.set(1.2, 0.8, 1.2);
+        bush.position.set(BOWL.cx + bxOff, yOff, bz);
+        bush.castShadow = true;
+        grp.add(bush);
     }
-    wetRing(47, 0,    7.4, 9.2);
-    wetRing(55, -0.5, 7.9, 9.7);
-    wetRing(63, 0.5,  6.9, 8.7);
 
-    // Foam-ringen langs de 3 hoofdblobs
-    const foamW = addFoamRing(grp, 7.2, 8.7);
-    foamW.position.set(47, 0.12, 0); animatedFoam.push(foamW);
-    const foamM = addFoamRing(grp, 7.7, 9.4);
-    foamM.position.set(55, 0.12, -0.5); animatedFoam.push(foamM);
-    const foamE = addFoamRing(grp, 6.7, 8.2);
-    foamE.position.set(63, 0.12, 0.5); animatedFoam.push(foamE);
+    // ── BOWLING APPARATUS (verbergbare group) ─────────────────
+    // Alle bowling-specifieke geometrie. Verborgen by default —
+    // wordt zichtbaar als playBowling start, weg na finish.
+    bowlingApparatus = new THREE.Group();
+    bowlingApparatus.visible = false;
+    scene.add(bowlingApparatus);
 
-    // ── 5. Houten bowling-baan (volledig hout) ────────────────
+    // Houten bowling-baan (LANGER nu, 22 units ipv 14)
     const alleyMat = new THREE.MeshToonMaterial({
         color: 0xd4a86a, gradientMap: toon,
         emissive: 0x6d4c2a, emissiveIntensity: 0.05,
@@ -3460,9 +3486,8 @@ const bowlingPins = [];
         alleyMat);
     alley.position.set(BOWL.cx, BOWL.alleyTopY - BOWL.alleyH / 2, BOWL.cz);
     alley.castShadow = true; alley.receiveShadow = true;
-    grp.add(alley);
+    bowlingApparatus.add(alley);
 
-    // Donkere zijwanden — geven de plank-rand een schaduw
     const sideWallMat = new THREE.MeshToonMaterial({
         color: 0x6d4c2a, gradientMap: toon });
     for (const zSide of [-1, 1]) {
@@ -3472,10 +3497,9 @@ const bowlingPins = [];
         wall.position.set(BOWL.cx,
             BOWL.alleyTopY - BOWL.alleyH / 2,
             BOWL.cz + zSide * (BOWL.alleyW / 2 + 0.02));
-        grp.add(wall);
+        bowlingApparatus.add(wall);
     }
 
-    // Plank-strepen op het oppervlak (langs X, gespreid in Z)
     const lineMat = new THREE.MeshToonMaterial({ color: 0x6d4c2a, gradientMap: toon });
     for (let i = -2; i <= 2; i++) {
         if (i === 0) continue;
@@ -3484,10 +3508,10 @@ const bowlingPins = [];
             lineMat);
         line.position.set(BOWL.cx, BOWL.alleyTopY + 0.005,
             BOWL.cz + i * (BOWL.alleyW / 5));
-        grp.add(line);
+        bowlingApparatus.add(line);
     }
 
-    // ── 6. Gutters (groeven) langs beide zijden, geen bumpers ─
+    // Gutters
     const gutterMat = new THREE.MeshToonMaterial({
         color: 0x5a3a1a, gradientMap: toon,
         emissive: 0x1a0a05, emissiveIntensity: 0.05 });
@@ -3499,17 +3523,16 @@ const bowlingPins = [];
             BOWL.gutterTopY - BOWL.gutterH / 2,
             BOWL.cz + zSide * (BOWL.alleyW / 2 + BOWL.gutterW / 2));
         gutter.castShadow = true; gutter.receiveShadow = true;
-        grp.add(gutter);
-        // Buitenwand van de gutter — kleine richel die hem afsluit
+        bowlingApparatus.add(gutter);
         const wall = new THREE.Mesh(
             new THREE.BoxGeometry(BOWL.alleyL + 0.02, BOWL.alleyH, 0.04),
             sideWallMat);
         wall.position.set(BOWL.cx, BOWL.alleyTopY - BOWL.alleyH / 2,
             BOWL.cz + zSide * (BOWL.alleyW / 2 + BOWL.gutterW + 0.02));
-        grp.add(wall);
+        bowlingApparatus.add(wall);
     }
 
-    // ── 7. 10 Pinnen aan de WEST-kant (richting hoofdeiland) ──
+    // 10 Pinnen — pin 1 vooraan (oost-kant, dichtst bij speler)
     const pinBodyMat = new THREE.MeshToonMaterial({
         color: 0xfff5e0, gradientMap: toon,
         emissive: 0xc89a4a, emissiveIntensity: 0.10,
@@ -3539,15 +3562,6 @@ const bowlingPins = [];
         g.add(stripe);
         return g;
     }
-
-    // Klassieke 10-pin layout: pin 1 (zOff=0) is de HEAD PIN
-    // vooraan, dichtst bij de speler. Daarachter rijen van 2, 3
-    // en uiteindelijk 4 pinnen. In onze wereld is de speler aan
-    // de oostkant (hoge X), dus pin 1 staat op de HOOGSTE X van
-    // het cluster. Het cluster strekt zich naar het westen uit.
-    //   Array-indices die later naar pin-indicator mappen:
-    //     idx 0 = pin 1, idx 1-2 = pin 2,3, idx 3-5 = pin 4,5,6,
-    //     idx 6-9 = pin 7,8,9,10 (back row)
     const triangle = [
         [0, 0],
         [-0.5, 1], [0.5, 1],
@@ -3558,42 +3572,15 @@ const bowlingPins = [];
     for (let i = 0; i < triangle.length; i++) {
         const [xOff, zOff] = triangle[i];
         const pin = makePin();
-        // Hoge X (front) → pin 1. zOff loopt naar achter (lagere X).
         const px = triangleStartX - zOff * BOWL.pinSpacing * 0.95;
         const pz = BOWL.cz + xOff * BOWL.pinSpacing;
         pin.position.set(px, BOWL.pinBaseY, pz);
         pin.userData.basePos = pin.position.clone();
         pin.userData.baseQuat = pin.quaternion.clone();
         pin.userData.fallen = false;
-        pin.userData.pinNum = i + 1;       // standaard pin-nummer 1-10
-        grp.add(pin);
+        pin.userData.pinNum = i + 1;
+        bowlingApparatus.add(pin);
         bowlingPins.push(pin);
-    }
-
-    // ── 8. Palmen ALLEEN aan de buitenrand van het eiland ───
-    // Verwijderd: alle palmen op of vlak bij de grassmound
-    // (zaten in de POV-cone wanneer je bowlt). Nu staan ze
-    // ver weg op z=±8 of meer, langs de buitenrand van de blobs.
-    makePalm(48, 1.40, -8.0, 0.85, 0.15);
-    makePalm(50, 1.40,  8.5, 0.90, -0.18);
-    makePalm(54, 1.40, -8.5, 0.95, 0.20);
-    makePalm(56, 1.40,  8.0, 0.85, -0.15);
-    makePalm(59, 1.40, -8.0, 0.80, 0.22);
-    makePalm(61, 1.40,  8.5, 0.90, -0.20);
-
-    // Bushes — laag, niet in de POV
-    const bushMat = new THREE.MeshToonMaterial({
-        color: 0x4a8a3a, gradientMap: toon });
-    // Alleen aan de buitenrand, niet midden achter de speler
-    for (const [bx, bz] of [[49, -6.5], [52, 6.5], [59, -6.5],
-                            [62, 6.0], [65, -3.0], [65, 3.0]]) {
-        const yOff = (bx >= 64) ? 1.65 : 1.35;
-        const bush = new THREE.Mesh(
-            new THREE.SphereGeometry(0.55, 10, 8), bushMat);
-        bush.scale.set(1.2, 0.8, 1.2);
-        bush.position.set(bx, yOff, bz);
-        bush.castShadow = true;
-        grp.add(bush);
     }
 })();
 
@@ -8401,6 +8388,9 @@ function playBowling({ players, drinks = 4 } = {}) {
         controls.enabled = false;
         camera.fov = 60;
         camera.updateProjectionMatrix();
+        // Toon de baan + gutters + pinnen — die zijn normaal verborgen
+        // zodat het eiland leeg is voor andere minigames.
+        if (bowlingApparatus) bowlingApparatus.visible = true;
 
         // ════════════════════════════════════════════════════════
         //  B. CONSTANTEN
@@ -8427,14 +8417,38 @@ function playBowling({ players, drinks = 4 } = {}) {
         const DRAG_FOR_MAX = 220;
 
         // ════════════════════════════════════════════════════════
-        //  C. CAMERA — vanaf oost kijken richting pinnen + vulkaan
+        //  C. CAMERA — vanaf oost kijken, VOLGT de bal tijdens roll
         // ════════════════════════════════════════════════════════
-        // Camera staat hoog achter speler, kijkt naar -X richting.
-        // Look-target zit voorbij de pinnen zodat het vulkaan-eiland
-        // groot in beeld komt op de achtergrond.
+        // De camera staat achter de bal (relatieve offset), kijkt
+        // langs -X richting de pinnen. Tijdens het rollen volgt 'ie
+        // de bal mee zodat de speler altijd "achter de bowler" zit.
+        // Net als de originele 2D-bowling app voelt deze tracking
+        // veel natuurlijker dan een statische camera.
+        const CAM_OFFSET = {
+            // Achter de bal (relatief): +6 op X, hoogte 4.2, geen Z-offset
+            posOffX: 6, posY: 4.2, posZ: 0,
+            // Look-target: 8 voor de bal (-X), iets lager Y voor
+            // gevoel van "kijken langs de baan"
+            tgtOffX: -8, tgtY: 2.5, tgtZ: 0,
+        };
+        function camPosForBall(bx) {
+            return new THREE.Vector3(bx + CAM_OFFSET.posOffX,
+                CAM_OFFSET.posY, BOWL.cz + CAM_OFFSET.posZ);
+        }
+        function camTgtForBall(bx) {
+            return new THREE.Vector3(bx + CAM_OFFSET.tgtOffX,
+                CAM_OFFSET.tgtY, BOWL.cz + CAM_OFFSET.tgtZ);
+        }
+        // Initiële camera-target: achter ball-start positie
         const CAM_BOWL = {
-            pos: new THREE.Vector3(ALLEY_NEAR_X + 6, 5.5, BOWL.cz),
-            tgt: new THREE.Vector3(BOWL.cx - 8, 4.0, BOWL.cz),
+            pos: camPosForBall(BALL_START_X),
+            tgt: camTgtForBall(BALL_START_X),
+        };
+        // Tweede target: pin-cam (zoom voorbij waar de bal eindigt
+        // om de impact mooi te tonen)
+        const CAM_PIN = {
+            pos: new THREE.Vector3(ALLEY_FAR_X + 4.5, 3.5, BOWL.cz + 0.4),
+            tgt: new THREE.Vector3(ALLEY_FAR_X - 1, 1.5, BOWL.cz),
         };
         const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
         let camLerpT = 0;
@@ -9083,13 +9097,37 @@ function playBowling({ players, drinks = 4 } = {}) {
             phaseT += dt;
             // Splash-ring updates
             updateSplashRings(time);
-            // Camera lerp tussen runs / op intro
+            // Camera tracking — afhankelijk van fase
+            //   1. Entry-lerp: gewone smooth lerp van startpositie naar
+            //      CAM_BOWL (gebruikt camLerpT zoals voorheen).
+            //   2. Rolling: camera VOLGT de bal — positie en target
+            //      lerpen elke frame naar de bal-relatieve positie.
+            //      Lerp-rate is dt * 3.0 zoals in de oude app.
+            //   3. Result_wait: korte zoom op pin-cam zodat impact
+            //      duidelijk wordt, dan terug naar CAM_BOWL voor
+            //      volgende worp.
             if (camLerpT < 1) {
                 camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
                 const k = camLerpT;
                 const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
                 camera.position.lerpVectors(camFrom.pos, CAM_BOWL.pos, e);
                 controls.target.lerpVectors(camFrom.tgt, CAM_BOWL.tgt, e);
+                camera.lookAt(controls.target);
+            } else if (phase === 'rolling' && ball) {
+                // Volg de bal met soepele lerp. Camera Z blijft vast op
+                // BOWL.cz zodat we niet zigzaggen als de bal curveert.
+                const targetPos = camPosForBall(ball.position.x);
+                const targetTgt = camTgtForBall(ball.position.x);
+                const k = Math.min(1, dt * 3.0);
+                camera.position.lerp(targetPos, k);
+                controls.target.lerp(targetTgt, k);
+                camera.lookAt(controls.target);
+            } else if (phase === 'result_wait' || phase === 'result') {
+                // Houd camera ongeveer waar 'ie nu is — lerp licht naar
+                // pin-cam zodat impact-shot zichtbaar wordt
+                const k = Math.min(1, dt * 1.8);
+                camera.position.lerp(CAM_PIN.pos, k);
+                controls.target.lerp(CAM_PIN.tgt, k);
                 camera.lookAt(controls.target);
             }
             // Bal rolling fysica + gutters + water-val
@@ -9127,10 +9165,12 @@ function playBowling({ players, drinks = 4 } = {}) {
                         p.vx *= 0.92;
                     }
                 } else {
-                    // Op zand of in zee
-                    const dx = ball.position.x - BOWL.cx;
+                    // Op zand of in zee. Eiland is enigszins
+                    // oost-georiënteerd (oost-blob ligt verder weg)
+                    // dus we offsetten het ellips-center oostwaarts.
+                    const dx = ball.position.x - (BOWL.cx + 2);
                     const dz = ball.position.z;
-                    const onSand = (dx / 11) ** 2 + (dz / 6.5) ** 2 < 1.0;
+                    const onSand = (dx / 14) ** 2 + (dz / 8) ** 2 < 1.0;
                     if (onSand) groundY = SAND_TOP_Y;
                 }
                 // Verticale fysica (vallen in zee)
@@ -9234,6 +9274,9 @@ function playBowling({ players, drinks = 4 } = {}) {
             splashRings.length = 0;
             // Pinnen reset (zodat ze permanent staan)
             resetPins();
+            // Verberg het bowling-apparatus zodat het eiland leeg
+            // achterblijft en herbruikbaar is voor andere minigames
+            if (bowlingApparatus) bowlingApparatus.visible = false;
             // Camera herstellen
             camera.fov = savedCam.fov;
             camera.position.copy(savedCam.pos);
