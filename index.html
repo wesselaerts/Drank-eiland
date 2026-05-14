@@ -8417,17 +8417,17 @@ function playBowling({ players, drinks = 4 } = {}) {
         // ════════════════════════════════════════════════════════
         //  C. CAMERA — vanaf oost kijken, VOLGT de bal tijdens roll
         // ════════════════════════════════════════════════════════
-        // De camera staat achter de bal (relatieve offset), kijkt
-        // langs -X richting de pinnen. Tijdens het rollen volgt 'ie
-        // de bal mee zodat de speler altijd "achter de bowler" zit.
-        // Net als de originele 2D-bowling app voelt deze tracking
-        // veel natuurlijker dan een statische camera.
+        //   Camera-tuning: dichter bij de bal zodat er geen "spring
+        //   naar achteren" gevoel meer is. Camera staat nu vrijwel
+        //   op de bal-positie (over-the-shoulder), lage hoek, kijkt
+        //   ver vooruit naar pinnen.
         const CAM_OFFSET = {
-            // Achter de bal (relatief): +6 op X, hoogte 4.2, geen Z-offset
-            posOffX: 6, posY: 4.2, posZ: 0,
-            // Look-target: 8 voor de bal (-X), iets lager Y voor
-            // gevoel van "kijken langs de baan"
-            tgtOffX: -8, tgtY: 2.5, tgtZ: 0,
+            posOffX: 1.5,            // bijna op de bal (was 3.5)
+            posY: 3.0,               // lager (was 3.4)
+            posZ: 0,
+            tgtOffX: -14,            // verder vooruit kijken (was -11)
+            tgtY: 1.5,               // lager target (was 1.9)
+            tgtZ: 0,
         };
         function camPosForBall(bx) {
             return new THREE.Vector3(bx + CAM_OFFSET.posOffX,
@@ -9183,7 +9183,9 @@ function playBowling({ players, drinks = 4 } = {}) {
             if (camLerpT < 1) {
                 camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
                 const k = camLerpT;
-                const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
+                // Ease-out cubic — snelle start, soepele aankomst
+                // zonder "stop-dan-spring" gevoel dat ease-in-out gaf.
+                const e = 1 - Math.pow(1 - k, 3);
                 camera.position.lerpVectors(camFrom.pos, CAM_BOWL.pos, e);
                 controls.target.lerpVectors(camFrom.tgt, CAM_BOWL.tgt, e);
                 camera.lookAt(controls.target);
