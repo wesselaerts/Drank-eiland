@@ -1,5 +1,5 @@
 --- /mnt/user-data/uploads/index.html	2026-05-14 17:13:57.879765000 +0000
-+++ /home/claude/work/index.html	2026-05-14 17:48:57.821301070 +0000
++++ /home/claude/work/index.html	2026-05-14 17:59:00.970334735 +0000
 @@ -1904,62 +1904,60 @@
      }
  
@@ -633,7 +633,7 @@
  // ── Bushes (instanced) ──
  const bushGeo = new THREE.SphereGeometry(0.55, 8, 6);
  const BUSH_COUNT = 70;
-@@ -14299,207 +14820,290 @@
+@@ -14299,207 +14820,289 @@
  
  function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Wheel', subtitle = 'Welke minigame wordt het?' } = {}) {
      return new Promise(resolve => {
@@ -649,46 +649,52 @@
 +            target: controls.target.clone(),
 +            autoRotate: controls.autoRotate,
 +            enabled: controls.enabled,
++            enableDamping: controls.enableDamping,
 +        };
 +        controls.autoRotate = false;
 +        controls.enabled = false;
++        // BELANGRIJK: damping uitzetten. Met enableDamping=true blijft
++        // OrbitControls.update() (die in de hoofd-render-loop wel
++        // doorloopt voor de damping-tween) de camera-positie EELKE
++        // FRAME terug-lerpen naar zijn interne sferische state. Dat
++        // overschrijft mijn eigen camera.position/lookAt en zorgt
++        // dat de camera nooit aankomt bij Bowl Eiland.
++        controls.enableDamping = false;
 +        camera.fov = 50;
 +        camera.updateProjectionMatrix();
 +
-+        // Bouw stall (1× lazy) + pas opties toe (rebuild wedges/labels/pegs
-+        // alleen als opties veranderd zijn)
++        // Bouw stall (1× lazy) + pas opties toe
 +        buildMysteryStallOnce();
 +        applyMysteryOptionsToWheel(options);
-+        // Reset spin-stand zodat segment 0 weer boven start
 +        if (mysteryWheelSpin) mysteryWheelSpin.rotation.x = 0;
 +        if (mysteryStall)     mysteryStall.visible = true;
 +
-+        // Debug: log naar console zodat we kunnen checken of stall echt
-+        // gebouwd is en zichtbaar staat. Helpt bij troubleshooting.
 +        console.log('[MysteryWheel] stall built:', !!mysteryStall,
 +            'visible:', mysteryStall?.visible,
-+            'world pos:', mysteryStall?.position,
-+            'wheel children:', mysteryWheelSpin?.children?.length);
++            'world pos:', mysteryStall?.position?.toArray?.(),
++            'spin children:', mysteryWheelSpin?.children?.length);
 +
 +        // ════════════════════════════════════════════════════════
-+        //  B. CAMERA — vanaf oost van Bowl Eiland kijken richting west,
-+        //  vulkaan op de achtergrond, kraam centraal in beeld.
++        //  B. CAMERA — SNAP direct naar bestemming (geen lerp).
++        //  Veel betrouwbaarder dan animeren over rAF, want
++        //  OrbitControls.update() in de main-loop kan onze positie
++        //  anders frame-na-frame ongedaan maken.
 +        //
-+        //  LET OP: MWHEEL.wheelY is een LOKALE Y binnen de stall (die
-+        //  zelf op floorY staat). De WERELD-Y van het rad is dus
-+        //  floorY + wheelY. Camera-coördinaten zijn altijd wereld.
++        //  MWHEEL.wheelY is LOKALE Y binnen de stall (die op floorY
++        //  staat). Wereld-Y van het rad = floorY + wheelY.
 +        // ════════════════════════════════════════════════════════
 +        const wheelWorldY = MWHEEL.floorY + MWHEEL.wheelY;
-+        const CAM_TGT = {
-+            pos: new THREE.Vector3(MWHEEL.cx + 12.5, wheelWorldY + 1.7, MWHEEL.cz),
-+            tgt: new THREE.Vector3(MWHEEL.cx - 9.5, wheelWorldY - 0.3,  MWHEEL.cz),
-+        };
-+        const camFrom = {
-+            pos: camera.position.clone(),
-+            tgt: controls.target.clone(),
-+        };
-+        const CAM_LERP_DUR = 0.95;
-+        let camT = 0;
++        const CAM_POS = new THREE.Vector3(
++            MWHEEL.cx + 12.5, wheelWorldY + 1.7, MWHEEL.cz);
++        const CAM_TGT = new THREE.Vector3(
++            MWHEEL.cx - 9.5, wheelWorldY - 0.3,  MWHEEL.cz);
++
++        camera.position.copy(CAM_POS);
++        controls.target.copy(CAM_TGT);
++        camera.lookAt(controls.target);
++
++        console.log('[MysteryWheel] camera snapped to',
++            CAM_POS.toArray(), 'looking at', CAM_TGT.toArray());
 +
 +        // ════════════════════════════════════════════════════════
 +        //  C. DOM OVERLAY — transparant, alleen header + skip + tip
@@ -1015,21 +1021,14 @@
 +            const dt = Math.min(0.05, (now - lastFrameT) / 1000);
 +            lastFrameT = now;
 +
-+            // 1) Camera-lerp tijdens fly-in
-+            //    BELANGRIJK: controls.enabled is false, dus
-+            //    controls.update() in de main loop oriënteert de
-+            //    camera NIET vanzelf. We moeten elk frame zelf
-+            //    camera.lookAt(controls.target) aanroepen — zelfde
-+            //    patroon als playBowling gebruikt.
-+            if (camT < 1) {
-+                camT = Math.min(1, camT + dt / CAM_LERP_DUR);
-+                const k = smoothstep(camT);
-+                camera.position.lerpVectors(camFrom.pos, CAM_TGT.pos, k);
-+                controls.target.lerpVectors(camFrom.tgt, CAM_TGT.tgt, k);
-+            }
++            // ELKE frame opnieuw camera vasthouden — voor de zekerheid,
++            // want OrbitControls.update() in de main-loop kan
++            // tussendoor de orientatie verstoren.
++            camera.position.copy(CAM_POS);
++            controls.target.copy(CAM_TGT);
 +            camera.lookAt(controls.target);
 +
-+            // 2) Spin-fysica (na release, voor stop)
++            // Spin-fysica (na release, voor stop)
 +            if (spinning && !winnerSettling) {
                  angle += angVel * dt;
 -                // Per frame friction; we converteren ROW-friction naar
@@ -1051,7 +1050,7 @@
 +                if (mysteryWheelSpin) mysteryWheelSpin.rotation.x = angle;
 +            }
 +
-+            // 3) Snap-to-center
++            // Snap-to-center
 +            if (winnerSettling) {
 +                snapT = Math.min(1, snapT + dt / SNAP_DUR);
 +                const k = smoothstep(snapT);
@@ -1086,7 +1085,7 @@
              const opt = options[winIdx];
              result.style.setProperty('--glo', opt.color);
              clear(result);
-@@ -14507,24 +15111,41 @@
+@@ -14507,24 +15110,42 @@
                  el('div', { className: 'ann' }, 'En het wordt…'),
                  el('div', { className: 'emo-big' }, opt.emoji),
                  el('div', { className: 'pick' }, opt.label),
@@ -1132,6 +1131,7 @@
 +            controls.target.copy(savedCam.target);
 +            controls.autoRotate = savedCam.autoRotate;
 +            controls.enabled = savedCam.enabled;
++            controls.enableDamping = savedCam.enableDamping;
 +            camera.lookAt(controls.target);
 +
 +            restoreMinigameChrome(hiddenChrome);
