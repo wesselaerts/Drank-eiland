@@ -1,942 +1,926 @@
---- /mnt/user-data/uploads/index.html	2026-05-14 14:12:05.272923000 +0000
-+++ /home/claude/work/index.html	2026-05-14 17:10:24.782877577 +0000
-@@ -33,7 +33,7 @@
- <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%234da6ff'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' dominant-baseline='middle' font-size='130'%3E🌋%3C/text%3E%3C/svg%3E"/>
+--- /mnt/user-data/uploads/index.html	2026-05-14 18:01:04.149813000 +0000
++++ /home/claude/work/index.html	2026-05-15 09:40:12.382365382 +0000
+@@ -4202,12 +4202,12 @@
+     cx:     BOWL.cx + 6,    // 88 — iets oost van bowling-centrum
+     cz:     BOWL.cz,
+     floorY: BOWL.sandTopY,  // staat op het zand, top y=1.05
+-    wheelY: 3.35,           // wereld-Y van de as = midden van rad
+-    radius: 1.8,
++    wheelY: 2.75,           // wereld-Y van de as = midden van postH/2
++    radius: 2.1,            // groter (was 1.8) — meer "wow" in beeld
+     thick:  0.18,
+-    postH:  4.6,
+-    stallW: 5.2,
+-    stallD: 3.2,
++    postH:  5.5,            // hoger (was 4.6) — rad past nu mooi onder dak
++    stallW: 4.0,            // depth X-axis (was 5.2) — kleiner OK
++    stallD: 5.8,            // width Z-axis (was 3.2) — moet > 3.6 (rad-diameter)
+     pegRad: 0.07,
+     pegLen: 0.22,
+ };
+@@ -4319,10 +4319,19 @@
+     const N  = options.length;
+     const segAng = (Math.PI * 2) / N;
  
- <!-- Inline PWA manifest (data URI – no extra files needed for GitHub Pages) -->
--<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name"%3A"Volkaan Eiland"%2C"short_name"%3A"Volkaan"%2C"description"%3A"Wii Party stijl WebGL eiland"%2C"display"%3A"standalone"%2C"orientation"%3A"any"%2C"theme_color"%3A"%234da6ff"%2C"background_color"%3A"%2387CEEB"%2C"start_url"%3A"."%2C"icons"%3A[{"src"%3A"data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iIzRkYTZmZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTYlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmb250LXNpemU9IjEzMCI+8J+MizwvdGV4dD48L3N2Zz4="%2C"sizes"%3A"180x180"%2C"type"%3A"image%2Fsvg%2Bxml"}]}'/>
-+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name"%3A"Volkaan Eiland"%2C"short_name"%3A"Volkaan"%2C"description"%3A"Wii Party stijl WebGL eiland"%2C"display"%3A"standalone"%2C"orientation"%3A"portrait-primary"%2C"theme_color"%3A"%234da6ff"%2C"background_color"%3A"%2387CEEB"%2C"start_url"%3A"."%2C"icons"%3A[{"src"%3A"data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iIzRkYTZmZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTYlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmb250LXNpemU9IjEzMCI+8J+MizwvdGV4dD48L3N2Zz4="%2C"sizes"%3A"180x180"%2C"type"%3A"image%2Fsvg%2Bxml"}]}'/>
- 
- <style>
-     * { box-sizing: border-box; }
-@@ -848,6 +848,26 @@
-       display: flex; align-items: center; justify-content: center;
-       z-index: 50; padding: 20px; animation: fadeIn .2s ease; }
-     @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-+
-+    /* ===== Portrait-only guard — toont overlay als telefoon
-+       schuin/landscape staat zodat de game altijd rechtop wordt
-+       gespeeld. Niet sluitbaar — speler moet draaien. ===== */
-+    #portrait-guard { position: fixed; inset: 0; z-index: 9999999;
-+        display: none; flex-direction: column; align-items: center;
-+        justify-content: center; gap: 18px; padding: 30px;
-+        background: linear-gradient(135deg, #0a0c18 0%, #1a1429 50%, #0a0c18 100%);
-+        color: white; text-align: center; }
-+    #portrait-guard.show { display: flex; }
-+    #portrait-guard .ico { font-size: 80px;
-+        animation: rotate-phone 2s ease-in-out infinite; }
-+    @keyframes rotate-phone {
-+        0%, 100% { transform: rotate(0); }
-+        50% { transform: rotate(-90deg); }
+-    // achtergrond transparant houden (de back-disc vult de rest)
++    // Helper: brighten een hex-kleur met factor (default +22%)
++    // Behoudt de tint maar maakt 'm levendiger.
++    function brighten(hex, factor = 1.22) {
++        const r = parseInt(hex.slice(1, 3), 16);
++        const g = parseInt(hex.slice(3, 5), 16);
++        const b = parseInt(hex.slice(5, 7), 16);
++        return `rgb(${Math.min(255, Math.round(r * factor))},`
++             + `${Math.min(255, Math.round(g * factor))},`
++             + `${Math.min(255, Math.round(b * factor))})`;
 +    }
-+    #portrait-guard h2 { margin: 0; font-size: 22px;
-+        font-weight: 900; letter-spacing: 0.5px; }
-+    #portrait-guard p { margin: 0; opacity: 0.7; font-size: 14px;
-+        line-height: 1.5; max-width: 280px; }
-     .modal { background: linear-gradient(180deg, #2a3850 0%, #1a1828 100%);
-       border: 2px solid rgba(255,255,255,0.25); border-radius: 24px;
-       padding: 28px 24px; width: min(420px, 100%); color: #fff; text-align: center;
-@@ -1807,98 +1827,59 @@
-     .tb-back .btn-pill.gold { background: linear-gradient(180deg, #ffd54a, #ff9a1a);
-       color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
- 
--    /* ===== Volcano Hop — pick-a-platform, wrong = lightning ===== */
--    .vh-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
--      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
-+    /* ===== Volcano Hop 3D — Lava Roulette rond de vulkaan ===== */
-+    /* Transparante overlay zodat de echte 3D vulkaan zichtbaar is. */
-+    .vh-back { position: fixed; inset: 0; z-index: 60; overflow: hidden;
-+      display: flex; flex-direction: column; color: #fff;
-+      animation: fadeIn .25s ease; touch-action: manipulation;
-+      user-select: none;
-       background:
--        radial-gradient(ellipse at 50% 110%, #ff5a1f 0%, #aa1a08 22%, #2a0a14 55%, #0a0612 100%);
--      touch-action: manipulation; }
--    .vh-back::before { content:""; position: absolute; inset: -10%; pointer-events: none;
--      background: radial-gradient(circle at 20% 30%, rgba(255,180,80,0.15), transparent 40%),
--                  radial-gradient(circle at 80% 70%, rgba(255,80,40,0.18), transparent 50%);
--      animation: vh-heat 8s ease-in-out infinite alternate; }
--    @keyframes vh-heat { from { opacity: 0.6; } to { opacity: 1; } }
-+        radial-gradient(ellipse at 50% 110%, rgba(255,90,31,0.20) 0%, rgba(170,26,8,0.10) 30%, transparent 65%),
-+        linear-gradient(180deg, rgba(5,8,18,0.40) 0%, rgba(5,8,18,0.05) 25%, rgba(5,8,18,0.05) 75%, rgba(5,8,18,0.55) 100%); }
-     .vh-header { position: relative; z-index: 2; padding: 14px 16px 4px; text-align: center; }
-     .vh-title { font-size: 22px; font-weight: 900; letter-spacing: 0.5px;
-       text-shadow: 0 2px 0 #000, 0 0 18px #ff7a1f; }
--    .vh-sub { font-size: 14px; opacity: 0.85; margin-top: 4px; min-height: 18px; }
-+    .vh-sub { font-size: 14px; opacity: 0.85; margin-top: 4px; min-height: 18px;
-+      text-shadow: 0 1px 0 #000; }
-     .vh-survivors { display: flex; gap: 6px; justify-content: center; margin-top: 6px; flex-wrap: wrap; }
-     .vh-chip { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800;
--      background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; gap: 6px; }
-+      background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; gap: 6px;
-+      backdrop-filter: blur(4px); }
-     .vh-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pcol); }
-     .vh-chip.out { opacity: 0.35; text-decoration: line-through; }
-     .vh-chip.cur { box-shadow: 0 0 0 2px var(--pcol), 0 0 14px var(--pcol); }
--    .vh-stage { flex: 1; position: relative; z-index: 1; perspective: 900px; overflow: hidden; }
--    .vh-platforms { position: absolute; inset: 0; display: flex; align-items: center;
--      justify-content: center; gap: 18px; padding: 20px;
--      transform-style: preserve-3d; transform: rotateX(8deg); }
--    .vh-plat { position: relative; width: clamp(70px, 22vw, 130px); aspect-ratio: 1.1 / 1;
--      background: linear-gradient(180deg, #6b3a1a 0%, #4a2510 70%, #2a1208 100%);
--      border-radius: 16px 16px 22px 22px / 18px 18px 30px 30px;
--      box-shadow: 0 12px 0 #2a1006, 0 18px 30px rgba(0,0,0,0.6),
--                  inset 0 2px 0 rgba(255,180,100,0.4), inset 0 -8px 12px rgba(0,0,0,0.5);
--      display: flex; align-items: center; justify-content: center; font-size: 38px; font-weight: 900;
--      color: #ffd54a; text-shadow: 0 3px 0 #000; cursor: pointer;
--      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
--      -webkit-tap-highlight-color: transparent; }
--    .vh-plat::before { content: ""; position: absolute; inset: 6px 6px auto 6px; height: 14px;
--      background: linear-gradient(180deg, #ff8c3a 0%, #c84410 100%);
--      border-radius: 12px 12px 4px 4px;
--      box-shadow: inset 0 -2px 4px rgba(0,0,0,0.5), 0 0 14px rgba(255,140,40,0.5); }
--    .vh-plat::after { content: ""; position: absolute; bottom: -14px; left: 50%;
--      width: 70%; height: 14px; transform: translateX(-50%);
--      background: radial-gradient(ellipse, rgba(0,0,0,0.55), transparent 70%); filter: blur(2px); }
--    .vh-plat:hover { transform: translateY(-4px); }
--    .vh-plat:active { transform: translateY(2px); }
--    .vh-plat.picked { transform: translateY(-12px) scale(1.05);
--      box-shadow: 0 16px 0 #2a1006, 0 0 0 4px var(--pcol), 0 0 30px var(--pcol),
--                  inset 0 2px 0 rgba(255,180,100,0.4); }
--    .vh-plat.safe { animation: vh-safe 0.6s ease forwards; }
--    @keyframes vh-safe { 0% { transform: translateY(-4px); }
--      40% { transform: translateY(-24px) scale(1.1); box-shadow: 0 0 0 6px #76ff7a, 0 0 50px #76ff7a; }
--      100% { transform: translateY(-12px); box-shadow: 0 0 0 4px #76ff7a, 0 0 30px #76ff7a; } }
--    .vh-plat.crumble { animation: vh-crumble 0.7s ease forwards; }
--    @keyframes vh-crumble {
--      0% { transform: translateY(0); opacity: 1; }
--      30% { transform: translateY(10px) rotate(-4deg); }
--      100% { transform: translateY(140px) rotate(12deg) scale(0.6); opacity: 0; }
--    }
--    .vh-tokens { position: absolute; inset: 0; pointer-events: none; }
--    .vh-token { position: absolute; width: 36px; height: 36px; border-radius: 50%;
--      background: var(--pcol); border: 3px solid #fff;
--      box-shadow: 0 6px 0 rgba(0,0,0,0.4), 0 0 18px rgba(0,0,0,0.4);
--      transform: translate(-50%, -50%); transition: left 0.5s ease, top 0.5s ease, opacity 0.5s ease;
--      display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900;
--      color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,0.6); }
--    .vh-token.fall { animation: vh-fall 0.9s cubic-bezier(.4,0,1,1) forwards; }
--    @keyframes vh-fall { 0% { transform: translate(-50%,-50%); }
--      50% { transform: translate(-50%, 60%) scale(0.8); }
--      100% { transform: translate(-50%, 200%) scale(0.4); opacity: 0; } }
--    .vh-cloud { position: absolute; left: 50%; bottom: -120px; transform: translateX(-50%);
--      width: 80%; height: 130px; pointer-events: none; z-index: 0;
--      background: radial-gradient(ellipse, #3a3550 30%, #1a1828 70%, transparent 100%);
--      border-radius: 50%; opacity: 0; transition: opacity 0.3s, bottom 0.4s; }
--    .vh-cloud.show { opacity: 1; bottom: -40px; }
--    .vh-cloud.zap::after { content: "⚡"; position: absolute; left: 50%; top: 50%;
--      transform: translate(-50%,-50%); font-size: 80px; color: #ffe54a;
--      text-shadow: 0 0 30px #fff, 0 0 60px #ffe54a;
--      animation: vh-zap 0.5s ease; }
--    @keyframes vh-zap { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
--      30% { opacity: 1; transform: translate(-50%,-50%) scale(1.4); }
--      100% { opacity: 0; transform: translate(-50%,-50%) scale(1); } }
--    .vh-actions { position: relative; z-index: 3; padding: 12px 16px 18px; text-align: center;
--      display: flex; justify-content: center; gap: 10px; }
--    .vh-actions .btn-pill { min-height: 52px; padding: 0 26px; border-radius: 999px;
--      border: 1px solid rgba(255,255,255,0.25); background: rgba(0,0,0,0.45);
--      color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; }
--    .vh-actions .btn-pill.gold { background: linear-gradient(180deg, #ffd54a, #ff9a1a);
--      color: #2a1a00; border-color: rgba(255,215,80,0.6); box-shadow: 0 4px 0 #b56a00; }
--    .vh-actions .btn-pill:disabled { opacity: 0.4; cursor: not-allowed; }
--    .vh-pass { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
--      display: flex; align-items: center; justify-content: center; flex-direction: column;
--      gap: 16px; z-index: 10; padding: 24px; text-align: center; }
-+    .vh-stage { flex: 1; position: relative; z-index: 1; }
-+    .vh-foot { position: relative; z-index: 2; padding: 12px 14px max(12px, env(safe-area-inset-bottom));
-+      display: flex; flex-direction: column; gap: 10px; align-items: center; }
-+    .vh-stones { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-width: 100%; }
-+    .vh-stone-btn { min-width: 56px; min-height: 56px; padding: 0 14px;
-+      border-radius: 50%; aspect-ratio: 1/1;
-+      background: radial-gradient(circle at 30% 30%, #7a5530, #3a2018);
-+      border: 2px solid #c89a4a; color: #fff; font-size: 22px; font-weight: 900;
-+      box-shadow: 0 4px 0 #2a1208, 0 0 18px rgba(255,154,26,0.4);
-+      cursor: pointer; -webkit-tap-highlight-color: transparent;
-+      transition: all 0.15s ease; }
-+    .vh-stone-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #2a1208, 0 0 12px rgba(255,154,26,0.3); }
-+    .vh-stone-btn.picked { background: radial-gradient(circle at 30% 30%, var(--pcol, #ffd54a), #6a3a18);
-+      border-color: var(--pcol, #ffd54a); box-shadow: 0 4px 0 #2a1208, 0 0 24px var(--pcol, #ffd54a); }
-+    .vh-stone-btn:disabled { opacity: 0.45; pointer-events: none; }
-+    .vh-pass { position: absolute; inset: 0; background: rgba(0,0,0,0.85);
-+      backdrop-filter: blur(10px); display: flex; flex-direction: column;
-+      align-items: center; justify-content: center; gap: 16px; padding: 30px;
-+      text-align: center; z-index: 10; animation: fadeIn 0.2s ease; }
-     .vh-pass h2 { margin: 0; font-size: 28px; font-weight: 900; }
--    .vh-pass p { margin: 0; opacity: 0.8; max-width: 280px; }
-+    .vh-pass p { margin: 0; opacity: 0.8; max-width: 280px; line-height: 1.4; }
-+    .vh-result { position: absolute; left: 50%; top: 50%;
-+      transform: translate(-50%, -50%) scale(0.5);
-+      pointer-events: none; z-index: 8; opacity: 0;
-+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-+    .vh-result.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-+    .vh-result .txt { font-size: 48px; font-weight: 900;
-+      background: linear-gradient(180deg, #ffeb3b, #ff5722);
-+      -webkit-background-clip: text; background-clip: text;
-+      -webkit-text-fill-color: transparent;
-+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.7))
-+              drop-shadow(0 0 30px rgba(255,80,40,0.8)); }
- 
-     /* Floating roll number animation */
-     .roll-pop { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%);
-@@ -2123,6 +2104,22 @@
-       font-size: clamp(22px, 6vw, 32px); }
-     @keyframes bj-deal { from { transform: translateY(-40px) rotate(-12deg); opacity: 0; }
-                          to   { transform: translateY(0) rotate(0); opacity: 1; } }
 +
-+    /* ===== Vulkaan-god's hand — deelt de kaarten uit ===== */
-+    .bj-godhand { position: absolute; top: 8px; left: 50%;
-+        transform: translateX(-50%) translateY(-12px) rotate(-8deg);
-+        font-size: 56px; pointer-events: none; z-index: 5;
-+        text-shadow: 0 4px 12px rgba(0,0,0,0.7);
-+        filter: drop-shadow(0 0 18px rgba(255,154,26,0.55));
-+        transition: transform 0.35s cubic-bezier(.3,1.7,.5,1); }
-+    .bj-godhand.deal {
-+        animation: bj-hand-flick 0.5s cubic-bezier(.3,1.7,.5,1); }
-+    @keyframes bj-hand-flick {
-+        0%   { transform: translateX(-50%) translateY(-12px) rotate(-8deg); }
-+        30%  { transform: translateX(-50%) translateY(-22px) rotate(-30deg) scale(1.15); }
-+        60%  { transform: translateX(-50%) translateY(8px) rotate(20deg); }
-+        100% { transform: translateX(-50%) translateY(-12px) rotate(-8deg); }
-+    }
-     .bj-val { font-size: 16px; font-weight: 900; padding: 4px 12px; border-radius: 999px;
-       background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); }
-     .bj-val.bust { background: rgba(200,0,40,0.5); border-color: #ff5050; }
-@@ -2465,6 +2462,13 @@
- </head>
- <body>
+     ctx.clearRect(0, 0, SZ, SZ);
  
-+<!-- Portrait-only guard — alleen rechtop spelen -->
-+<div id="portrait-guard">
-+    <div class="ico">📱</div>
-+    <h2>Draai je telefoon</h2>
-+    <p>Drank Eiland werkt alleen rechtop. Draai je telefoon terug om verder te spelen.</p>
-+</div>
+-    // donkere buitenring achter de segmenten (geeft "ingelegd" gevoel)
+     ctx.beginPath();
+     ctx.arc(cx, cy, R + 4, 0, Math.PI * 2);
+     ctx.fillStyle = '#2a1a08';
+@@ -4337,18 +4346,19 @@
+         ctx.moveTo(cx, cy);
+         ctx.arc(cx, cy, R, aStart, aEnd, false);
+         ctx.closePath();
+-        // fill met segment-kleur
+-        ctx.fillStyle = options[i].color;
++        // Brightened segment-kleur voor meer levendigheid
++        ctx.fillStyle = brighten(options[i].color);
+         ctx.fill();
+-        // donkere segmentlijn
+         ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+         ctx.lineWidth = 4;
+         ctx.stroke();
+-        // glans-overlay (radiaal naar buiten lichter)
++        // Lichtere glans-overlay (minder donker aan de rand)
++        // Voorheen: 0.25 / 0.05 / 0.18-DARK. Nu: meer white, minder
++        // dark, dus de wedges blijven hun helle kleur tonen.
+         const radial = ctx.createRadialGradient(cx, cy, R * 0.15, cx, cy, R);
+-        radial.addColorStop(0, 'rgba(255,255,255,0.25)');
+-        radial.addColorStop(0.55, 'rgba(255,255,255,0.05)');
+-        radial.addColorStop(1, 'rgba(0,0,0,0.18)');
++        radial.addColorStop(0,    'rgba(255,255,255,0.32)');
++        radial.addColorStop(0.55, 'rgba(255,255,255,0.12)');
++        radial.addColorStop(1,    'rgba(0,0,0,0.08)');
+         ctx.beginPath();
+         ctx.moveTo(cx, cy);
+         ctx.arc(cx, cy, R, aStart, aEnd, false);
+@@ -4439,89 +4449,87 @@
+     stall.add(makeBambooBeam( halfW, -halfD,  halfW,  halfD, topY));   // oost zijkant
+ 
+     // ── Schuin "rieten" dak (twee panelen + nokbalk) ──
++    //    De ridge loopt nu langs Z-as (de lange kant van de stall).
++    //    Twee panelen die naar oost en west aflopen.
+     const thatchDarkMat = new THREE.MeshToonMaterial({
+         color: 0x7a5520, gradientMap: toon });
+     const thatchLightMat = new THREE.MeshToonMaterial({
+         color: 0xa68238, gradientMap: toon });
+-    const roofGeo = new THREE.BoxGeometry(MWHEEL.stallW + 0.7, 0.14, halfD + 0.35);
+-    const roofF = new THREE.Mesh(roofGeo, thatchDarkMat);
+-    roofF.position.set(0, topY + 0.62, -halfD * 0.5);
+-    roofF.rotation.x = -Math.PI / 7;
+-    roofF.castShadow = true;
+-    stall.add(roofF);
+-    addOutline(roofF, 1.012);
+-    const roofB = new THREE.Mesh(roofGeo, thatchDarkMat);
+-    roofB.position.set(0, topY + 0.62, halfD * 0.5);
+-    roofB.rotation.x = Math.PI / 7;
+-    roofB.castShadow = true;
+-    stall.add(roofB);
+-    addOutline(roofB, 1.012);
+-    // Nokbalk
++    const roofGeo = new THREE.BoxGeometry(halfW + 0.35, 0.14, MWHEEL.stallD + 0.7);
++    const roofE = new THREE.Mesh(roofGeo, thatchDarkMat);
++    roofE.position.set(halfW * 0.5, topY + 0.62, 0);
++    roofE.rotation.z = -Math.PI / 7;
++    roofE.castShadow = true;
++    stall.add(roofE);
++    addOutline(roofE, 1.012);
++    const roofW = new THREE.Mesh(roofGeo, thatchDarkMat);
++    roofW.position.set(-halfW * 0.5, topY + 0.62, 0);
++    roofW.rotation.z = Math.PI / 7;
++    roofW.castShadow = true;
++    stall.add(roofW);
++    addOutline(roofW, 1.012);
++    // Nokbalk (langs Z-as, de lange kant)
+     const ridge = new THREE.Mesh(
+-        new THREE.CylinderGeometry(0.10, 0.10, MWHEEL.stallW + 0.8, 8),
++        new THREE.CylinderGeometry(0.10, 0.10, MWHEEL.stallD + 0.8, 8),
+         new THREE.MeshToonMaterial({ color: 0x5a3f18, gradientMap: toon }));
+-    ridge.rotation.z = Math.PI / 2;
++    ridge.rotation.x = Math.PI / 2;
+     ridge.position.set(0, topY + 1.05, 0);
+     ridge.castShadow = true;
+     stall.add(ridge);
+-    // Lichte riet-strepen
+-    for (const zSide of [-1, 1]) {
++    // Lichte riet-strepen op de panelen (langs Z-as)
++    for (const xSide of [-1, 1]) {
+         const stripe = new THREE.Mesh(
+-            new THREE.BoxGeometry(MWHEEL.stallW + 0.5, 0.05, 0.16),
++            new THREE.BoxGeometry(0.16, 0.05, MWHEEL.stallD + 0.5),
+             thatchLightMat);
+-        stripe.position.set(0, topY + 0.55 + 0.04, zSide * halfD * 0.35);
+-        stripe.rotation.x = zSide < 0 ? -Math.PI / 7 : Math.PI / 7;
++        stripe.position.set(xSide * halfW * 0.35, topY + 0.55 + 0.04, 0);
++        stripe.rotation.z = xSide < 0 ? Math.PI / 7 : -Math.PI / 7;
+         stall.add(stripe);
+     }
+ 
+-    // ── Backboard (paneel achter rad, hangt aan back-palen) ──
+-    const backboardMat = new THREE.MeshToonMaterial({
+-        color: 0x9a6a2e, gradientMap: toon });
+-    const backboard = new THREE.Mesh(
+-        new THREE.BoxGeometry(MWHEEL.stallW - 0.6, MWHEEL.postH - 0.8, 0.08),
+-        backboardMat);
+-    backboard.position.set(0, (MWHEEL.postH - 0.8) / 2 + 0.4, halfD - 0.08);
+-    backboard.castShadow = true;
+-    backboard.receiveShadow = true;
+-    stall.add(backboard);
+-    addOutline(backboard, 1.008);
++    // ── Backboard verwijderd: kraampje is nu open, hoofdeiland +
++    //    lucht zijn zichtbaar als achtergrond achter het rad ──
+ 
+-    // ── Counter (bamboe toonbank vóór de kraam) ──
++    // ── Counter (bamboe toonbank vóór de kraam — op oost-zijde,
++    //    tussen camera en rad). Hangt iets BUITEN de stall. ──
+     const counterMat = new THREE.MeshToonMaterial({
+         color: 0xa67838, gradientMap: toon });
+     const counter = new THREE.Mesh(
+-        new THREE.BoxGeometry(MWHEEL.stallW - 0.4, 0.18, 0.7),
++        new THREE.BoxGeometry(0.7, 0.18, MWHEEL.stallD - 0.4),
+         counterMat);
+-    counter.position.set(0, 0.95, -halfD - 0.15);
++    counter.position.set(halfW + 0.35, 0.95, 0);
+     counter.castShadow = true;
+     counter.receiveShadow = true;
+     stall.add(counter);
+     addOutline(counter, 1.012);
+-    for (const xSide of [-1, 1]) {
++    for (const zSide of [-1, 1]) {
+         const leg = new THREE.Mesh(
+             new THREE.CylinderGeometry(0.07, 0.07, 0.95, 8), counterMat);
+-        leg.position.set(xSide * (halfW - 0.4), 0.47, -halfD - 0.15);
++        leg.position.set(halfW + 0.35, 0.47, zSide * (halfD - 0.4));
+         stall.add(leg);
+     }
+ 
+-    // ── Sign-bord boven dak ──
++    // ── Sign-bord boven dak (steekt OOST uit, richting camera) ──
+     const signMat = new THREE.MeshBasicMaterial({
+         map: makeMysterySignTexture(), transparent: false });
+     const sign = new THREE.Mesh(
+         new THREE.PlaneGeometry(3.9, 0.95), signMat);
+-    sign.position.set(0, topY + 1.85, -halfD * 0.3);
+-    sign.rotation.x = -Math.PI / 9;
++    sign.position.set(halfW * 0.5 + 0.4, topY + 1.85, 0);
++    // Plane default normal = +Z. Roteer Y=π/2 zodat normal langs +X
++    // (richting camera). Daarna kleine Z-tilt voor het "hangen".
++    sign.rotation.y = Math.PI / 2;
++    sign.rotation.z = -Math.PI / 9;
+     stall.add(sign);
+-    for (const xs of [-1, 1]) {
++    for (const zs of [-1, 1]) {
+         const stick = new THREE.Mesh(
+             new THREE.CylinderGeometry(0.05, 0.05, 1.6, 6),
+             new THREE.MeshToonMaterial({ color: 0xc89456, gradientMap: toon }));
+-        stick.position.set(xs * 1.9, topY + 1.0, -halfD * 0.3 + 0.4);
+-        stick.rotation.z = xs * -0.08;
++        stick.position.set(halfW * 0.5 + 0.4 - 0.4, topY + 1.0, zs * 1.9);
++        stick.rotation.x = zs * 0.08;
+         stall.add(stick);
+     }
+ 
+-    // ── Axle (horizontaal langs wereld-X, voor de backboard) ──
++    // ── Axle (horizontaal langs wereld-X, ACHTER het rad-vlak)
++    //    nu op z=0 (gecentreerd in stall) ──
+     const axleMat = new THREE.MeshToonMaterial({
+         color: 0x3a2810, gradientMap: toon,
+         emissive: 0x1a1208, emissiveIntensity: 0.2 });
+@@ -4529,17 +4537,17 @@
+     const axle = new THREE.Mesh(
+         new THREE.CylinderGeometry(0.09, 0.09, axleLen, 10), axleMat);
+     axle.rotation.z = Math.PI / 2;
+-    axle.position.set(0, MWHEEL.wheelY, halfD - 0.4);
++    axle.position.set(0, MWHEEL.wheelY, 0);    // z=0 — center
+     axle.castShadow = true;
+     stall.add(axle);
+     const axleCap = new THREE.Mesh(
+         new THREE.SphereGeometry(0.13, 12, 10),
+         new THREE.MeshToonMaterial({ color: 0xffd54a, gradientMap: toon,
+             emissive: 0x885500, emissiveIntensity: 0.4 }));
+-    axleCap.position.set(-axleLen / 2 + 0.05, MWHEEL.wheelY, halfD - 0.4);
++    axleCap.position.set(axleLen / 2 - 0.05, MWHEEL.wheelY, 0);
+     stall.add(axleCap);
+ 
+-    // ── Pointer (vast, niet draaiend) — gouden pijl bovenaan ──
++    // ── Pointer (vast, gouden pijl bovenaan, ook gecentreerd) ──
+     const pointerMat = new THREE.MeshToonMaterial({
+         color: 0xffd54a, gradientMap: toon,
+         emissive: 0x885500, emissiveIntensity: 0.55 });
+@@ -4547,20 +4555,18 @@
+         new THREE.ConeGeometry(0.18, 0.42, 4), pointerMat);
+     pointer.rotation.x = Math.PI;
+     pointer.rotation.y = Math.PI / 4;
+-    pointer.position.set(0, MWHEEL.wheelY + MWHEEL.radius + 0.18,
+-                         halfD - 0.4 - 0.05);
++    pointer.position.set(0, MWHEEL.wheelY + MWHEEL.radius + 0.18, 0);
+     pointer.castShadow = true;
+     stall.add(pointer);
+     addOutline(pointer, 1.08);
+     const pointerBall = new THREE.Mesh(
+         new THREE.SphereGeometry(0.13, 12, 10), pointerMat);
+-    pointerBall.position.set(0, MWHEEL.wheelY + MWHEEL.radius + 0.45,
+-                             halfD - 0.4 - 0.05);
++    pointerBall.position.set(0, MWHEEL.wheelY + MWHEEL.radius + 0.45, 0);
+     stall.add(pointerBall);
+ 
+-    // ── Spin-group: alles wat MEE-ROTEERT om wereld-X ──
++    // ── Spin-group: gecentreerd in stall (z=0) ──
+     const spin = new THREE.Group();
+-    spin.position.set(0, MWHEEL.wheelY, halfD - 0.4);
++    spin.position.set(0, MWHEEL.wheelY, 0);    // z=0 — center
+     stall.add(spin);
+     mysteryWheelSpin = spin;
+ 
+@@ -4639,9 +4645,12 @@
+     mysteryWheelFaceMeshes.length = 0;
+ 
+     // Front-disc met canvas-texture
++    // MeshBasicMaterial — geen licht-shading, dus kleuren komen
++    // EXACT door zoals in de texture-canvas. ToonMaterial dimde
++    // de kleuren door scene-lighting en gradient-banding.
+     const faceTex = makeMysteryWheelFaceTexture(options);
+-    const faceMat = new THREE.MeshToonMaterial({
+-        map: faceTex, gradientMap: toon, transparent: true,
++    const faceMat = new THREE.MeshBasicMaterial({
++        map: faceTex, transparent: true,
+         side: THREE.FrontSide });
+     const faceGeo = new THREE.CircleGeometry(MWHEEL.radius, 64);
+     const faceDisc = new THREE.Mesh(faceGeo, faceMat);
+@@ -5519,6 +5528,126 @@
+     layoutTokensOnTile(player.tileIdx);
+ }
+ 
++// ════════════════════════════════════════════════════════════════
++//  JAIL / BANANA BRIG PAWN MANAGEMENT
++// ════════════════════════════════════════════════════════════════
++//  Banana Brig satelliet staat op wereld (4, 0, -19) met grass-top
++//  y=2.4. De stenen plateau zit op y=2.65, de bamboe-kooi op y=2.85
++//  met radius 1.55 en hoogte 2.4 — binnenruimte ruim genoeg voor
++//  meerdere pawns.
++//
++//  Een vastzittende speler's token gaat NAAR de jail-positie (binnen
++//  de kooi), terwijl player.tileIdx blijft staan op de skull-tegel
++//  waar 'ie verbannen werd. Bij ontsnappen vliegt de pawn terug naar
++//  die tegel om vervolgens normaal te bewegen.
++//
++//  Bij meerdere gevangen spelers worden ze in een klein cirkeltje
++//  binnen de kooi gerangschikt.
++// ════════════════════════════════════════════════════════════════
++const JAIL_WORLD_POS = new THREE.Vector3(4, 3.0, -19);
 +
- <div id="loading">
-     <div>🌋 Drank Eiland</div>
-     <div><span class="dot"></span> <span class="dot"></span> <span class="dot"></span></div>
-@@ -2486,6 +2490,21 @@
- import * as THREE from 'three';
- import { OrbitControls } from 'OrbitControls';
- 
-+// ════════════════════════════════════════════════════════════
-+//  PORTRAIT-ONLY GUARD
-+// ════════════════════════════════════════════════════════════
-+const portraitGuardEl = document.getElementById('portrait-guard');
-+function checkOrientation() {
-+    if (!portraitGuardEl) return;
-+    const isLandscape = window.innerWidth > window.innerHeight;
-+    const isMobileSize = Math.min(window.innerWidth, window.innerHeight) < 720;
-+    if (isLandscape && isMobileSize) portraitGuardEl.classList.add('show');
-+    else portraitGuardEl.classList.remove('show');
++function jailPositionFor(player) {
++    const jailed = G.players.filter(p => p.inPrison);
++    const idx = jailed.indexOf(player);
++    if (idx === -1 || jailed.length <= 1) return JAIL_WORLD_POS.clone();
++    const angle = (idx / jailed.length) * Math.PI * 2;
++    const r = 0.5;
++    return new THREE.Vector3(
++        JAIL_WORLD_POS.x + Math.cos(angle) * r,
++        JAIL_WORLD_POS.y,
++        JAIL_WORLD_POS.z + Math.sin(angle) * r,
++    );
 +}
-+window.addEventListener('resize', checkOrientation);
-+window.addEventListener('orientationchange', checkOrientation);
-+checkOrientation();
 +
- /* ============================================================
-    VOLKAAN EILAND — Wii Party stijl
-    ============================================================
-@@ -11933,204 +11952,518 @@
++function layoutJailedTokens() {
++    const jailed = G.players.filter(p => p.inPrison);
++    jailed.forEach((p, idx) => {
++        const angle = jailed.length <= 1 ? 0 : (idx / jailed.length) * Math.PI * 2;
++        const r = jailed.length <= 1 ? 0 : 0.5;
++        p.token.position.set(
++            JAIL_WORLD_POS.x + Math.cos(angle) * r,
++            JAIL_WORLD_POS.y,
++            JAIL_WORLD_POS.z + Math.sin(angle) * r,
++        );
++    });
++}
++
++function animateTokenToJail(player, durMs = 800, arcH = 2.0) {
++    return new Promise(resolve => {
++        const startPos = player.token.position.clone();
++        const endPos = jailPositionFor(player);
++        const startTime = performance.now();
++        const step = (now) => {
++            const k = Math.min(1, (now - startTime) / durMs);
++            const ease = 1 - Math.pow(1 - k, 2.5);
++            player.token.position.lerpVectors(startPos, endPos, ease);
++            player.token.position.y += Math.sin(k * Math.PI) * arcH;
++            if (k < 1) requestAnimationFrame(step);
++            else {
++                player.token.position.copy(endPos);
++                layoutJailedTokens();
++                resolve();
++            }
++        };
++        requestAnimationFrame(step);
++    });
++}
++
++function animateTokenFromJail(player, durMs = 800, arcH = 2.0) {
++    return new Promise(resolve => {
++        const startPos = player.token.position.clone();
++        const endPos = tileWorldPos[player.tileIdx].clone();
++        endPos.y += 0.25;
++        const startTime = performance.now();
++        const step = (now) => {
++            const k = Math.min(1, (now - startTime) / durMs);
++            const ease = 1 - Math.pow(1 - k, 2.5);
++            player.token.position.lerpVectors(startPos, endPos, ease);
++            player.token.position.y += Math.sin(k * Math.PI) * arcH;
++            if (k < 1) requestAnimationFrame(step);
++            else {
++                player.token.position.copy(endPos);
++                layoutTokensOnTile(player.tileIdx);
++                layoutJailedTokens();
++                resolve();
++            }
++        };
++        requestAnimationFrame(step);
++    });
++}
++
++function lerpCameraTo(toPos, toTgt, durMs = 700) {
++    return new Promise(resolve => {
++        const fromPos = camera.position.clone();
++        const fromTgt = controls.target.clone();
++        const t0 = performance.now();
++        const step = (now) => {
++            const k = Math.min(1, (now - t0) / durMs);
++            const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
++            camera.position.lerpVectors(fromPos, toPos, e);
++            controls.target.lerpVectors(fromTgt, toTgt, e);
++            if (k < 1) requestAnimationFrame(step);
++            else resolve();
++        };
++        requestAnimationFrame(step);
++    });
++}
++
++// Dramatische zoom op Banana Brig — voor POV op de gevangen speler
++async function zoomCameraToJail(durMs = 700) {
++    const camTo = new THREE.Vector3(
++        JAIL_WORLD_POS.x + 4,
++        JAIL_WORLD_POS.y + 3,
++        JAIL_WORLD_POS.z + 5,
++    );
++    const tgtTo = new THREE.Vector3(
++        JAIL_WORLD_POS.x,
++        JAIL_WORLD_POS.y + 0.5,
++        JAIL_WORLD_POS.z,
++    );
++    await lerpCameraTo(camTo, tgtTo, durMs);
++}
++
+ // ── UI: helper ──
+ const ui = document.getElementById('game-ui');
+ function el(tag, props={}, children=[]) {
+@@ -11314,6 +11443,7 @@
+             palette: 'lava',
+         }).then(async () => {
+             advanceTurn();
++            await maybeRunAllPlayerRoundGame();
+             G.phase = 'idle';
+             refreshHUD();
+             // Schnaps could still call after a skip-turn
+@@ -11330,6 +11460,23 @@
+     const useBonus = (player.bonusDice || 0) > 0;
+     const diceCount = useBonus ? 2 : 1;
  
- // ── Volcano Hop — secretly pick a platform; wrong = lightning, last standing wins ──
- function playVolcanoHop({ players = G.players, drinks = 2 } = {}) {
--    return new Promise(resolve => {
-+    return new Promise(resolveOuter => {
-+        // ════════════════════════════════════════════════════════
-+        //  VOLCANO HOP 3D — Lava Roulette boven de vulkaan
-+        // ════════════════════════════════════════════════════════
-+        //   Spelers kiezen om beurten stiekem een zwevend lava-
-+        //   platform HOOG boven de vulkaan-krater. Bij de onthulling
-+        //   stort één random platform de lava in — wie daarop staat
-+        //   drinkt en is uit. Laatste overlevende wint.
-+        // ════════════════════════════════════════════════════════
-+
-+        // SETUP
-+        const hiddenChrome = hideMinigameChrome();
-+        const savedCam = {
++    // ── Gevangenis POV: zoom camera in op Banana Brig zodat je de pawn
++    //    in de kooi ziet terwijl 'ie probeert te ontsnappen. De dice-
++    //    iframe is semi-transparant, dus de jail-view is zichtbaar
++    //    áchter de dobbelstenen — extra dramatisch. Saved-state wordt
++    //    in finish() gerestored (lerp terug naar bord). ─────────────
++    let savedCamForJail = null;
++    if (player.inPrison) {
++        savedCamForJail = {
 +            pos: camera.position.clone(),
-+            fov: camera.fov,
-+            target: controls.target.clone(),
++            tgt: controls.target.clone(),
 +            autoRotate: controls.autoRotate,
-+            enabled: controls.enabled,
 +        };
 +        controls.autoRotate = false;
-+        controls.enabled = false;
-+        camera.fov = 55;
-+        camera.updateProjectionMatrix();
++        // Fire-and-forget: zoomt parallel met iframe-setup
++        zoomCameraToJail(500);
++    }
 +
-+        // Camera HOOG boven de vulkaan — platforms zweven nu rond
-+        // y=20 (ruim boven krater-top y=12.4)
-+        const VOLCANO_CAM = {
-+            pos: new THREE.Vector3(10, 30, 10),
-+            tgt: new THREE.Vector3(-0.2, 18, 0.2),
-+        };
-+        const camFrom = { pos: camera.position.clone(),
-+                          tgt: controls.target.clone() };
-+        let camLerpT = 0;
-+        const camLerpDur = 1.0;
-+        let camShakeT = 0;
-+
-+        // 3D PLATFORMS
-+        const platformsGroup = new THREE.Group();
-+        scene.add(platformsGroup);
-+        const platforms3D = [];
-+        const tokens3D = [];
-+
-+        const VOL_X = -0.2, VOL_Z = 0.2;
-+        const RING_R = 5.5;        // grotere ring voor proportie op hoogte
-+        const PLAT_Y = 20;         // platforms hoog boven krater (12.4)
-+
-+        function makeNumberSprite(n) {
-+            const cvs = document.createElement('canvas');
-+            cvs.width = 128; cvs.height = 128;
-+            const ctx = cvs.getContext('2d');
-+            ctx.fillStyle = '#ffd54a';
-+            ctx.font = 'bold 90px sans-serif';
-+            ctx.textAlign = 'center';
-+            ctx.textBaseline = 'middle';
-+            ctx.shadowColor = '#000';
-+            ctx.shadowBlur = 12;
-+            ctx.fillText(String(n), 64, 64);
-+            const tex = new THREE.CanvasTexture(cvs);
-+            const mat = new THREE.SpriteMaterial({
-+                map: tex, transparent: true,
-+                depthTest: false, depthWrite: false });
-+            const sp = new THREE.Sprite(mat);
-+            sp.scale.set(1.1, 1.1, 1.1);
-+            return sp;
-+        }
-+
-+        function buildPlatforms(count) {
-+            for (const p of platforms3D) {
-+                platformsGroup.remove(p);
-+                p.traverse(c => {
-+                    if (c.geometry) c.geometry.dispose();
-+                    if (c.material) c.material.dispose();
-+                });
-+            }
-+            platforms3D.length = 0;
-+
-+            for (let i = 0; i < count; i++) {
-+                const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-+                const x = VOL_X + Math.cos(angle) * RING_R;
-+                const z = VOL_Z + Math.sin(angle) * RING_R;
-+
-+                const grp = new THREE.Group();
-+                const stone = new THREE.Mesh(
-+                    deformCylinder(
-+                        new THREE.CylinderGeometry(0.9, 1.05, 0.5, 14), 0.2),
-+                    new THREE.MeshToonMaterial({
-+                        color: 0x6d4c2a, gradientMap: toon,
-+                        emissive: 0xff5500, emissiveIntensity: 0.12,
-+                    }));
-+                stone.castShadow = true;
-+                grp.add(stone);
-+                addOutline(stone, 1.04);
-+                // Lava-glow ring eronder
-+                const glow = new THREE.Mesh(
-+                    new THREE.RingGeometry(1.0, 1.35, 18),
-+                    new THREE.MeshBasicMaterial({
-+                        color: 0xff7a1f, transparent: true, opacity: 0.55,
-+                        side: THREE.DoubleSide,
-+                        depthWrite: false }));
-+                glow.rotation.x = -Math.PI / 2;
-+                glow.position.y = -0.23;
-+                grp.add(glow);
-+                // Nummer-sprite boven het platform
-+                const numSp = makeNumberSprite(i + 1);
-+                numSp.position.set(0, 0.95, 0);
-+                numSp.renderOrder = 2;
-+                grp.add(numSp);
-+
-+                grp.position.set(x, PLAT_Y, z);
-+                grp.userData.idx = i;
-+                grp.userData.basePos = grp.position.clone();
-+                grp.userData.bobPhase = i * 0.4;
-+                grp.userData.stoneMat = stone.material;
-+                grp.userData.glowMat = glow.material;
-+                platformsGroup.add(grp);
-+                platforms3D.push(grp);
-+            }
-+        }
-+
-+        function buildTokenOnPlatform(p, platIdx) {
-+            const plat = platforms3D[platIdx];
-+            const tokenGrp = new THREE.Group();
-+            const ball = new THREE.Mesh(
-+                new THREE.SphereGeometry(0.33, 14, 12),
-+                new THREE.MeshToonMaterial({
-+                    color: parseHexColor(p.color.hex),
-+                    gradientMap: toon,
-+                    emissive: parseHexColor(p.color.hex),
-+                    emissiveIntensity: 0.30,
-+                }));
-+            ball.castShadow = true;
-+            tokenGrp.add(ball);
-+            addOutline(ball, 1.10);
-+            tokenGrp.position.set(plat.position.x,
-+                plat.position.y + 0.62, plat.position.z);
-+            tokenGrp.userData.baseY = tokenGrp.position.y;
-+            tokenGrp.userData.bobPhase = Math.random() * Math.PI * 2;
-+            tokenGrp.userData.platIdx = platIdx;
-+            tokenGrp.userData.player = p;
-+            platformsGroup.add(tokenGrp);
-+            tokens3D.push(tokenGrp);
-+            return tokenGrp;
-+        }
-+
-+        function clearTokens() {
-+            for (const t of tokens3D) {
-+                platformsGroup.remove(t);
-+                t.traverse(c => {
-+                    if (c.geometry) c.geometry.dispose();
-+                    if (c.material) c.material.dispose();
-+                });
-+            }
-+            tokens3D.length = 0;
-+        }
-+
-+        function destroyPlatform(idx) {
-+            return new Promise(res => {
-+                const plat = platforms3D[idx];
-+                const startY = plat.position.y;
-+                const startTime = performance.now();
-+                const dur = 1500;
-+                const fallingTokens = tokens3D.filter(t =>
-+                    t.userData.platIdx === idx);
-+                fallingTokens.forEach(t => {
-+                    t.userData.fallStartY = t.position.y;
-+                });
-+                const step = () => {
-+                    const t = Math.min(1, (performance.now() - startTime) / dur);
-+                    const fall = t * t * 24;     // grotere val (hoger startpunt)
-+                    plat.position.y = startY - fall;
-+                    plat.rotation.x = t * 2;
-+                    plat.rotation.z = t * 1.3;
-+                    if (plat.userData.stoneMat) {
-+                        plat.userData.stoneMat.transparent = true;
-+                        plat.userData.stoneMat.opacity = Math.max(0, 1 - t * 1.3);
-+                    }
-+                    if (plat.userData.glowMat) {
-+                        plat.userData.glowMat.opacity = 0.55 * Math.max(0, 1 - t * 1.3);
-+                    }
-+                    fallingTokens.forEach(tk => {
-+                        tk.position.y = tk.userData.fallStartY - fall;
-+                        tk.rotation.z = t * 3;
-+                        tk.traverse(c => {
-+                            if (c.material) {
-+                                c.material.transparent = true;
-+                                c.material.opacity = Math.max(0, 1 - t * 1.3);
-+                            }
-+                        });
-+                    });
-+                    if (t < 1) requestAnimationFrame(step);
-+                    else res();
-+                };
-+                step();
-+            });
-+        }
-+
-+        // ANIMATION HOOK
-+        const PREV_HOOK = window.__deGameHook;
-+        let lastT = 0;
-+        window.__deGameHook = (time) => {
-+            const dt = lastT ? Math.min(0.05, time - lastT) : 0;
-+            lastT = time;
-+            if (camLerpT < 1) {
-+                camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
-+                const e = 1 - Math.pow(1 - camLerpT, 3);
-+                camera.position.lerpVectors(camFrom.pos, VOLCANO_CAM.pos, e);
-+                controls.target.lerpVectors(camFrom.tgt, VOLCANO_CAM.tgt, e);
-+            }
-+            if (camShakeT > 0) {
-+                camera.position.x += (Math.random() - 0.5) * camShakeT;
-+                camera.position.y += (Math.random() - 0.5) * camShakeT;
-+                camera.position.z += (Math.random() - 0.5) * camShakeT;
-+                camShakeT *= 0.92;
-+                if (camShakeT < 0.01) camShakeT = 0;
-+            }
-+            camera.lookAt(controls.target);
-+            // Platform bob
-+            for (const plat of platforms3D) {
-+                const u = plat.userData;
-+                if (u.basePos && u.bobPhase !== undefined) {
-+                    plat.position.y = u.basePos.y +
-+                        Math.sin(time * 1.5 + u.bobPhase) * 0.10;
-+                }
-+            }
-+            // Token bob volgt platform
-+            for (const t of tokens3D) {
-+                const u = t.userData;
-+                if (u.baseY !== undefined && u.bobPhase !== undefined) {
-+                    const plat = platforms3D[u.platIdx];
-+                    if (plat) {
-+                        t.position.y = plat.position.y + 0.62 +
-+                            Math.sin(time * 2.5 + u.bobPhase) * 0.05;
-+                    }
-+                }
-+            }
-+        };
-+
-+        // STATE
-+        let alive = [...players];
-+        const eliminated = [];
-+        let round = 0;
-+
-+        // HUD overlay
-         const ui = document.getElementById('game-ui');
-         const back = el('div', { className: 'vh-back' });
-         const header = el('div', { className: 'vh-header' });
-         const title = el('div', { className: 'vh-title' }, '🌋 Volcano Hop');
--        const sub = el('div', { className: 'vh-sub' }, 'Kies stiekem een platform');
-+        const sub = el('div', { className: 'vh-sub' }, 'Kies een lava-steen boven de krater');
-         const chips = el('div', { className: 'vh-survivors' });
-         header.append(title, sub, chips);
-         const stage = el('div', { className: 'vh-stage' });
--        const plats = el('div', { className: 'vh-platforms' });
--        const tokens = el('div', { className: 'vh-tokens' });
--        const cloud = el('div', { className: 'vh-cloud' });
--        stage.append(plats, tokens, cloud);
--        const actions = el('div', { className: 'vh-actions' });
--        back.append(header, stage, actions);
-+        const result = el('div', { className: 'vh-result' });
-+        result.append(el('div', { className: 'txt' }));
-+        stage.append(result);
-+        const foot = el('div', { className: 'vh-foot' });
-+        const stones = el('div', { className: 'vh-stones' });
-+        const actionsRow = el('div', {
-+            style: { display: 'flex', gap: '10px', justifyContent: 'center' }
-+        });
-+        foot.append(stones, actionsRow);
-+        back.append(header, stage, foot);
-         ui.append(back);
- 
--        let alive = [...players];
--        const eliminated = [];
--        let round = 0;
--
-         function renderChips(currentP = null) {
-             chips.innerHTML = '';
-             for (const p of players) {
-                 const out = !alive.includes(p);
-                 const cur = p === currentP;
--                const c = el('div', { className: 'vh-chip' + (out ? ' out' : '') + (cur ? ' cur' : ''),
--                    style: { '--pcol': p.color.css } });
--                c.append(el('div', { className: 'dot' }), document.createTextNode(p.name));
-+                const c = el('div', {
-+                    className: 'vh-chip' + (out ? ' out' : '') + (cur ? ' cur' : ''),
-+                    style: { '--pcol': p.color.css }
-+                });
-+                c.append(el('div', { className: 'dot' }),
-+                    document.createTextNode(p.name));
-                 chips.append(c);
-             }
-         }
- 
--        function clear() { plats.innerHTML = ''; tokens.innerHTML = ''; actions.innerHTML = ''; cloud.className = 'vh-cloud'; }
-+        function showResultText(text) {
-+            const txt = result.querySelector('.txt');
-+            txt.textContent = text;
-+            requestAnimationFrame(() => result.classList.add('show'));
-+            return new Promise(r => setTimeout(() => {
-+                result.classList.remove('show');
-+                r();
-+            }, 1800));
-+        }
- 
--        function showPassScreen(text, sub2, btnLabel, onGo) {
--            const pass = el('div', { className: 'vh-pass' });
--            pass.append(
--                el('h2', {}, text),
--                el('p', {}, sub2 || ''),
--                el('button', { className: 'btn-pill gold', on: { click: () => { pass.remove(); onGo(); } },
--                    style: { minHeight: '52px', padding: '0 26px', borderRadius: '999px',
--                        background: 'linear-gradient(180deg,#ffd54a,#ff9a1a)', color: '#2a1a00',
--                        border: '1px solid rgba(255,215,80,0.6)', boxShadow: '0 4px 0 #b56a00',
--                        fontWeight: '800', fontSize: '16px', cursor: 'pointer' } }, btnLabel || 'OK'),
--            );
--            stage.append(pass);
-+        function showPassScreen(text, subtitle, btnLabel) {
-+            return new Promise(r => {
-+                const pass = el('div', { className: 'vh-pass' });
-+                pass.append(
-+                    el('h2', {}, text),
-+                    el('p', {}, subtitle || ''),
-+                    el('button', { className: 'btn-pill gold',
-+                        on: { click: () => { pass.remove(); r(); } },
-+                        style: { minHeight: '52px', padding: '0 26px',
-+                                 borderRadius: '999px',
-+                                 background: 'linear-gradient(180deg,#ffd54a,#ff9a1a)',
-+                                 color: '#2a1a00', border: '1px solid rgba(255,215,80,0.6)',
-+                                 boxShadow: '0 4px 0 #b56a00',
-+                                 fontWeight: '800', fontSize: '16px',
-+                                 cursor: 'pointer' } }, btnLabel || 'OK'),
-+                );
-+                stage.append(pass);
-+            });
-+        }
-+
-+        function renderStoneButtons(count) {
-+            stones.innerHTML = '';
-+            const btns = [];
-+            for (let i = 0; i < count; i++) {
-+                const btn = el('button', { className: 'vh-stone-btn' },
-+                    String(i + 1));
-+                btn.dataset.idx = i;
-+                stones.append(btn);
-+                btns.push(btn);
-+            }
-+            return btns;
-+        }
-+
-+        function highlightPlatform(idx, color) {
-+            const plat = platforms3D[idx];
-+            if (!plat) return;
-+            const hex = parseHexColor(color);
-+            plat.userData.stoneMat.emissive.setHex(hex);
-+            plat.userData.stoneMat.emissiveIntensity = 0.7;
-+            plat.userData.glowMat.color.setHex(hex);
-+            plat.userData.glowMat.opacity = 0.9;
-+        }
-+        function dimPlatform(idx) {
-+            const plat = platforms3D[idx];
-+            if (!plat) return;
-+            plat.userData.stoneMat.emissive.setHex(0xff5500);
-+            plat.userData.stoneMat.emissiveIntensity = 0.12;
-+            plat.userData.glowMat.color.setHex(0xff7a1f);
-+            plat.userData.glowMat.opacity = 0.55;
-         }
- 
-+        const sleep = ms => new Promise(r => setTimeout(r, ms));
-+
-         async function playRound() {
-             round++;
--            clear();
--            const platCount = Math.max(2, Math.min(5, alive.length + 1));
--            const safeIdx = Math.floor(Math.random() * platCount);
--            const picks = new Map(); // player → platIdx
--
--            // build platforms
--            const platEls = [];
--            for (let i = 0; i < platCount; i++) {
--                const pl = el('div', { className: 'vh-plat' }, String(i + 1));
--                pl.dataset.idx = i;
--                plats.append(pl);
--                platEls.push(pl);
--            }
--
--            sub.textContent = `Ronde ${round} — ${alive.length} spelers, ${platCount} platforms`;
-+            const platCount = Math.max(2, Math.min(7, alive.length + 1));
-+            buildPlatforms(platCount);
-+            clearTokens();
-+            sub.textContent =
-+                `Ronde ${round} — ${alive.length} spelers, ${platCount} stenen`;
-             renderChips();
- 
--            // pass-and-pick for each alive player
--            for (let pi = 0; pi < alive.length; pi++) {
--                const p = alive[pi];
--                await new Promise(r => {
--                    showPassScreen(`Geef telefoon aan ${p.name}`,
--                        'Kies stiekem 1 platform. Anderen mogen niet zien!',
--                        'Ik ben er klaar voor', r);
--                });
-+            const picks = new Map();
-+            for (const p of alive) {
-+                await showPassScreen(`Geef telefoon aan ${p.name}`,
-+                    'Tik stiekem op een lava-steen. Anderen mogen niet kijken!',
-+                    'Ik ben er klaar voor');
-                 renderChips(p);
--                sub.textContent = `${p.name} kiest een platform…`;
--                // wire clicks
-+                sub.textContent = `${p.name}, kies een steen…`;
-+                const btns = renderStoneButtons(platCount);
-                 let picked = null;
-+                const confirmBtn = el('button', { className: 'btn-pill gold',
-+                    style: { minHeight: '48px', padding: '0 22px',
-+                             borderRadius: '999px',
-+                             background: 'linear-gradient(180deg,#ffd54a,#ff9a1a)',
-+                             color: '#2a1a00',
-+                             border: '1px solid rgba(255,215,80,0.6)',
-+                             boxShadow: '0 4px 0 #b56a00',
-+                             fontWeight: '800', fontSize: '16px',
-+                             cursor: 'pointer' } }, 'Bevestig');
-+                confirmBtn.disabled = true;
-+                actionsRow.innerHTML = '';
-+                actionsRow.append(confirmBtn);
-                 await new Promise(r => {
--                    const onClick = (e) => {
--                        const t = e.target.closest('.vh-plat');
--                        if (!t) return;
--                        const idx = +t.dataset.idx;
--                        platEls.forEach(x => { x.classList.remove('picked'); x.style.setProperty('--pcol', p.color.css); });
--                        t.classList.add('picked');
--                        picked = idx;
--                        confirmBtn.disabled = false;
--                    };
--                    plats.addEventListener('click', onClick);
--                    const confirmBtn = el('button', { className: 'btn-pill gold',
--                        on: { click: () => { plats.removeEventListener('click', onClick); actions.innerHTML = ''; r(); } } }, 'Bevestig');
--                    confirmBtn.disabled = true;
--                    actions.innerHTML = ''; actions.append(confirmBtn);
-+                    btns.forEach((btn, idx) => {
-+                        btn.addEventListener('click', () => {
-+                            btns.forEach(b => {
-+                                b.classList.remove('picked');
-+                                b.style.setProperty('--pcol', p.color.css);
-+                            });
-+                            for (let i = 0; i < platCount; i++) dimPlatform(i);
-+                            btn.classList.add('picked');
-+                            highlightPlatform(idx, p.color.hex);
-+                            picked = idx;
-+                            confirmBtn.disabled = false;
-+                        });
-+                    });
-+                    confirmBtn.addEventListener('click', () => {
-+                        if (picked === null) return;
-+                        r();
-+                    });
+     // Build the iframe overlay (semi-transparent table, host page peeks through)
+     const back = el('div', { className: 'dice-iframe-back' });
+     const headerBar = el('div', { className: 'dice-iframe-header' });
+@@ -11441,6 +11588,15 @@
+                     sub: `${player.name} gooit ${total} en breekt uit Banana Brig!`,
+                     palette: 'gold',
                  });
-                 picks.set(p, picked);
--                // hide pick before next player
--                platEls.forEach(x => x.classList.remove('picked'));
-+                for (let i = 0; i < platCount; i++) dimPlatform(i);
-+                stones.innerHTML = '';
-+                actionsRow.innerHTML = '';
-             }
++                // Animeer pawn FYSIEK uit de kooi terug naar de skull-tegel
++                // (waar 'ie verbannen werd), zodat moveTokenAlong vanaf daar
++                // normaal kan rollen.
++                await animateTokenFromJail(player, 750, 2.2);
++                // Camera terug naar bord-overzicht
++                if (savedCamForJail) {
++                    await lerpCameraTo(savedCamForJail.pos, savedCamForJail.tgt, 600);
++                    controls.autoRotate = savedCamForJail.autoRotate;
++                }
+                 // Vervolg normaal: bewegen + onLandedOnTile
+                 G.phase = 'moving';
+                 moveTokenAlong(player, total, () => onLandedOnTile(player));
+@@ -11452,8 +11608,14 @@
+                     sub: `${player.name} gooide ${total} — te laag, blijft vast. Drinkt ${d} 🍻`,
+                     palette: 'dark',
+                 });
++                // Camera terug naar bord-overzicht voor de volgende speler
++                if (savedCamForJail) {
++                    await lerpCameraTo(savedCamForJail.pos, savedCamForJail.tgt, 600);
++                    controls.autoRotate = savedCamForJail.autoRotate;
++                }
+                 // Beurt eindigt zonder beweging
+                 advanceTurn();
++                await maybeRunAllPlayerRoundGame();
+                 G.phase = 'idle';
+                 refreshHUD();
+                 await maybeFireSchnapsCall();
+@@ -11505,6 +11667,65 @@
+     }
+ }
  
--            // reveal
--            await new Promise(r => {
--                showPassScreen('Iedereen heeft gekozen!', 'Tijd voor de waarheid — welk platform is veilig?',
--                    '🌋 Onthul!', r);
--            });
--            sub.textContent = 'Onthullen…';
-+            // REVEAL
-+            await showPassScreen('Iedereen heeft gekozen!',
-+                'Welke steen overleeft de eruptie?',
-+                '🌋 Onthul!');
-+            sub.textContent = 'De vulkaan rommelt…';
-             renderChips();
-+            stones.innerHTML = '';
- 
--            // place tokens on chosen platforms
-             for (const [p, idx] of picks) {
--                const platRect = platEls[idx].getBoundingClientRect();
--                const stageRect = stage.getBoundingClientRect();
--                const tk = el('div', { className: 'vh-token',
--                    style: { '--pcol': p.color.css,
--                        left: (platRect.left - stageRect.left + platRect.width/2) + 'px',
--                        top:  (platRect.top  - stageRect.top  + platRect.height/2 - 28) + 'px' } },
--                    p.name.charAt(0).toUpperCase());
--                tk.dataset.player = p.colorIdx;
--                tokens.append(tk);
-+                buildTokenOnPlatform(p, idx);
-             }
--            await sleep(700);
-+            await sleep(800);
++// ════════════════════════════════════════════════════════════════
++//  ROUND-END ALL-PLAYER MINIGAME TRIGGER
++// ════════════════════════════════════════════════════════════════
++//  Alle-spelers minigames (volcano, tappy, bowling, lavasteen, etc.)
++//  worden niet meer getriggerd door een tile op het bord. In plaats
++//  daarvan vuren ze automatisch aan het einde van een ronde-blok,
++//  zodat het tempo onafhankelijk van het aantal spelers vergelijk-
++//  baar blijft: ongeveer 8 individuele beurten per groeps-minigame.
++//
++//    Spelers   Rondes tussen minigames   Beurten tussen
++//      8                1                       8
++//      4                2                       8
++//      2                4                       8
++//      3                3                       9
++//      5/6/7            2                       10-14
++//
++//  Anti-repeat shuffled pool: alle 7 minigames worden in willekeur-
++//  ige volgorde afgewerkt voor er een herhaling komt.
++// ════════════════════════════════════════════════════════════════
++async function maybeRunAllPlayerRoundGame() {
++    if (G.players.length < 2) return;
++    // Alleen triggeren wanneer de ronde NET is gewikkeld
++    // (advanceTurn heeft G.turnIdx naar 0 gerold).
++    if (G.turnIdx !== 0) return;
++    if (G._roundsSinceAllPlayer === undefined) G._roundsSinceAllPlayer = 0;
++    G._roundsSinceAllPlayer++;
++    const threshold = Math.max(1, Math.ceil(8 / G.players.length));
++    if (G._roundsSinceAllPlayer < threshold) return;
++    G._roundsSinceAllPlayer = 0;
 +
-+            const fallIdx = Math.floor(Math.random() * platCount);
-+            const plat = platforms3D[fallIdx];
-+            plat.userData.stoneMat.emissive.setHex(0xff2200);
-+            plat.userData.stoneMat.emissiveIntensity = 1.4;
-+            plat.userData.glowMat.color.setHex(0xff2200);
-+            plat.userData.glowMat.opacity = 1;
-+            camShakeT = 0.35;
-+            await showResultText('💥 ERUPTIE!');
-+            await destroyPlatform(fallIdx);
++    G.phase = 'event';
++    refreshHUD();
++    await showStamp({
++        emoji: '🎉', big: 'GROEPSMINIGAME!',
++        sub: 'Iedereen doet mee — draai aan het rad!',
++        palette: 'gold', auto: true, duration: 1400,
++    });
++
++    // Spin het Mystery Wheel op bowl-eiland, maar met ALLEEN de
++    // groeps-minigames erop. Het rad bepaalt visueel welk spel
++    // we doen — geen anti-repeat pool meer, gewoon willekeurig
++    // (wheel-randomness is onderdeel van het tafereel).
++    const id = await playMysteryWheel({
++        options:  ALL_PLAYER_WHEEL_OPTIONS,
++        title:    '🎡 Groeps-Rad',
++        subtitle: 'Welk spel doen we met z\'n allen?',
++    });
++    if (!id) {
++        // Wheel skip/abort — geen minigame
++        G.phase = 'idle';
++        return;
++    }
++
++    // De dispatcher heeft een 'player' param nodig maar voor all-player
++    // games doet 't er niet toe wie — gebruik de eerste in de lijst.
++    await runMinigameOnTile(id, G.players[0]);
++    G.phase = 'idle';
++}
++
+ function updateVolcanoBanner() {
+     let banner = document.getElementById('vol-banner');
+     if (G.volcanoActive > 0) {
+@@ -12594,25 +12815,22 @@
  
--            // reveal: safe platform glows, others crumble
--            platEls[safeIdx].classList.add('safe');
+         function buildTokenOnPlatform(p, platIdx) {
+             const plat = platforms3D[platIdx];
+-            const tokenGrp = new THREE.Group();
+-            const ball = new THREE.Mesh(
+-                new THREE.SphereGeometry(0.33, 14, 12),
+-                new THREE.MeshToonMaterial({
+-                    color: parseHexColor(p.color.hex),
+-                    gradientMap: toon,
+-                    emissive: parseHexColor(p.color.hex),
+-                    emissiveIntensity: 0.30,
+-                }));
+-            ball.castShadow = true;
+-            tokenGrp.add(ball);
+-            addOutline(ball, 1.10);
++            // Bouw een ECHTE pawn (zelfde cone-body + avatar-head als op het
++            // hoofdbord) i.p.v. een simpele bal — zo zie je duidelijk welk
++            // poppetje van welke speler op welke steen staat.
++            //   makePlayerAvatarToken voegt 'm standaard aan het globale
++            //   tokenGroup toe; we hangen 'm hier om naar platformsGroup.
++            const tokenGrp = makePlayerAvatarToken(p.color.hex, p.avatar);
++            if (tokenGrp.parent) tokenGrp.parent.remove(tokenGrp);
++            platformsGroup.add(tokenGrp);
++            tokenGrp.scale.setScalar(0.85);   // iets compacter voor de platforms
+             tokenGrp.position.set(plat.position.x,
+-                plat.position.y + 0.62, plat.position.z);
++                plat.position.y + 0.25, plat.position.z);
+             tokenGrp.userData.baseY = tokenGrp.position.y;
+             tokenGrp.userData.bobPhase = Math.random() * Math.PI * 2;
+             tokenGrp.userData.platIdx = platIdx;
+             tokenGrp.userData.player = p;
+-            platformsGroup.add(tokenGrp);
++            tokenGrp.userData.yOffset = 0.25;   // pawn-basis op platform-top
+             tokens3D.push(tokenGrp);
+             return tokenGrp;
+         }
+@@ -12633,7 +12851,7 @@
+                 const plat = platforms3D[idx];
+                 const startY = plat.position.y;
+                 const startTime = performance.now();
+-                const dur = 1500;
++                const dur = 600;           // veel sneller (was 1500)
+                 const fallingTokens = tokens3D.filter(t =>
+                     t.userData.platIdx === idx);
+                 fallingTokens.forEach(t => {
+@@ -12703,7 +12921,10 @@
+                 if (u.baseY !== undefined && u.bobPhase !== undefined) {
+                     const plat = platforms3D[u.platIdx];
+                     if (plat) {
+-                        t.position.y = plat.position.y + 0.62 +
++                        // yOffset is gezet door buildTokenOnPlatform (0.25 voor
++                        // de pawn-basis op platform-top).
++                        const off = u.yOffset !== undefined ? u.yOffset : 0.62;
++                        t.position.y = plat.position.y + off +
+                             Math.sin(time * 2.5 + u.bobPhase) * 0.05;
+                     }
+                 }
+@@ -12844,6 +13065,18 @@
+                 confirmBtn.disabled = true;
+                 actionsRow.innerHTML = '';
+                 actionsRow.append(confirmBtn);
++                // Helper om tijdelijke pawn (tijdens pick-fase) op te ruimen
++                const disposeTempPawn = (pwn) => {
++                    platformsGroup.remove(pwn);
++                    pwn.traverse(c => {
++                        if (c.geometry) c.geometry.dispose();
++                        if (c.material) c.material.dispose();
++                    });
++                    const ti = tokens3D.indexOf(pwn);
++                    if (ti !== -1) tokens3D.splice(ti, 1);
++                };
++
++                let pickedPawn = null;     // 3D pawn voor de current picker
+                 await new Promise(r => {
+                     btns.forEach((btn, idx) => {
+                         btn.addEventListener('click', () => {
+@@ -12856,6 +13089,10 @@
+                             highlightPlatform(idx, p.color.hex);
+                             picked = idx;
+                             confirmBtn.disabled = false;
++                            // Plaats het 3D pionnetje op het gekozen platform.
++                            // Bij wisselen van keuze: verplaats (oude weg).
++                            if (pickedPawn) disposeTempPawn(pickedPawn);
++                            pickedPawn = buildTokenOnPlatform(p, idx);
+                         });
+                     });
+                     confirmBtn.addEventListener('click', () => {
+@@ -12863,6 +13100,10 @@
+                         r();
+                     });
+                 });
++                // Na confirm: verwijder de tijdelijke pawn zodat de volgende
++                // speler een schoon bord ziet. Tijdens REVEAL worden alle
++                // pawns opnieuw geplaatst voor de eruptie.
++                if (pickedPawn) disposeTempPawn(pickedPawn);
+                 picks.set(p, picked);
+                 for (let i = 0; i < platCount; i++) dimPlatform(i);
+                 stones.innerHTML = '';
+@@ -12882,20 +13123,36 @@
+             }
+             await sleep(800);
+ 
+-            const fallIdx = Math.floor(Math.random() * platCount);
+-            const plat = platforms3D[fallIdx];
+-            plat.userData.stoneMat.emissive.setHex(0xff2200);
+-            plat.userData.stoneMat.emissiveIntensity = 1.4;
+-            plat.userData.glowMat.color.setHex(0xff2200);
+-            plat.userData.glowMat.opacity = 1;
++            const fallIdxs = [];
++            {
++                // Pak 50% van de platforms, naar boven afgerond. Met platCount=4
++                // → 2 platforms vallen. Met platCount=7 → 4 vallen. Altijd minstens
++                // 1 platform overleeft (ceil(N/2) ≤ N voor alle N ≥ 1).
++                const flipCount = Math.ceil(platCount / 2);
++                const pool = Array.from({ length: platCount }, (_, i) => i);
++                for (let i = pool.length - 1; i > 0; i--) {
++                    const j = Math.floor(Math.random() * (i + 1));
++                    [pool[i], pool[j]] = [pool[j], pool[i]];
++                }
++                fallIdxs.push(...pool.slice(0, flipCount));
++            }
++            // Markeer ALLE vallende platforms rood vóór de eruptie
++            for (const idx of fallIdxs) {
++                const plat = platforms3D[idx];
++                plat.userData.stoneMat.emissive.setHex(0xff2200);
++                plat.userData.stoneMat.emissiveIntensity = 1.4;
++                plat.userData.glowMat.color.setHex(0xff2200);
++                plat.userData.glowMat.opacity = 1;
++            }
+             camShakeT = 0.35;
+             await showResultText('💥 ERUPTIE!');
+-            await destroyPlatform(fallIdx);
++            // Vernietig alle vallende platforms TEGELIJK (parallel)
++            await Promise.all(fallIdxs.map(idx => destroyPlatform(idx)));
+ 
              const losers = [];
              const survivors = [];
              for (const [p, idx] of picks) {
--                if (idx === safeIdx) survivors.push(p);
--                else losers.push(p);
--            }
--            for (let i = 0; i < platEls.length; i++) {
--                if (i !== safeIdx) platEls[i].classList.add('crumble');
-+                if (idx === fallIdx) losers.push(p);
-+                else survivors.push(p);
+-                if (idx === fallIdx) losers.push(p);
++                if (fallIdxs.includes(idx)) losers.push(p);
+                 else survivors.push(p);
              }
--            // fall tokens that picked wrong
--            if (losers.length) {
--                cloud.classList.add('show');
--                await sleep(350);
--                for (const tk of tokens.querySelectorAll('.vh-token')) {
--                    const cIdx = +tk.dataset.player;
--                    const p = players.find(x => x.colorIdx === cIdx);
--                    if (losers.includes(p)) tk.classList.add('fall');
--                }
--                await sleep(400);
--                cloud.classList.add('zap');
--                await sleep(700);
--            } else {
--                await sleep(600);
--            }
--
--            // update alive list
              for (const p of losers) {
-                 if (!eliminated.includes(p)) eliminated.push(p);
-             }
-             alive = survivors;
- 
--            // show round result
--            await new Promise(r => {
--                const labelTxt = losers.length === 0
--                    ? `Iedereen veilig! Door naar ronde ${round + 1}`
--                    : (losers.length === alive.length + losers.length
--                        ? `Alles fout! Iedereen drinkt ${drinks} 🍻`
--                        : `${losers.map(p => p.name).join(', ')} valt → drinkt ${drinks} 🍻`);
--                showPassScreen(losers.length === 0 ? '🎉 Allemaal goed!' : '⚡ KZZZAP!', labelTxt,
--                    alive.length <= 1 ? '🏆 Eindstand' : '▶ Volgende ronde', r);
-+            renderChips();
-+            const labelTxt = losers.length === 0
-+                ? `Iedereen veilig! Door naar ronde ${round + 1}`
-+                : `${losers.map(p => p.name).join(', ')} drinkt ${drinks} 🍻`;
-+            await showPassScreen(losers.length === 0 ? '🎉 Allemaal goed!'
-+                                                     : '⚡ KZZZAP!',
-+                labelTxt,
-+                alive.length <= 1 ? '🏆 Eindstand' : '▶ Volgende ronde');
-+        }
+@@ -14801,6 +15058,20 @@
+    chosen minigame id ('krokodil','paddle','tappy','volcano',
+    'raft','roulette','blackjack','hoofdsteden') or null if skipped.
+    ============================================================ */
++// Welke minigames worden door ALLE spelers tegelijk gespeeld?
++// Die triggeren NIET meer via een tile op het bord, maar automatisch
++// aan het einde van een ronde-blok (zie maybeRunAllPlayerRoundGame).
++// Krab Vangen is uit BETA opgewaardeerd naar groeps-minigame; de
++// andere BETA-spellen (lavasteen, tiki, brug) blijven alleen
++// handmatig speelbaar via het minigame-menu.
++const ALL_PLAYER_WHEEL_OPTIONS = [
++    { id: 'tappy',   emoji: '🐦', label: 'Tappy Bird',  color: '#ff7ad6' },
++    { id: 'volcano', emoji: '🌋', label: 'Volcano Hop', color: '#3aff9e' },
++    { id: 'bowling', emoji: '🎳', label: 'Bowlspel',    color: '#1a7adb' },
++    { id: 'krabben', emoji: '🦀', label: 'Krab Vangen', color: '#ff5a3a' },
++];
++const ALL_PLAYER_GAMES = ALL_PLAYER_WHEEL_OPTIONS.map(o => o.id);
 +
-+        function finish(winner) {
-+            scene.remove(platformsGroup);
-+            platformsGroup.traverse(c => {
-+                if (c.geometry) c.geometry.dispose();
-+                if (c.material) {
-+                    if (Array.isArray(c.material)) c.material.forEach(m => m.dispose());
-+                    else c.material.dispose();
-+                }
-             });
-+            window.__deGameHook = PREV_HOOK;
-+            camera.fov = savedCam.fov;
-+            camera.position.copy(savedCam.pos);
-+            camera.updateProjectionMatrix();
-+            controls.target.copy(savedCam.target);
-+            controls.autoRotate = savedCam.autoRotate;
-+            controls.enabled = savedCam.enabled;
-+            back.style.transition = 'opacity 0.3s ease';
-+            back.style.opacity = '0';
-+            setTimeout(() => {
-+                back.remove();
-+                restoreMinigameChrome(hiddenChrome);
-+                resolveOuter(winner || null);
-+            }, 300);
-         }
+ const MYSTERY_OPTIONS = [
+     { id: 'krokodil',    emoji: '🐊', label: 'Krokodil',     color: '#b87aff' },
+     { id: 'paddle',      emoji: '🏓', label: 'Paddle Duel',  color: '#4af2ff' },
+@@ -14857,23 +15128,30 @@
+             'spin children:', mysteryWheelSpin?.children?.length);
  
-         function showFinal() {
--            clear();
-+            stones.innerHTML = '';
-+            actionsRow.innerHTML = '';
-             renderChips();
-             const winner = alive[0];
--            const board = el('div', { style: { padding: '20px', display: 'flex',
--                flexDirection: 'column', alignItems: 'center', gap: '16px' } });
-+            const board = el('div', {
-+                style: { padding: '20px', display: 'flex',
-+                         flexDirection: 'column', alignItems: 'center',
-+                         gap: '14px' }
-+            });
-             if (winner) {
-                 board.append(
-                     el('div', { style: { fontSize: '60px' } }, '🏆'),
--                    el('div', { style: { fontSize: '28px', fontWeight: '900', color: winner.color.css,
--                        textShadow: '0 2px 0 #000, 0 0 20px ' + winner.color.css } }, `${winner.name} wint!`),
--                    el('div', { style: { fontSize: '16px', opacity: 0.85, textAlign: 'center', maxWidth: '280px' } },
--                        `${eliminated.map(p => p.name).join(', ')} drinkt elk ${drinks} 🍻`),
-+                    el('div', { style: { fontSize: '28px', fontWeight: '900',
-+                                          color: winner.color.css,
-+                                          textShadow: '0 2px 0 #000, 0 0 20px '
-+                                                    + winner.color.css } },
-+                        `${winner.name} wint!`),
-+                    el('div', { style: { fontSize: '16px', opacity: 0.85,
-+                                          textAlign: 'center', maxWidth: '280px' } },
-+                        eliminated.length
-+                            ? `${eliminated.map(p => p.name).join(', ')} drinkt elk ${drinks} 🍻`
-+                            : 'Iedereen heeft het overleefd! 🎉'),
-                 );
-             } else {
-                 board.append(
-                     el('div', { style: { fontSize: '60px' } }, '🌋'),
--                    el('div', { style: { fontSize: '24px', fontWeight: '900' } }, 'Geen winnaar!'),
--                    el('div', { style: { fontSize: '16px', opacity: 0.85, textAlign: 'center', maxWidth: '280px' } },
-+                    el('div', { style: { fontSize: '24px', fontWeight: '900' } },
-+                        'Geen winnaar!'),
-+                    el('div', { style: { fontSize: '16px', opacity: 0.85,
-+                                          textAlign: 'center', maxWidth: '280px' } },
-                         `Iedereen viel. Iedereen drinkt ${drinks} 🍻 extra`),
-                 );
-             }
-             stage.append(board);
-             const finishBtn = el('button', { className: 'btn-pill gold',
--                on: { click: () => {
--                    back.style.transition = 'opacity 0.3s ease';
--                    back.style.opacity = '0';
--                    setTimeout(() => { back.remove(); resolve(winner || null); }, 300);
--                } } }, 'Verder');
--            actions.innerHTML = ''; actions.append(finishBtn);
-+                style: { minHeight: '52px', padding: '0 26px',
-+                         borderRadius: '999px',
-+                         background: 'linear-gradient(180deg,#ffd54a,#ff9a1a)',
-+                         color: '#2a1a00',
-+                         border: '1px solid rgba(255,215,80,0.6)',
-+                         boxShadow: '0 4px 0 #b56a00',
-+                         fontWeight: '800', fontSize: '16px',
-+                         cursor: 'pointer' },
-+                on: { click: () => finish(winner) }
-+            }, 'Verder');
-+            actionsRow.append(finishBtn);
-         }
+         // ════════════════════════════════════════════════════════
+-        //  B. CAMERA — SNAP direct naar bestemming (geen lerp).
+-        //  Veel betrouwbaarder dan animeren over rAF, want
+-        //  OrbitControls.update() in de main-loop kan onze positie
+-        //  anders frame-na-frame ongedaan maken.
++        //  B. CAMERA — SNAP direct naar bestemming
+         //
+-        //  MWHEEL.wheelY is LOKALE Y binnen de stall (die op floorY
+-        //  staat). Wereld-Y van het rad = floorY + wheelY.
++        //  wheelWorldY = floorY + wheelY = 1.05 + 2.75 = 3.80
++        //  Camera staat oost van de stall, op iets hoger niveau dan
++        //  de rad-as, en kijkt licht omlaag richting het rad-vlak.
++        //  Y-offsets gekozen zodat polar angle binnen OrbitControls
++        //  constraints valt (< π/2.1 ≈ 85.7°).
+         // ════════════════════════════════════════════════════════
+         const wheelWorldY = MWHEEL.floorY + MWHEEL.wheelY;
+         const CAM_POS = new THREE.Vector3(
+-            MWHEEL.cx + 12.5, wheelWorldY + 1.7, MWHEEL.cz);
++            MWHEEL.cx + 12.5, wheelWorldY + 2.0, MWHEEL.cz);
+         const CAM_TGT = new THREE.Vector3(
+-            MWHEEL.cx - 9.5, wheelWorldY - 0.3,  MWHEEL.cz);
++            MWHEEL.cx - 9.5, wheelWorldY, MWHEEL.cz);
  
-         async function loop() {
-@@ -12140,8 +12473,6 @@
+         camera.position.copy(CAM_POS);
+         controls.target.copy(CAM_TGT);
+         camera.lookAt(controls.target);
++        // BELANGRIJK: na manueel zetten van camera.position MOET
++        // controls.update() worden aangeroepen om OrbitControls'
++        // interne spherical-state te syncen met de nieuwe positie.
++        // Zonder deze call blijft 'ie soms aan de oude state hangen
++        // en lijkt de camera niet te verplaatsen.
++        // (https://threejs.org/docs/#examples/en/controls/OrbitControls)
++        controls.update();
+ 
+         console.log('[MysteryWheel] camera snapped to',
+             CAM_POS.toArray(), 'looking at', CAM_TGT.toArray());
+@@ -15045,22 +15323,29 @@
+         });
+ 
+         // ════════════════════════════════════════════════════════
+-        //  G. ANIMATIE-LOOP — eigen RAF voor camera-fly-in + spin
++        //  G. ANIMATIE-LOOP — via __deGameHook (in main animate())
+         // ════════════════════════════════════════════════════════
++        //   BELANGRIJKE FIX: gebruik __deGameHook in plaats van een
++        //   losse rAF. __deGameHook draait in de main animate() loop,
++        //   NÁ controls.update() maar VÓÓR renderer.render(). Zo kan
++        //   OrbitControls onze camera nooit overschrijven, en is de
++        //   render altijd op de juiste positie. De vorige losse tick
++        //   draaide NA renderer.render() en daardoor renderde de eerste
++        //   frames met de oude (orbital) camera-positie.
+         let alive = true;
+         let lastFrameT = performance.now();
+-        let rafId = null;
++        const PREV_HOOK = window.__deGameHook;
+ 
+         function smoothstep(t) { return t * t * (3 - 2 * t); }
+ 
+-        function tick(now) {
++        window.__deGameHook = (time) => {
+             if (!alive) return;
++            const now = performance.now();
+             const dt = Math.min(0.05, (now - lastFrameT) / 1000);
+             lastFrameT = now;
+ 
+-            // ELKE frame opnieuw camera vasthouden — voor de zekerheid,
+-            // want OrbitControls.update() in de main-loop kan
+-            // tussendoor de orientatie verstoren.
++            // FORCE camera elke frame — draait na controls.update()
++            // dus OrbitControls kan dit niet ongedaan maken.
+             camera.position.copy(CAM_POS);
+             controls.target.copy(CAM_TGT);
+             camera.lookAt(controls.target);
+@@ -15093,10 +15378,7 @@
+                     announceWinner();
+                 }
              }
-             showFinal();
-         }
 -
--        const sleep = ms => new Promise(r => setTimeout(r, ms));
-         loop();
-     });
- }
-@@ -14479,6 +14810,16 @@
+-            rafId = requestAnimationFrame(tick);
+-        }
+-        rafId = requestAnimationFrame(tick);
++        };
  
-         stage.append(godSide, youSide);
+         // ════════════════════════════════════════════════════════
+         //  H. WINNER-ANNOUNCE — eindbanner met emoji + Start-knop
+@@ -15125,7 +15407,8 @@
+         // ════════════════════════════════════════════════════════
+         function finish(id) {
+             alive = false;
+-            if (rafId) cancelAnimationFrame(rafId);
++            // Herstel vorige hook (was opgeslagen voor de wheel begon)
++            window.__deGameHook = PREV_HOOK;
  
-+        // Vulkaan-god's hand — verschijnt boven het bord, "gooit"
-+        // de kaarten uit elke keer als er een nieuwe wordt gedeald.
-+        const godHand2 = el('div', { className: 'bj-godhand' }, '🤚');
-+        stage.append(godHand2);
-+        function flickGodHand() {
-+            godHand2.classList.remove('deal');
-+            void godHand2.offsetWidth;     // force reflow
-+            godHand2.classList.add('deal');
-+        }
+             stage.removeEventListener('pointerdown', onPointerDown);
+             stage.removeEventListener('pointermove', onPointerMove);
+@@ -15143,6 +15426,8 @@
+             controls.enabled = savedCam.enabled;
+             controls.enableDamping = savedCam.enableDamping;
+             camera.lookAt(controls.target);
++            // Sync OrbitControls internal state na manual camera move
++            controls.update();
+ 
+             restoreMinigameChrome(hiddenChrome);
+ 
+@@ -16321,15 +16606,47 @@
+         });
+         if (swap) {
+             const pIdx = player.tileIdx, sIdx = swap.tileIdx;
++            const pWasJailed = player.inPrison;
++            const sWasJailed = swap.inPrison;
+             await showStamp({
+                 emoji: '✨🔁✨', big: `${player.name} ↔ ${swap.name}`,
+                 sub: `Beiden drinken ${d} 🍻`,
+                 palette: 'purple',
+             });
+-            teleportTokenTo(player, sIdx);
+-            teleportTokenTo(swap, pIdx);
+-            refreshHUD();
+-            if (player.tileIdx >= TILE_COUNT - 1) return onLandedOnTile(player);
 +
-         // Foot — hit/stand
-         const foot = el('div', { className: 'bj-foot' });
-         const hitBtn = el('button', { className: 'btn-pill gold', type: 'button' }, '🎴 Hit');
-@@ -14525,6 +14866,7 @@
-             if (isBlackjack(playerHand)) youVal.classList.add('bj');
++            // Speciaal geval: precies EEN van de twee zit in de gevangenis.
++            // De wisselkaart laat ze letterlijk van plek wisselen — vrije
++            // speler komt vast, gevangen speler komt vrij op tegel van
++            // de ander. Token-animaties (bogen tussen jail en tile).
++            if (pWasJailed !== sWasJailed) {
++                const wasJailed = pWasJailed ? player : swap;   // wordt vrij
++                const wasFree   = pWasJailed ? swap   : player; // gaat vast
++
++                // Swap inPrison flags
++                wasJailed.inPrison = false;
++                wasFree.inPrison   = true;
++                // Swap tileIdx (zoals normale UFO-swap)
++                player.tileIdx = sIdx;
++                swap.tileIdx   = pIdx;
++
++                // Beweeg pawns. animateTokenFromJail leest player.tileIdx
++                // (nu de nieuwe waarde) → token landt op de juiste tegel.
++                await Promise.all([
++                    animateTokenFromJail(wasJailed, 800, 2.5),
++                    animateTokenToJail(wasFree, 800, 2.5),
++                ]);
++                refreshHUD();
++                // Vrijgekomen speler kan op finish-tegel landen
++                if (!player.inPrison && player.tileIdx >= TILE_COUNT - 1) {
++                    return onLandedOnTile(player);
++                }
++            } else {
++                // Beide vrij of beide vast → normale tegel-swap
++                teleportTokenTo(player, sIdx);
++                teleportTokenTo(swap, pIdx);
++                refreshHUD();
++                if (player.tileIdx >= TILE_COUNT - 1) return onLandedOnTile(player);
++            }
          }
-         render();
-+        flickGodHand();    // initiële uitdeel-animatie
+     }
+     // ─── SKULL — pitchzwarte tegel die je naar Banana Brig verbant
+@@ -16381,33 +16698,9 @@
+             requestAnimationFrame(step);
+         });
  
-         // ── Game flow ──
-         function checkBust() {
-@@ -14540,6 +14882,7 @@
-         hitBtn.addEventListener('click', () => {
-             if (gameOver || playerStood) return;
-             playerHand.push(draw());
-+            flickGodHand();
-             render();
-             if (handValue(playerHand) >= 21) {
-                 if (!checkBust()) {
-@@ -14575,6 +14918,7 @@
-                 if (dv < 17 && handValue(playerHand) <= 21) {
-                     setTimeout(() => {
-                         dealerHand.push(draw());
-+                        flickGodHand();
-                         render();
-                         dealerStep();
-                     }, 500);
+-        // 3. Tiki Wheel spint → kiest een eiland (voor nu altijd Banana Brig)
+-        const islandId = await showTikiWheel({
+-            subtitle: `${player.name} wordt naar een eiland gestuurd…`,
+-        });
+-
+-        if (!islandId) {
+-            // Skip gekozen → camera terug, geen straf
+-            await new Promise(r => {
+-                const camFrom = camera.position.clone();
+-                const tgtFrom = controls.target.clone();
+-                const finalTile = tileWorldPos[player.tileIdx].clone();
+-                const t0 = performance.now();
+-                const dur = 600;
+-                const step = (now) => {
+-                    const k = Math.min(1, (now - t0) / dur);
+-                    const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+-                    camera.position.lerpVectors(camFrom, savedCamPos, e);
+-                    controls.target.lerpVectors(tgtFrom, finalTile, e);
+-                    if (k < 1) requestAnimationFrame(step); else r();
+-                };
+-                requestAnimationFrame(step);
+-            });
+-            controls.autoRotate = wasAutoRotate;
+-            return;
+-        }
+-
+-        // 4. Camera zoomt in op het Banana Brig satelliet-eiland.
++        // 3. Camera zoomt direct in op het Banana Brig satelliet-eiland.
++        //    (De Tiki Wheel-tussenstap is weggehaald — voor nu is Banana
++        //    Brig de enige speelbare straf, het rad voegde alleen ruis toe.)
+         //    Positie van Banana Brig satelliet is (4, -19), top y ≈ 2.4.
+         const bbX = 4, bbZ = -19, bbY = 2.4;
+         await new Promise(r => {
+@@ -16427,19 +16720,19 @@
+             requestAnimationFrame(step);
+         });
+ 
+-        // Stamp: hier zit je vast, gooi 4+ om vrij te komen
++        // 4. Markeer de speler als gevangen + animeer de pawn fysiek IN
++        //    de kooi (zodat je 'm daar echt ziet staan).
++        player.inPrison = true;
++        await animateTokenToJail(player, 900, 2.5);
++        refreshHUD();
++
++        // 5. Stamp: hier zit je vast, gooi 4+ om vrij te komen
+         await showStamp({
+             emoji: '🍌🔒', big: 'BANANA BRIG',
+             sub: `${player.name} zit nu vast — gooi 4 of hoger om uit te breken!`,
+             palette: 'gold',
+         });
+ 
+-        // 5. Markeer de speler als gevangen. De prison-check zit in onRollDice().
+-        //    De token blijft visueel op de zwarte skull-tegel staan; de kooi op
+-        //    het eiland is puur sfeer.
+-        player.inPrison = true;
+-        refreshHUD();
+-
+         // 6. Camera zwaait terug naar het bord
+         await new Promise(r => {
+             const camFrom = camera.position.clone();
+@@ -16557,8 +16850,12 @@
+             palette: 'purple', auto: true, duration: 1200,
+         });
+         // Filter wheel options based on player count: 1v1 games need 2+
++        // PLUS: alle-spelers minigames (volcano/tappy/bowling/lavasteen/...)
++        // worden NOOIT via de tile-wheel gekozen — die spelen we apart
++        // aan het einde van een ronde-blok.
+         const playerOk = G.players.length >= 2;
+         const options = MYSTERY_OPTIONS.filter(o => {
++            if (ALL_PLAYER_GAMES.includes(o.id)) return false;
+             if (!playerOk) return ['roulette','blackjack','hoofdsteden'].includes(o.id);
+             return true;
+         });
+@@ -16597,6 +16894,7 @@
+         });
+     } else {
+         advanceTurn();
++        await maybeRunAllPlayerRoundGame();
+     }
+     G.phase = 'idle';
+     refreshHUD();
