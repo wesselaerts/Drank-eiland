@@ -1376,6 +1376,15 @@
       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
       user-select: none; overflow: hidden; touch-action: none;
       padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+    /* 3D-modus: laat het bowl-eiland scene erdoorheen zien */
+    .krab-back.is3d { background: transparent; }
+    .krab-back.is3d .krab-stage { background: transparent; box-shadow: none; }
+    .krab-back.is3d .krab-stage::before { display: none; }
+    .krab-back.is3d .krab-head { background: rgba(0,0,0,0.45); border-radius: 12px;
+        padding: 6px 12px; display: inline-block; margin: 0 auto; }
+    .krab-back.is3d .krab-chip {
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
     .krab-head { text-align: center; padding: 4px 8px 6px; }
     .krab-head h2 { margin: 0; font-size: 20px; font-weight: 900; }
     .krab-hud { display: flex; justify-content: space-around; align-items: center;
@@ -7808,7 +7817,7 @@ function renderSetup() {
         // de Mystery Wheel pool van runMinigameOnTile).
         { id: 'lavasteen',   emoji: '🌋',  name: 'Hete Lavasteen',       meta: 'hot potato',    tag: 'BETA',  locked: false },
         { id: 'kano',        emoji: '🛶',  name: 'Kano Race',            meta: '1v1 race',      tag: 'NIEUW', locked: false },
-        { id: 'krabben',     emoji: '🦀',  name: 'Krabben Vangen',       meta: 'whack-a-mole',  tag: 'BETA',  locked: false },
+        { id: 'krabben',     emoji: '🦀',  name: 'Krabben Vangen',       meta: 'whack-a-mole',  tag: null,    locked: false },
         { id: 'tiki',        emoji: '🗿',  name: 'Tiki Ritme',           meta: 'memory',        tag: 'BETA',  locked: false },
         { id: 'brug',        emoji: '⚖️',  name: 'Brug Balans',          meta: 'gyro',          tag: 'BETA',  locked: false },
     ];
@@ -14066,16 +14075,202 @@ function playKanoRace({ playerA, playerB, drinks = 4 } = {}) {
    ════════════════════════════════════════════════════════════════════ */
 function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
     return new Promise(resolve => {
+        // ══════════════════════════════════════════════════════════════
+        //  KRABBEN VANGEN — 3D versie op bowl-eiland strand
+        // ══════════════════════════════════════════════════════════════
+        //  Zelfde regels als de 2D versie:
+        //   • 30 sec per speler, 8 gaten
+        //   • Spawn-interval 0.55s → 0.30s gedurende de ronde
+        //   • Krab leeft 700-1400ms, tik = +1
+        //   • Per speler een ronde, eindstand met losers drinken
+        //  Maar nu: 3D scene op bowl-eiland, tap = raycast tegen krabben.
+        // ══════════════════════════════════════════════════════════════
+
+        // ── SETUP: chrome verbergen, camera bewaren ───────────────────
+        const hiddenChrome = hideMinigameChrome();
+        const savedCam = {
+            pos: camera.position.clone(),
+            fov: camera.fov,
+            target: controls.target.clone(),
+            autoRotate: controls.autoRotate,
+            enabled: controls.enabled,
+            enableDamping: controls.enableDamping,
+        };
+        controls.autoRotate = false;
+        controls.enabled = false;
+        controls.enableDamping = false;
+        camera.fov = 58;
+        camera.updateProjectionMatrix();
+
+        // ── KRABBEN PIT locatie op bowl-eiland ────────────────────────
+        //   Noord van de bowling alley (alley loopt z=-1.2…+1.2 langs X).
+        //   Hier is een vrij stuk zand waar de 8 gaten in passen.
+        const KRAB = {
+            cx: BOWL.cx,                // 82
+            cy: BOWL.sandTopY,          // 1.05
+            cz: BOWL.cz + 5,            // 5 noord van alley-centrum
+        };
+
+        // ── 3D scene: zand-platform + 8 gaten + bord ──────────────────
+        const krabbenGroup = new THREE.Group();
+        scene.add(krabbenGroup);
+
+        // Lichte zand-mound onder de gaten (subtiel verschil met de
+        // omringende beach — geeft de speel-arena visuele identiteit)
+        const sandMound = new THREE.Mesh(
+            deformCylinder(
+                new THREE.CylinderGeometry(3.0, 3.4, 0.18, 22), 0.10),
+            new THREE.MeshToonMaterial({
+                color: 0xe8b878, gradientMap: toon,
+                emissive: 0x402810, emissiveIntensity: 0.04 }));
+        sandMound.position.set(KRAB.cx, KRAB.cy + 0.09, KRAB.cz);
+        sandMound.receiveShadow = true;
+        krabbenGroup.add(sandMound);
+        addOutline(sandMound, 1.005);
+
+        // 8 gat-posities — 3-2-3 patroon (zoals 2D versie), maar nu
+        // GEROTEERD: diepte langs X (richting volcano in -X), breedte
+        // langs Z (loodrecht op camera-view). Speler kijkt vanaf oost
+        // door pit heen richting hoofdeiland + vulkaan.
+        const HOLE_OFFSETS = [
+            { x: -1.6, z: -1.4 }, { x: -1.6, z:  0   }, { x: -1.6, z: +1.4 },  // verste rij (richting vulkaan)
+            { x:  0,   z: -1.0 },                       { x:  0,   z: +1.0 },  // midden rij
+            { x: +1.6, z: -1.4 }, { x: +1.6, z:  0   }, { x: +1.6, z: +1.4 },  // dichtsbij camera
+        ];
+
+        const holes3D = [];
+        for (let i = 0; i < HOLE_OFFSETS.length; i++) {
+            const ofs = HOLE_OFFSETS[i];
+            const wx = KRAB.cx + ofs.x;
+            const wy = KRAB.cy + 0.18;     // top van zand-mound
+            const wz = KRAB.cz + ofs.z;
+
+            const holeGrp = new THREE.Group();
+            holeGrp.position.set(wx, wy, wz);
+
+            // Lichte zand-ring rondom het gat
+            const ring = new THREE.Mesh(
+                new THREE.RingGeometry(0.52, 0.72, 22),
+                new THREE.MeshToonMaterial({
+                    color: 0xc89856, gradientMap: toon,
+                    side: THREE.DoubleSide }));
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.012;
+            holeGrp.add(ring);
+
+            // Donker binnen-gat (de "diepe schaduw")
+            const inner = new THREE.Mesh(
+                new THREE.CircleGeometry(0.55, 22),
+                new THREE.MeshBasicMaterial({ color: 0x0a0608 }));
+            inner.rotation.x = -Math.PI / 2;
+            inner.position.y = 0.005;
+            holeGrp.add(inner);
+
+            krabbenGroup.add(holeGrp);
+            holes3D.push({
+                worldX: wx, worldY: wy, worldZ: wz,
+                group: holeGrp, busy: false,
+            });
+        }
+
+        // Geen 3D bord-paaltje — past niet in portrait-FOV naast de
+        // krabben-pit, en de HUD bovenin toont al "🦀 Krabben Vangen".
+
+        // ── CRAB FACTORY: oblate body + ogen op stelen + scharen ──────
+        function makeCrab() {
+            const g = new THREE.Group();
+
+            const matBody = new THREE.MeshToonMaterial({
+                color: 0xff5a3a, gradientMap: toon,
+                emissive: 0x501808, emissiveIntensity: 0.22 });
+            const matLeg = new THREE.MeshToonMaterial({
+                color: 0xc8482a, gradientMap: toon });
+
+            // Plat, breed lichaam
+            const bodyGeo = new THREE.SphereGeometry(0.40, 14, 10);
+            // squash naar oblate vorm
+            const bp = bodyGeo.attributes.position;
+            for (let i = 0; i < bp.count; i++) {
+                bp.setY(i, bp.getY(i) * 0.55);
+                bp.setX(i, bp.getX(i) * 1.15);
+            }
+            bp.needsUpdate = true;
+            bodyGeo.computeVertexNormals();
+            const body = new THREE.Mesh(bodyGeo, matBody);
+            body.position.y = 0.18;
+            body.castShadow = true;
+            g.add(body);
+            addOutline(body, 1.05);
+
+            // Twee ogen op stelen
+            for (const side of [-1, 1]) {
+                const stalk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.04, 0.04, 0.18, 6),
+                    matBody);
+                stalk.position.set(side * 0.16, 0.36, -0.08);
+                g.add(stalk);
+                const eyeWhite = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.105, 10, 8),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                eyeWhite.position.set(side * 0.16, 0.48, -0.08);
+                g.add(eyeWhite);
+                const pupil = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.055, 8, 6),
+                    new THREE.MeshBasicMaterial({ color: 0x101820 }));
+                pupil.position.set(side * 0.16, 0.48, -0.165);
+                g.add(pupil);
+            }
+
+            // Schaar-armen (links + rechts)
+            for (const side of [-1, 1]) {
+                const claw = new THREE.Group();
+                claw.position.set(side * 0.38, 0.18, -0.18);
+
+                const arm = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.07, 0.07, 0.25, 6),
+                    matBody);
+                arm.rotation.x = Math.PI / 2;
+                arm.position.z = -0.13;
+                claw.add(arm);
+
+                const pincerBody = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.17, 12, 10),
+                    matBody);
+                pincerBody.scale.set(1.0, 0.6, 1.5);
+                pincerBody.position.z = -0.32;
+                claw.add(pincerBody);
+
+                claw.rotation.y = side * -0.35;
+                g.add(claw);
+            }
+
+            // Pootjes (4 paar mini-cylindertjes onder lichaam)
+            for (const side of [-1, 1]) {
+                for (let i = 0; i < 3; i++) {
+                    const leg = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.035, 0.035, 0.18, 5),
+                        matLeg);
+                    const offX = side * (0.30 + i * 0.04);
+                    const offZ = -0.12 + i * 0.10;
+                    leg.position.set(offX, 0.10, offZ);
+                    leg.rotation.z = side * 0.4;
+                    g.add(leg);
+                }
+            }
+
+            return g;
+        }
+
+        // ── UI overlay: HUD (chips) + transparant stage voor tap-area ──
         const ui = document.getElementById('game-ui');
-        const back = el('div', { className: 'krab-back' });
+        const back = el('div', { className: 'krab-back is3d' });
         const head = el('div', { className: 'krab-head' });
         head.append(el('h2', {}, '🦀 Krabben Vangen'));
-        // HUD
         const hud = el('div', { className: 'krab-hud' });
         const pChip = el('div', { className: 'krab-chip' });
-        const pLbl = el('div', { className: 'lbl' }, 'Speler');
+        pChip.append(el('div', { className: 'lbl' }, 'Speler'));
         const pVal = el('div', { className: 'val' }, '–');
-        pChip.append(pLbl, pVal);
+        pChip.append(pVal);
         const tChip = el('div', { className: 'krab-chip' });
         tChip.append(el('div', { className: 'lbl' }, 'Tijd'));
         const tVal = el('div', { className: 'val' }, '30');
@@ -14085,84 +14280,193 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
         const sVal = el('div', { className: 'val' }, '0');
         sChip.append(sVal);
         hud.append(pChip, tChip, sChip);
-        // Stage
         const stage = el('div', { className: 'krab-stage' });
         back.append(head, hud, stage);
         ui.append(back);
 
         // ── STATE ──
         const ROUND_MS = 30000;
-        const HOLES = 8;           // aantal gaten
-        const holes = [];          // {x, y, busy, el}
-        const scores = [];         // {player, score}
+        const scores = [];
         let curIdx = 0;
         let score = 0;
-        let phase = 'intro';       // intro | playing | done
+        let phase = 'intro';
         let phaseStart = 0;
         let crabSpawnTimer = 0;
         let crabSpawnInterval = 0.55;
-        const activeCrabs = [];    // {hole, el, expireAt}
+        const activeCrabs = [];
 
-        // Plaats gaten in een patroon (verspreid maar niet recht-toe-recht-aan)
-        function layoutHoles() {
-            const w = stage.clientWidth, h = stage.clientHeight;
-            const gx = [0.20, 0.50, 0.80, 0.30, 0.70, 0.20, 0.50, 0.80];
-            const gy = [0.18, 0.18, 0.18, 0.45, 0.45, 0.72, 0.72, 0.72];
-            holes.length = 0;
-            // verwijder oude
-            stage.querySelectorAll('.krab-hole').forEach(e => e.remove());
-            for (let i = 0; i < HOLES; i++) {
-                const hx = gx[i] * w, hy = gy[i] * h;
-                const hole = el('div', { className: 'krab-hole',
-                    style: { left: hx + 'px', top: hy + 'px' } });
-                stage.append(hole);
-                holes.push({ x: hx, y: hy, busy: false, el: hole });
+        // ── RAYCASTER voor tap-detectie ──
+        const raycaster = new THREE.Raycaster();
+        const ndc = new THREE.Vector2();
+
+        function onScenePointer(ev) {
+            if (phase !== 'playing') return;
+            // Voorkomen dat banner-buttons ook raycast triggeren
+            if (ev.target && ev.target.closest('.krab-banner')) return;
+            const x = ev.clientX !== undefined ? ev.clientX
+                : (ev.touches && ev.touches[0] ? ev.touches[0].clientX : 0);
+            const y = ev.clientY !== undefined ? ev.clientY
+                : (ev.touches && ev.touches[0] ? ev.touches[0].clientY : 0);
+            ndc.x = (x / window.innerWidth) * 2 - 1;
+            ndc.y = -(y / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(ndc, camera);
+
+            const allMeshes = [];
+            activeCrabs.forEach(c => {
+                if (c.hit || c.removing) return;
+                c.group.traverse(o => {
+                    if (o.isMesh && o.visible) allMeshes.push(o);
+                });
+            });
+            const hits = raycaster.intersectObjects(allMeshes);
+            if (hits.length === 0) return;
+
+            // Loop omhoog tot we de crab-group vinden
+            let target = hits[0].object;
+            let foundCrab = null;
+            while (target && !foundCrab) {
+                for (const c of activeCrabs) {
+                    if (c.group === target) { foundCrab = c; break; }
+                }
+                target = target.parent;
             }
+            if (foundCrab) onHit(foundCrab);
         }
+        stage.addEventListener('pointerdown', onScenePointer);
+
+        // ── CAMERA LERP setup ──
+        //   Beach-POV: oost van de krabben-pit op ongeveer ooghoogte
+        //   (3.45 boven zand). Look-direction: westwaarts dwars over
+        //   de pit richting hoofdeiland — de vulkaan blijft net in de
+        //   bovenrand zichtbaar.
+        //
+        //   Geometrie-check (FOV=58, half-vert=29°):
+        //   • cam (90, 4.5, 5) → tgt (82, 1.4, 5): pitch 21.2° down
+        //   • vulkaan-piek wereld (~0, 12.4, 0): 26.3° vanaf look-dir
+        //     → 91% van halve FOV richting top-edge = nét zichtbaar
+        //   • verste hole (80.4, 1.23, ±6.4): 12.3° horizontal
+        //     → binnen horizontale half-FOV (14.3° in portrait 0.46)
+        const CAM_TGT = new THREE.Vector3(
+            KRAB.cx, KRAB.cy + 0.35, KRAB.cz);
+        const CAM_POS = new THREE.Vector3(
+            KRAB.cx + 8, KRAB.cy + 3.45, KRAB.cz);
+        const camFrom = {
+            pos: camera.position.clone(),
+            tgt: controls.target.clone(),
+        };
+        let camLerpT = 0;
+        const camLerpDur = 0.9;
+
+        // ── CRAB SPAWN / HIT / EXPIRE / REMOVE ──
         function spawnCrab() {
-            // Random vrij gat kiezen
-            const free = holes.filter(h => !h.busy);
+            const free = holes3D.filter(h => !h.busy);
             if (free.length === 0) return;
             const hole = free[Math.floor(Math.random() * free.length)];
             hole.busy = true;
-            const crab = el('div', { className: 'krab-crab',
-                style: { left: hole.x + 'px', top: hole.y + 'px' } }, '🦀');
-            stage.append(crab);
-            requestAnimationFrame(() => crab.classList.add('show'));
-            // expire na random tijd
-            const lifeMs = 700 + Math.random() * 700;
-            const obj = { hole, el: crab, expireAt: performance.now() + lifeMs, hit: false };
-            activeCrabs.push(obj);
-            crab.addEventListener('touchstart', e => { e.preventDefault(); onHit(obj); },
-                { passive: false });
-            crab.addEventListener('mousedown', e => onHit(obj));
+
+            const crabGrp = makeCrab();
+            const startY = hole.worldY - 0.5;     // verstopt onder zand
+            const peakY  = hole.worldY + 0.05;    // net boven zand
+            crabGrp.position.set(hole.worldX, startY, hole.worldZ);
+            crabGrp.rotation.y = Math.random() * Math.PI * 2;
+            krabbenGroup.add(crabGrp);
+
+            activeCrabs.push({
+                group: crabGrp, hole,
+                spawnAt: performance.now(),
+                popDur: 160,
+                lifeMs: 700 + Math.random() * 700,
+                startY, peakY,
+                hit: false, removing: false,
+            });
         }
+
         function onHit(c) {
             if (c.hit || phase !== 'playing') return;
             c.hit = true;
+            c.removing = true;
             score++;
             sVal.textContent = String(score);
-            c.el.classList.add('hit');
-            // Zandwolk
-            const dust = el('div', { className: 'krab-dust',
-                style: { left: c.hole.x + 'px', top: c.hole.y + 'px' } });
-            stage.append(dust);
-            setTimeout(() => dust.remove(), 600);
-            // Krab verdwijnt sneller
-            setTimeout(() => {
-                c.el.remove(); c.hole.busy = false;
-                const idx = activeCrabs.indexOf(c);
-                if (idx >= 0) activeCrabs.splice(idx, 1);
-            }, 350);
+            // Squish + scale-out animatie
+            const t0 = performance.now();
+            const dur = 280;
+            const startScale = c.group.scale.x;
+            const step = () => {
+                const k = Math.min(1, (performance.now() - t0) / dur);
+                const s = startScale * (1 - k);
+                c.group.scale.set(s * 1.3, s * 0.55, s * 1.3);
+                c.group.position.y = c.peakY + (c.startY - c.peakY) * (k * k);
+                c.group.rotation.z = k * 1.2;
+                if (k < 1) requestAnimationFrame(step);
+                else removeCrab(c);
+            };
+            step();
+            // Zandwolk-puff bij het gat
+            spawnSandDust(c.hole.worldX, c.hole.worldY + 0.05, c.hole.worldZ);
+            // Trilling-feedback
+            if (navigator.vibrate) {
+                try { navigator.vibrate(15); } catch (e) {}
+            }
         }
+
+        function removeCrab(c) {
+            c.removing = true;
+            krabbenGroup.remove(c.group);
+            c.group.traverse(o => {
+                if (o.geometry) o.geometry.dispose();
+                if (o.material) {
+                    if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
+                    else o.material.dispose();
+                }
+            });
+            c.hole.busy = false;
+            const idx = activeCrabs.indexOf(c);
+            if (idx !== -1) activeCrabs.splice(idx, 1);
+        }
+
         function expireCrab(c) {
-            c.el.classList.remove('show');
-            setTimeout(() => {
-                c.el.remove(); c.hole.busy = false;
-                const idx = activeCrabs.indexOf(c);
-                if (idx >= 0) activeCrabs.splice(idx, 1);
-            }, 200);
+            // Animeer naar beneden
+            c.removing = true;
+            const t0 = performance.now();
+            const dur = 220;
+            const startY = c.group.position.y;
+            const step = () => {
+                const k = Math.min(1, (performance.now() - t0) / dur);
+                const e = 1 - Math.pow(1 - k, 2);
+                c.group.position.y = startY + (c.startY - startY) * e;
+                if (k < 1) requestAnimationFrame(step);
+                else removeCrab(c);
+            };
+            step();
         }
+
+        function spawnSandDust(x, y, z) {
+            const dust = new THREE.Mesh(
+                new THREE.RingGeometry(0.18, 0.55, 18),
+                new THREE.MeshBasicMaterial({
+                    color: 0xe6c890, transparent: true, opacity: 0.75,
+                    side: THREE.DoubleSide, depthWrite: false }));
+            dust.rotation.x = -Math.PI / 2;
+            dust.position.set(x, y, z);
+            krabbenGroup.add(dust);
+            const t0 = performance.now();
+            const dur = 450;
+            const step = () => {
+                const k = Math.min(1, (performance.now() - t0) / dur);
+                const s = 1 + k * 1.4;
+                dust.scale.set(s, s, s);
+                dust.material.opacity = 0.75 * (1 - k);
+                if (k < 1) requestAnimationFrame(step);
+                else {
+                    krabbenGroup.remove(dust);
+                    dust.geometry.dispose();
+                    dust.material.dispose();
+                }
+            };
+            step();
+        }
+
+        // ── PHASE MACHINE ──
         function startRun(playerIdx) {
             curIdx = playerIdx;
             const p = players[curIdx];
@@ -14170,11 +14474,13 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
             pVal.style.color = p.color.css;
             pChip.style.setProperty('--pcol', p.color.css);
             sVal.textContent = '0';
+            tVal.textContent = '30';
             score = 0;
-            // Cleanup old crabs/holes
-            activeCrabs.forEach(c => c.el.remove());
-            activeCrabs.length = 0;
-            holes.forEach(h => h.busy = false);
+            // Cleanup
+            for (let i = activeCrabs.length - 1; i >= 0; i--) {
+                removeCrab(activeCrabs[i]);
+            }
+            holes3D.forEach(h => h.busy = false);
             // Banner
             const banner = el('div', { className: 'krab-banner',
                 style: { '--pcol': p.color.css } });
@@ -14188,24 +14494,28 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
                         phase = 'playing';
                         phaseStart = performance.now();
                         crabSpawnTimer = 0;
-                        if (!holes.length) layoutHoles();
+                        crabSpawnInterval = 0.55;
                     }} }, '▶ Start'),
             );
             stage.append(banner);
             phase = 'intro';
         }
+
         function endRun() {
             phase = 'between';
             scores.push({ player: players[curIdx], score });
-            activeCrabs.forEach(c => c.el.remove());
-            activeCrabs.length = 0;
-            holes.forEach(h => h.busy = false);
+            // Cleanup
+            for (let i = activeCrabs.length - 1; i >= 0; i--) {
+                removeCrab(activeCrabs[i]);
+            }
+            holes3D.forEach(h => h.busy = false);
             const p = players[curIdx];
             const banner = el('div', { className: 'krab-banner',
                 style: { '--pcol': p.color.css } });
             banner.append(
                 el('h2', {}, 'Klaar!'),
-                el('div', { className: 'big', style: { color: p.color.css } }, String(score)),
+                el('div', { className: 'big',
+                    style: { color: p.color.css } }, String(score)),
                 el('p', {}, `krabben gevangen door ${p.name}`),
             );
             stage.append(banner);
@@ -14215,13 +14525,13 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
                 else showFinal();
             }, 2200);
         }
+
         function showFinal() {
             phase = 'done';
             const sorted = [...scores].sort((a, b) => b.score - a.score);
             const topS = sorted[0].score;
             const winners = sorted.filter(s => s.score === topS);
-            const losers = sorted.filter(s => s.score < topS);
-            const winName = winners.map(w => w.player.name).join(' & ');
+            const losers  = sorted.filter(s => s.score < topS);
             const banner = el('div', { className: 'krab-banner',
                 style: { '--pcol': winners[0].player.color.css } });
             const ranking = el('div', { style: {
@@ -14250,49 +14560,106 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
             stage.append(banner);
             setTimeout(() => finish(sorted), 8000);
         }
+
         function finish(sorted) {
             if (phase === 'closed') return;
             phase = 'closed';
-            cancelAnimationFrame(rafId);
+            // 3D cleanup
+            window.__deGameHook = PREV_HOOK;
+            // Anim alle crabs weg
+            for (let i = activeCrabs.length - 1; i >= 0; i--) {
+                removeCrab(activeCrabs[i]);
+            }
+            scene.remove(krabbenGroup);
+            krabbenGroup.traverse(o => {
+                if (o.geometry) o.geometry.dispose();
+                if (o.material) {
+                    if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
+                    else o.material.dispose();
+                }
+            });
+            // Camera restore
+            camera.fov = savedCam.fov;
+            camera.updateProjectionMatrix();
+            camera.position.copy(savedCam.pos);
+            controls.target.copy(savedCam.target);
+            controls.autoRotate = savedCam.autoRotate;
+            controls.enabled = savedCam.enabled;
+            controls.enableDamping = savedCam.enableDamping;
+            controls.update();
+            // UI fade-out
             back.style.transition = 'opacity 0.3s ease';
             back.style.opacity = '0';
-            setTimeout(() => { back.remove(); resolve(sorted || null); }, 300);
+            setTimeout(() => {
+                back.remove();
+                restoreMinigameChrome(hiddenChrome);
+                resolve(sorted || null);
+            }, 300);
         }
 
-        let rafId = 0, lastT = 0;
-        function tick(t) {
-            const dt = lastT ? (t - lastT) / 1000 : 0;
-            lastT = t;
+        // ── ANIMATION HOOK (camera lerp + crab pop + spawn + timer) ──
+        const PREV_HOOK = window.__deGameHook;
+        let lastT = 0;
+        window.__deGameHook = (time) => {
+            const now = performance.now() / 1000;
+            const dt = lastT ? Math.min(0.05, now - lastT) : 0;
+            lastT = now;
+
+            // Camera lerp van saved-pos → krabben-pit view
+            if (camLerpT < 1) {
+                camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
+                const e = 1 - Math.pow(1 - camLerpT, 3);
+                camera.position.lerpVectors(camFrom.pos, CAM_POS, e);
+                controls.target.lerpVectors(camFrom.tgt, CAM_TGT, e);
+                camera.lookAt(controls.target);
+            }
+
+            // Crab pop-up / wobble / dive
+            const t = performance.now();
+            for (let i = activeCrabs.length - 1; i >= 0; i--) {
+                const c = activeCrabs[i];
+                if (c.hit || c.removing) continue;
+                const age = t - c.spawnAt;
+                if (age < c.popDur) {
+                    // Pop-up: ease-out
+                    const k = age / c.popDur;
+                    const e = 1 - Math.pow(1 - k, 3);
+                    c.group.position.y = c.startY + (c.peakY - c.startY) * e;
+                } else if (age < c.popDur + c.lifeMs) {
+                    // At peak: subtiele wiebel + draaitje
+                    const localAge = age - c.popDur;
+                    c.group.position.y = c.peakY +
+                        Math.sin(localAge * 0.012) * 0.04;
+                    c.group.rotation.y += dt * 0.6;
+                } else if (age < c.popDur + c.lifeMs + 220) {
+                    // Dive-back
+                    const k = (age - c.popDur - c.lifeMs) / 220;
+                    const e = 1 - Math.pow(1 - k, 2);
+                    c.group.position.y = c.peakY + (c.startY - c.peakY) * e;
+                } else {
+                    expireCrab(c);
+                }
+            }
+
+            // Spawn & timer (alleen tijdens 'playing')
             if (phase === 'playing') {
-                const elapsed = performance.now() - phaseStart;
+                const elapsed = t - phaseStart;
                 const remaining = Math.max(0, ROUND_MS - elapsed);
                 tVal.textContent = Math.ceil(remaining / 1000).toString();
-                // Spawn ritme versnelt: 0.55s → 0.30s
-                const t01 = elapsed / ROUND_MS;
+                // Spawn-ritme versnelt: 0.55s → 0.30s
+                const t01 = Math.min(1, elapsed / ROUND_MS);
                 crabSpawnInterval = 0.55 - t01 * 0.25;
                 crabSpawnTimer += dt;
-                if (crabSpawnTimer >= crabSpawnInterval) {
+                while (crabSpawnTimer >= crabSpawnInterval) {
                     crabSpawnTimer -= crabSpawnInterval;
                     spawnCrab();
                 }
-                // Expire crabs
-                const now = performance.now();
-                for (let i = activeCrabs.length - 1; i >= 0; i--) {
-                    if (!activeCrabs[i].hit && now >= activeCrabs[i].expireAt) {
-                        expireCrab(activeCrabs[i]);
-                    }
-                }
                 if (elapsed >= ROUND_MS) endRun();
             }
-            rafId = requestAnimationFrame(tick);
-        }
-        // Wacht tot stage layout heeft, dan starten
-        setTimeout(() => {
-            layoutHoles();
-            window.addEventListener('resize', () => layoutHoles());
-            startRun(0);
-            rafId = requestAnimationFrame(tick);
-        }, 50);
+        };
+
+        // ── KICKOFF ──
+        startRun(0);
     });
 }
 
