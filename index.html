@@ -2290,6 +2290,42 @@
     width: 100%; height: 100%;
     max-height: 100%;
 }
+/* 3D-preview canvas (vervangt SVG-preview in nieuwe pion-creator) */
+.av-3d-wrap {
+    width: 80%; max-width: 320px; height: 100%; aspect-ratio: 4/5;
+    display: flex; align-items: center; justify-content: center;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
+    position: relative;
+}
+.av-3d-wrap canvas {
+    width: 100% !important; height: 100% !important;
+    border-radius: 18px;
+    background: radial-gradient(ellipse at 50% 70%, rgba(255,255,255,0.05), transparent 70%);
+}
+/* 3D-thumbnail in option-cards — bevat nu een echte 3D-render <img> */
+.av-opt-thumb-3d {
+    width: 60px; height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.10), rgba(0,0,0,0.30));
+    border-radius: 14px; border: 1px solid rgba(255,255,255,0.10);
+    overflow: hidden;
+}
+.av-opt-thumb-3d img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
+}
+/* 3D-thumbnail op home page (vervangt 2D SVG avatar) */
+.av-thumb-3d {
+    overflow: hidden;
+    background: radial-gradient(circle at 35% 30%,
+        rgba(255,255,255,0.15), rgba(0,0,0,0.30));
+}
+.av-thumb-3d img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
+}
 .av-bounce {
     animation: avBounce 0.4s cubic-bezier(.4,1.7,.5,1);
 }
@@ -2385,6 +2421,60 @@
     text-align: center; line-height: 1.2;
     max-width: 80px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── Color picker in Type-tab — alle PLAYER_COLORS swatches ── */
+.av-color-block {
+    padding: 10px 14px 4px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    margin-top: 8px;
+}
+.av-color-label {
+    font-size: 11px; letter-spacing: 1.1px; text-transform: uppercase;
+    opacity: 0.7; font-weight: 700; margin-bottom: 8px;
+}
+.av-color-grid {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px;
+}
+.av-color-sw {
+    width: 100%; aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.25);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .12s ease, border-color .2s ease;
+    position: relative;
+    padding: 0;
+}
+.av-color-sw:active { transform: scale(0.90); }
+.av-color-sw.mine {
+    border-color: #ffd54a;
+    box-shadow: 0 0 0 2px rgba(255,215,80,0.6), 0 0 14px rgba(255,215,80,0.5);
+    transform: scale(1.10);
+}
+.av-color-sw.taken {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+/* Diagonale doorgestreepte lijn op bezette kleur — als rode streep */
+.av-color-sw.taken::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg,
+        transparent 44%,
+        rgba(255,255,255,0.85) 47%,
+        #ff2848 50%,
+        rgba(255,255,255,0.85) 53%,
+        transparent 56%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.av-color-sw.taken::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.25);
+    border-radius: 50%;
+    pointer-events: none;
 }
 
 /* Palette row */
@@ -5227,14 +5317,23 @@ tileWorldPos.push(summitPos.clone());  // last index = gold summit
 
 // ── Game state ──
 const PLAYER_COLORS = [
-    { name: 'Rood',   hex: 0xff4d5c, css: '#ff4d5c' },
-    { name: 'Blauw',  hex: 0x3aa9ff, css: '#3aa9ff' },
-    { name: 'Geel',   hex: 0xffd54a, css: '#ffd54a' },
-    { name: 'Groen',  hex: 0x4ce07a, css: '#4ce07a' },
-    { name: 'Paars',  hex: 0xb87aff, css: '#b87aff' },
-    { name: 'Roze',   hex: 0xff8fbe, css: '#ff8fbe' },
-    { name: 'Oranje', hex: 0xff8a3a, css: '#ff8a3a' },
-    { name: 'Wit',    hex: 0xffffff, css: '#ffffff' },
+    { name: 'Rood',     hex: 0xff4d5c, css: '#ff4d5c' },
+    { name: 'Blauw',    hex: 0x3aa9ff, css: '#3aa9ff' },
+    { name: 'Geel',     hex: 0xffd54a, css: '#ffd54a' },
+    { name: 'Groen',    hex: 0x4ce07a, css: '#4ce07a' },
+    { name: 'Paars',    hex: 0xb87aff, css: '#b87aff' },
+    { name: 'Roze',     hex: 0xff8fbe, css: '#ff8fbe' },
+    { name: 'Oranje',   hex: 0xff8a3a, css: '#ff8a3a' },
+    { name: 'Wit',      hex: 0xffffff, css: '#ffffff' },
+    // ── extra vrouwelijke / pastel kleuren ──
+    { name: 'Magenta',  hex: 0xff3a8a, css: '#ff3a8a' },   // hot pink
+    { name: 'Lavendel', hex: 0xc8a8ff, css: '#c8a8ff' },   // zachte lila
+    { name: 'Lila',     hex: 0xe0b0ff, css: '#e0b0ff' },   // licht violet
+    { name: 'Mint',     hex: 0x8de8c0, css: '#8de8c0' },   // pastel mint
+    { name: 'Koraal',   hex: 0xff9080, css: '#ff9080' },   // salmon-coral
+    { name: 'Perzik',   hex: 0xffc59a, css: '#ffc59a' },   // soft peach
+    { name: 'Rose',     hex: 0xf8b8c8, css: '#f8b8c8' },   // dusty rose
+    { name: 'Babyblauw',hex: 0xa8d4ff, css: '#a8d4ff' },   // soft sky blue
 ];
 
 const G = {
@@ -5735,14 +5834,84 @@ const AVATAR_HAIR_OPTIONS    = [
     'braids','bob','space_buns','side_swept','messy_bun','half_up'
 ];
 const AVATAR_ACC_OPTIONS     = ['none','glasses','shades','cap','beanie','crown','bandana','headband','helmet','earrings',
-                                  'bow','flower','pearls','bunny_ears'];
+                                  'bow','flower','pearls','bunny_ears',
+                                  // ── nieuwe 3D-hoeden voor de pion-creator ──
+                                  'sombrero','tophat','cowboy','pirate',
+                                  // ── grappige extra hoeden ──
+                                  'viking','jester','propeller','fez','witch','party',
+                                  // ── mega-overdreven hoeden ──
+                                  'wizard','unicorn','shark','astronaut','mega_crown','cone',
+                                  // ── vrouwelijke + stereotype mannen-hoeden ──
+                                  'tiara','cat_ears','flower_crown','hardhat'];
+// ── Nieuwe pawn-only opties (alleen op de 3D pion, niet 2D HUD) ──
+const PAWN_MUSTACHE_OPTIONS  = ['none','big','curly','goatee','pencil','horseshoe',
+                                 'chevron','walrus','fu_manchu','soulpatch'];
+const PAWN_ITEM_OPTIONS      = ['none','guitar','ukulele','mic','beer','torch',
+                                 'rubber_chicken','fishing_rod','ice_cream','umbrella','sword','balloon',
+                                 // ── vrouwelijke items ──
+                                 'lipstick','handbag','hand_mirror','flower_bouquet','heart_balloon',
+                                 // ── stereotype mannen-items ──
+                                 'cigar','dumbbell','hammer'];
+const PAWN_SHOES_OPTIONS     = ['normal','big','clown','flippers','roller_skates','cowboy_boots','high_heels'];
+const PAWN_PUPPY_OPTIONS     = ['none','shiba','dalmatian','pug','husky','corgi','poodle','chihuahua'];
+const PAWN_BODY_COLORS       = ['#e63b3b','#3aa6ff','#3acc6a','#ffd54a','#a45cff',
+                                 '#ff7a1f','#ff5fa2','#1ae0d0','#7a5a3a','#9a9aff'];
+const PAWN_FACIAL_HAIR_COLORS = ['#1a1010','#3a2a1a','#6a4a2a','#9a7a4a','#c8a47a','#e0d0a0','#ffffff'];
+
+// ── Geslacht-specifieke subsets ────────────────────────────────
+// Gebruikt door de creator om bij het kiezen van Man/Vrouw alle
+// face/eye/brow/mouth/hair velden automatisch te randomiseren in
+// passende stijlen. Hoeden + items zijn gender-neutraal.
+const MALE_FACE_OPTS    = ['round','square','long','wide_jaw','angular','pointed','triangle','soft','chubby'];
+const MALE_HAIR_OPTS    = ['bald','short_messy','short_neat','side_part','mohawk','spiky','bowl','bun','ponytail'];
+const MALE_BROW_OPTS    = ['thick','flat','angry','wavy'];
+const MALE_EYE_OPTS     = ['normal','big','sleepy','wink','dot','square','tired'];
+const MALE_MOUTH_OPTS   = ['smile','grin','neutral','open','smirk','tongue','frown','tooth'];
+
+const FEMALE_FACE_OPTS  = ['round','oval','heart','soft','baby','narrow','diamond'];
+const FEMALE_HAIR_OPTS  = ['long_straight','ponytail','pigtails','bun','curly','wavy_long',
+                            'braids','bob','space_buns','side_swept','messy_bun','half_up','afro'];
+const FEMALE_BROW_OPTS  = ['arched','thin','wavy','surprised'];
+const FEMALE_EYE_OPTS   = ['big','star','sparkle','lashed','glamour','cute_lashed','eyeliner'];
+const FEMALE_MOUTH_OPTS = ['smile','soft_smile','kiss','lips_red','lips_pink','lips_full','o','grin'];
+
+// Randomiseer alle gender-afhankelijke velden voor een avatar.
+// Behoudt huidskleur, oog-kleur, brauw-kleur, haar-kleur etc.
+function randomizeForGender(a, gender) {
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+    if (gender === 'female') {
+        // SCHATTIG / VROUWELIJK — altijd wimpers, blush, lippenstift
+        a.face         = pick(['round','oval','heart','soft','baby']);   // soft only
+        a.eyes.shape   = pick(['lashed','glamour','cute_lashed','sparkle','star','big']);
+        a.brows.shape  = pick(['arched','thin','wavy']);                  // never thick
+        a.mouth        = pick(['lips_red','lips_pink','lips_full','kiss','soft_smile']);
+        a.hair.style   = pick(FEMALE_HAIR_OPTS);
+        a.blush        = pick(['soft_pink','pink','freckles']);           // ALTIJD blush
+        a.pawnMustache = 'none';                                          // NOOIT snor
+    } else {
+        // STEREOTYPE MAN — sterke brauwen, vaak een snor
+        a.face         = pick(MALE_FACE_OPTS);
+        a.eyes.shape   = pick(MALE_EYE_OPTS);
+        a.brows.shape  = pick(['thick','flat','angry']);                  // altijd dik
+        a.mouth        = pick(MALE_MOUTH_OPTS);
+        a.hair.style   = pick(MALE_HAIR_OPTS);
+        // 40% kans op een snor by default — typisch mannelijke look
+        if (Math.random() < 0.40) {
+            a.pawnMustache = pick(['big','curly','horseshoe','chevron','walrus','fu_manchu']);
+        } else {
+            a.pawnMustache = 'none';
+        }
+    }
+    a.gender = gender;
+}
 const AVATAR_BODY_OPTIONS    = ['slim','normal','chunky'];
 const AVATAR_BLUSH_OPTIONS   = ['none','soft_pink','pink','red','freckles','stars'];
 
 // ── Factory: default avatar based on player color ──
 function defaultAvatar(colorIdx = 0) {
     return {
-        v: 1,
+        v: 2,
+        gender: 'male',
         face: 'round',
         skin: AVATAR_SKIN_TONES[1],
         eyes: { shape: 'normal', color: AVATAR_EYE_COLORS[0] },
@@ -5754,13 +5923,20 @@ function defaultAvatar(colorIdx = 0) {
         body: 'normal',
         outfit: AVATAR_OUTFIT_COLORS[colorIdx % AVATAR_OUTFIT_COLORS.length],
         blush: 'none',
+        // ── NEW 3D pawn fields ──
+        pawnMustache: 'none',
+        pawnMustacheColor: PAWN_FACIAL_HAIR_COLORS[1],
+        pawnItem: 'none',
+        pawnShoes: 'normal',
+        pawnPuppy: 'none',
+        pawnBodyColor: null,   // null = use player.color, else override
     };
 }
 
 function randomAvatar() {
     const pick = a => a[Math.floor(Math.random() * a.length)];
     return {
-        v: 1,
+        v: 2,
         face: pick(AVATAR_FACE_OPTIONS),
         skin: pick(AVATAR_SKIN_TONES),
         eyes: { shape: pick(AVATAR_EYE_OPTIONS), color: pick(AVATAR_EYE_COLORS) },
@@ -5772,7 +5948,26 @@ function randomAvatar() {
         body: pick(AVATAR_BODY_OPTIONS),
         outfit: pick(AVATAR_OUTFIT_COLORS),
         blush: pick(AVATAR_BLUSH_OPTIONS),
+        pawnMustache: pick(PAWN_MUSTACHE_OPTIONS),
+        pawnMustacheColor: pick(PAWN_FACIAL_HAIR_COLORS),
+        pawnItem: pick(PAWN_ITEM_OPTIONS),
+        pawnShoes: pick(PAWN_SHOES_OPTIONS),
+        pawnPuppy: Math.random() < 0.35 ? pick(PAWN_PUPPY_OPTIONS.slice(1)) : 'none',
+        pawnBodyColor: null,
     };
+}
+
+// Migratie-helper: zorgt dat oude avatars de nieuwe pawn-velden ook hebben.
+function ensurePawnFields(a) {
+    if (!a) return a;
+    if (a.gender             === undefined) a.gender             = 'male';
+    if (a.pawnMustache       === undefined) a.pawnMustache       = 'none';
+    if (a.pawnMustacheColor  === undefined) a.pawnMustacheColor  = PAWN_FACIAL_HAIR_COLORS[1];
+    if (a.pawnItem           === undefined) a.pawnItem           = 'none';
+    if (a.pawnShoes          === undefined) a.pawnShoes          = 'normal';
+    if (a.pawnPuppy          === undefined) a.pawnPuppy          = 'none';
+    if (a.pawnBodyColor      === undefined) a.pawnBodyColor      = null;
+    return a;
 }
 
 // ═══ SVG PART RENDERERS ═══════════════════════════════════════════════════
@@ -6467,14 +6662,83 @@ function avlbl(key) { return AVATAR_LABELS[key] || key; }
  * @param {string} title E.g. "Avatar voor Speler 1"
  * @returns {Promise<object|null>} The edited avatar, or null if cancelled
  */
-function openAvatarCreator(initial, title = 'Avatar Creator') {
+function openAvatarCreator(initial, title = '🎭 Pion Maker', playerColor = null, opts = {}) {
+    // opts.currentColorIdx    : index in PLAYER_COLORS van deze speler
+    // opts.takenColorIndices  : indices die andere spelers al hebben
+    // opts.onColorChange      : (newIdx) => void  callback bij kleurkeuze
     return new Promise(resolve => {
-        // Deep-clone so cancel really discards changes
-        const a = JSON.parse(JSON.stringify(initial || defaultAvatar(0)));
-        let currentCat = AVATAR_CATEGORIES[0];
+        // Deep-clone zodat cancel echt cancelt
+        const a = ensurePawnFields(JSON.parse(JSON.stringify(initial || defaultAvatar(0))));
+
+        // Live kleur-state — start bij meegegeven color, wisselt bij user-keuze
+        let curColorIdx = (typeof opts.currentColorIdx === 'number') ? opts.currentColorIdx : 0;
+        let curColor = playerColor || (PLAYER_COLORS[curColorIdx] && PLAYER_COLORS[curColorIdx].css) || '#e63b3b';
+        const takenIdx = new Set(opts.takenColorIndices || []);
+
+        // ── Categorieën focused op 3D-pion customizatie ──
+        //   Type-tab heeft EXTRA color-picker met strikethrough op kleuren
+        //   die andere spelers al hebben.
+        const PAWN_CATS = [
+            { id: 'gender', emoji: '⚧️', label: 'Type',
+              kind: 'options',
+              options: ['male','female'],
+              get: () => a.gender || 'male',
+              set: (v) => {
+                  // Geslacht-wissel randomiseert face/eyes/brows/mouth/hair
+                  // in de juiste subset → snelle weg naar mannelijke vs vrouwelijke pion
+                  randomizeForGender(a, v);
+              } },
+            { id: 'hair', emoji: '💇', label: 'Pruik',
+              kind: 'options',
+              // Opties dynamisch obv geslacht — vrouwelijke avatars
+              // krijgen lang/braids/buns etc., mannelijke korte stijlen.
+              get options() {
+                  return a.gender === 'female' ? FEMALE_HAIR_OPTS : MALE_HAIR_OPTS;
+              },
+              get: () => a.hair.style,
+              set: (v) => { a.hair.style = v; },
+              palette: AVATAR_HAIR_COLORS,
+              getColor: () => a.hair.color,
+              setColor: (v) => { a.hair.color = v; } },
+            { id: 'mustache', emoji: '🥸', label: 'Snor',
+              kind: 'options',
+              options: PAWN_MUSTACHE_OPTIONS,
+              get: () => a.pawnMustache,
+              set: (v) => { a.pawnMustache = v; },
+              palette: PAWN_FACIAL_HAIR_COLORS,
+              getColor: () => a.pawnMustacheColor,
+              setColor: (v) => { a.pawnMustacheColor = v; },
+              // ── VERSTOP voor vrouwelijke pionnen ──
+              hideIf: () => a.gender === 'female' },
+            { id: 'hat', emoji: '🎩', label: 'Hoed',
+              kind: 'options',
+              options: ['none','cap','beanie','crown','sombrero','tophat','cowboy','pirate',
+                        'helmet','bunny_ears','viking','jester','propeller','fez','witch','party',
+                        'wizard','unicorn','shark','astronaut','mega_crown','cone',
+                        // ── feminiene + stereotype mannen-hoeden ──
+                        'tiara','cat_ears','flower_crown','hardhat'],
+              get: () => a.accessory,
+              set: (v) => { a.accessory = v; } },
+            { id: 'item', emoji: '🎸', label: 'Item',
+              kind: 'options',
+              options: PAWN_ITEM_OPTIONS,
+              get: () => a.pawnItem,
+              set: (v) => { a.pawnItem = v; } },
+            { id: 'shoes', emoji: '👟', label: 'Schoenen',
+              kind: 'options',
+              options: PAWN_SHOES_OPTIONS,
+              get: () => a.pawnShoes,
+              set: (v) => { a.pawnShoes = v; } },
+            { id: 'puppy', emoji: '🐶', label: 'Puppy',
+              kind: 'options',
+              options: PAWN_PUPPY_OPTIONS,
+              get: () => a.pawnPuppy,
+              set: (v) => { a.pawnPuppy = v; } },
+        ];
+        let currentCat = PAWN_CATS[0];
 
         const host = document.getElementById('game-ui');
-        const back = el('div', { className: 'av-back' });
+        const back = el('div', { className: 'av-back av-back-3d' });
 
         // ── Header
         const head = el('div', { className: 'av-head' });
@@ -6484,32 +6748,92 @@ function openAvatarCreator(initial, title = 'Avatar Creator') {
                 on: { click: () => finish(null) } }, '✕'),
         );
 
-        // ── Big preview
+        // ── 3D preview (vervangt SVG-preview)
         const preview = el('div', { className: 'av-preview' });
-        const previewSVG = el('div', { className: 'av-svg-wrap' });
-        preview.append(previewSVG);
+        const canvasWrap = el('div', { className: 'av-3d-wrap' });
+        const pCanvas = document.createElement('canvas');
+        canvasWrap.append(pCanvas);
+        preview.append(canvasWrap);
 
-        // ── Top-action row: random + reset
+        // ── Mini 3D scene (eigen renderer, los van hoofd-scene)
+        const pRenderer = new THREE.WebGLRenderer({
+            canvas: pCanvas, antialias: true, alpha: true });
+        pRenderer.setPixelRatio(window.devicePixelRatio);
+        pRenderer.setClearColor(0x000000, 0);
+        const pScene = new THREE.Scene();
+        pScene.add(new THREE.AmbientLight(0xffffff, 0.85));
+        const pDir = new THREE.DirectionalLight(0xffffff, 0.9);
+        pDir.position.set(2.5, 4.5, 3);
+        pScene.add(pDir);
+        const pCam = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+        pCam.position.set(0, 1.7, 4.8);
+        pCam.lookAt(0, 1.0, 0);
+
+        let pawnGroup = null;
+        function rebuildPawn() {
+            if (pawnGroup) {
+                pScene.remove(pawnGroup);
+                pawnGroup.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                    if (o.material) {
+                        const mats = Array.isArray(o.material) ? o.material : [o.material];
+                        mats.forEach(m => m.dispose?.());
+                    }
+                });
+            }
+            // Body-kleur volgt curColor (kan tijdens session wisselen via Type-tab)
+            const col = curColor;
+            pawnGroup = buildPawnGroup(col, a);
+            pScene.add(pawnGroup);
+        }
+
+        let pawnRot = 0;
+        let prevRAF = null;
+        let running = true;
+        function loop() {
+            if (!running) return;
+            // GEEN auto-rotatie — kleine vaste tilt naar links (~12°)
+            // zodat het item dat op de rechter-zij hangt zichtbaar blijft
+            // vanuit de frontale camera. Pion kijkt voornamelijk vooruit.
+            if (pawnGroup) pawnGroup.rotation.y = -0.22;
+            const w = canvasWrap.clientWidth  || 280;
+            const h = canvasWrap.clientHeight || 360;
+            const dpr = window.devicePixelRatio || 1;
+            if (pRenderer.domElement.width !== Math.round(w * dpr) ||
+                pRenderer.domElement.height !== Math.round(h * dpr)) {
+                pRenderer.setSize(w, h, false);
+                pCam.aspect = w / h;
+                pCam.updateProjectionMatrix();
+            }
+            pRenderer.render(pScene, pCam);
+            prevRAF = requestAnimationFrame(loop);
+        }
+
+        // ── Top-action: random + reset
         const topActs = el('div', { className: 'av-top-actions' });
         const btnRand = el('button', { className: 'av-action-btn', type: 'button',
             on: { click: () => {
                 const rand = randomAvatar();
-                // keep outfit close to the player's identity if the original had a fixed outfit
                 Object.assign(a, rand);
+                ensurePawnFields(a);
+                // GEEN pawnBodyColor meer — kleur komt van de swatch
+                a.pawnBodyColor = null;
+                rebuildPawn();
                 refresh();
             } } });
         btnRand.append(el('span', { className: 'e' }, '🎲'), document.createTextNode(' Random'));
         const btnReset = el('button', { className: 'av-action-btn', type: 'button',
             on: { click: () => {
-                Object.assign(a, JSON.parse(JSON.stringify(initial || defaultAvatar(0))));
+                Object.assign(a, ensurePawnFields(JSON.parse(JSON.stringify(initial || defaultAvatar(0)))));
+                rebuildPawn();
                 refresh();
             } } });
         btnReset.append(el('span', { className: 'e' }, '↺'), document.createTextNode(' Reset'));
         topActs.append(btnRand, btnReset);
 
-        // ── Category tab-strip (horizontal scroll)
+        // ── Category tabs
         const catStrip = el('div', { className: 'av-tabs' });
-        for (const cat of AVATAR_CATEGORIES) {
+        for (const cat of PAWN_CATS) {
             const tab = el('button', { className: 'av-tab', type: 'button',
                 on: { click: () => { currentCat = cat; refresh(); } } });
             tab.append(
@@ -6520,18 +6844,17 @@ function openAvatarCreator(initial, title = 'Avatar Creator') {
             catStrip.append(tab);
         }
 
-        // ── Options carousel
+        // ── Options carousel + palette
         const optWrap = el('div', { className: 'av-options-wrap' });
         const optScroll = el('div', { className: 'av-options' });
         optWrap.append(optScroll);
 
-        // ── Palette (color swatches, shown only when category has palette)
         const paletteWrap = el('div', { className: 'av-palette-wrap' });
         const paletteLabel = el('div', { className: 'av-palette-label' });
         const paletteRow = el('div', { className: 'av-palette' });
         paletteWrap.append(paletteLabel, paletteRow);
 
-        // ── Footer (Cancel / Save)
+        // ── Footer
         const foot = el('div', { className: 'av-foot' });
         const cancel = el('button', { className: 'av-btn ghost', type: 'button',
             on: { click: () => finish(null) } }, '✕  Annuleren');
@@ -6542,46 +6865,170 @@ function openAvatarCreator(initial, title = 'Avatar Creator') {
         back.append(head, preview, topActs, catStrip, optWrap, paletteWrap, foot);
         host.append(back);
 
-        // ── refresh: re-render preview, options, palette
-        function refresh() {
-            // preview
-            previewSVG.innerHTML = renderAvatarSVG(a, 'full');
-            previewSVG.firstChild?.classList?.add('av-bounce');
+        // Categorie-tabs blijven met emoji omdat dit functionele
+        // navigatie-icoontjes zijn (geen attributen-iconen).
+        const labelize = (v) => {
+            if (v === 'none') return 'Geen';
+            if (v === 'male') return 'Man';
+            if (v === 'female') return 'Vrouw';
+            if (v === 'high_heels') return 'Hakken';
+            if (v === 'cowboy_boots') return 'Cowboy';
+            if (v === 'roller_skates') return 'Skates';
+            if (v === 'mega_crown') return 'Mega kroon';
+            if (v === 'cat_ears') return 'Kat-oortjes';
+            if (v === 'flower_crown') return 'Bloemkrans';
+            if (v === 'hardhat') return 'Bouwhelm';
+            if (v === 'hand_mirror') return 'Spiegel';
+            if (v === 'flower_bouquet') return 'Boeket';
+            if (v === 'heart_balloon') return 'Hart-ballon';
+            // Puppy-rassen
+            if (v === 'shiba')     return 'Shiba';
+            if (v === 'dalmatian') return 'Dalmatiër';
+            if (v === 'pug')       return 'Mopshond';
+            if (v === 'husky')     return 'Husky';
+            if (v === 'corgi')     return 'Corgi';
+            if (v === 'poodle')    return 'Poedel';
+            if (v === 'chihuahua') return 'Chihuahua';
+            return v.replace(/_/g, ' ');
+        };
 
-            // active tab
-            for (const t of catStrip.querySelectorAll('.av-tab')) {
-                t.classList.toggle('active', t.dataset.cat === currentCat.id);
+        // Bouwt een avatar-variant waarin enkel de gevraagde attribuut is
+        // veranderd t.o.v. de huidige a. Gebruikt door de option-thumbnail
+        // renderer zodat elke thumb ALLEEN dat ene attribuut benadrukt.
+        function buildAvatarVariant(catId, optValue) {
+            const v = JSON.parse(JSON.stringify(a));
+            ensurePawnFields(v);
+            // Reset andere accessoires voor cleane thumbnail (alleen
+            // dit attribuut tonen). Behalve haar — daar blijft de
+            // huidige stijl/kleur staan voor context.
+            v.pawnItem = 'none';
+            v.pawnMustache = 'none';
+            v.pawnShoes = 'normal';
+            v.accessory = 'none';
+            switch (catId) {
+                case 'gender':
+                    // Geslacht-thumb: laat zien hoe een random face van
+                    // dat geslacht eruit ziet (deterministisch obv gender)
+                    if (optValue === 'female') {
+                        v.gender = 'female';
+                        v.face = 'oval';
+                        v.eyes.shape = 'lashed';
+                        v.brows.shape = 'thin';
+                        v.mouth = 'lips_red';
+                        v.hair.style = 'long_straight';
+                        v.blush = 'soft_pink';
+                    } else {
+                        v.gender = 'male';
+                        v.face = 'square';
+                        v.eyes.shape = 'normal';
+                        v.brows.shape = 'thick';
+                        v.mouth = 'smile';
+                        v.hair.style = 'short_messy';
+                    }
+                    break;
+                case 'color':      v.pawnBodyColor = optValue; break;
+                case 'hair':       v.hair.style = optValue; break;
+                case 'mustache':   v.pawnMustache = optValue; break;
+                case 'hat':        v.accessory = optValue; break;
+                case 'item':       v.pawnItem = optValue; break;
+                case 'shoes':      v.pawnShoes = optValue; break;
             }
-            // Scroll active tab into view
+            return v;
+        }
+
+        function refresh() {
+            // Hidden-tab check: als de actieve tab nu verstopt is
+            // (bv. mustache bij geslacht=female), spring naar de eerste
+            // zichtbare tab.
+            if (currentCat.hideIf?.()) {
+                currentCat = PAWN_CATS.find(c => !c.hideIf?.()) || PAWN_CATS[0];
+            }
+            // Active tab + zichtbaarheid
+            for (const t of catStrip.querySelectorAll('.av-tab')) {
+                const cat = PAWN_CATS.find(c => c.id === t.dataset.cat);
+                t.style.display = cat?.hideIf?.() ? 'none' : '';
+                t.classList.toggle('active', cat?.id === currentCat.id);
+            }
             const activeTab = catStrip.querySelector('.av-tab.active');
             if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
-            // options
+            // Options met ZICHTBARE attribuut-thumbnails (alleen het
+            // accessoire/item/etc., niet de hele pion eromheen). Auto-fit
+            // camera zorgt dat het attribuut groot in beeld komt.
             clear(optScroll);
-            const currentVal = currentCat.get(a);
-            for (const opt of currentCat.options) {
-                const card = el('button', { className: 'av-opt' + (opt.value === currentVal ? ' active' : ''), type: 'button',
-                    on: { click: () => { currentCat.set(a, opt.value); refresh(); } } });
-                // mini preview: clone the avatar and apply just this option
-                const mini = JSON.parse(JSON.stringify(a));
-                currentCat.set(mini, opt.value);
-                card.innerHTML = `<div class="av-opt-thumb">${renderAvatarSVG(mini, 'head')}</div>
-                    <div class="av-opt-lbl">${avlbl(opt.value)}</div>`;
-                optScroll.append(card);
-            }
-            // Scroll active option into view
-            const activeOpt = optScroll.querySelector('.av-opt.active');
-            if (activeOpt) activeOpt.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            // Verwijder evt. vorige color-block (wordt zo nodig opnieuw opgebouwd)
+            const oldBlock = optWrap.parentNode.querySelector('.av-color-block');
+            if (oldBlock) oldBlock.remove();
+            if (currentCat.kind === 'options') {
+                const currentVal = currentCat.get();
+                for (const v of currentCat.options) {
+                    const card = el('button', { className: 'av-opt' + (v === currentVal ? ' active' : ''), type: 'button',
+                        on: { click: () => {
+                            currentCat.set(v);
+                            if (currentCat.id === 'gender') _thumbCache.clear();
+                            rebuildPawn();
+                            refresh();
+                        } } });
+                    const thumbURL = renderAttributeOnlyThumb(currentCat.id, v, a);
+                    card.innerHTML = `<div class="av-opt-thumb-3d"><img src="${thumbURL}" alt="${v}"></div>
+                        <div class="av-opt-lbl">${labelize(v)}</div>`;
+                    optScroll.append(card);
+                }
+                optWrap.style.display = '';
 
-            // palette
+                // ── Extra: in Type-tab óók een color-picker met strikethrough
+                // voor kleuren die andere spelers al hebben gepakt ──
+                if (currentCat.id === 'gender' && opts.onColorChange) {
+                    const colorBlock = el('div', { className: 'av-color-block' });
+                    colorBlock.append(el('div', { className: 'av-color-label' }, '🎨 Pion-kleur'));
+                    const grid = el('div', { className: 'av-color-grid' });
+                    PLAYER_COLORS.forEach((c, idx) => {
+                        const isMine = idx === curColorIdx;
+                        const isTaken = takenIdx.has(idx) && !isMine;
+                        const sw = el('button', {
+                            className: 'av-color-sw'
+                                + (isMine  ? ' mine'  : '')
+                                + (isTaken ? ' taken' : ''),
+                            type: 'button',
+                            title: c.name + (isTaken ? ' (bezet)' : ''),
+                            on: { click: () => {
+                                if (isTaken) return;          // doorgestreept ⇒ geen actie
+                                if (idx === curColorIdx) return;
+                                curColorIdx = idx;
+                                curColor = c.css;
+                                opts.onColorChange(idx);
+                                _thumbCache.clear();          // pion-body kleur is nu anders
+                                rebuildPawn();
+                                refresh();
+                            } } });
+                        sw.style.background = c.css;
+                        grid.append(sw);
+                    });
+                    colorBlock.append(grid);
+                    optScroll.parentNode.insertBefore(colorBlock, optScroll.nextSibling);
+                }
+
+                const activeOpt = optScroll.querySelector('.av-opt.active');
+                if (activeOpt) activeOpt.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            } else {
+                optWrap.style.display = 'none';
+            }
+
+            // Palette
             if (currentCat.palette) {
                 paletteWrap.style.display = '';
-                paletteLabel.textContent = currentCat.paletteLabel || 'Kleur';
+                paletteLabel.textContent = currentCat.kind === 'palette-only' ? 'Pion-kleur' : 'Kleur';
                 clear(paletteRow);
-                const curColor = currentCat.getColor(a);
+                const curColor = currentCat.kind === 'palette-only'
+                    ? currentCat.get()
+                    : currentCat.getColor?.();
                 for (const col of currentCat.palette) {
                     const sw = el('button', { className: 'av-sw' + (col === curColor ? ' active' : ''), type: 'button',
-                        on: { click: () => { currentCat.setColor(a, col); refresh(); } } });
+                        on: { click: () => {
+                            if (currentCat.kind === 'palette-only') currentCat.set(col);
+                            else currentCat.setColor(col);
+                            rebuildPawn(); refresh();
+                        } } });
                     sw.style.background = col;
                     paletteRow.append(sw);
                 }
@@ -6591,12 +7038,27 @@ function openAvatarCreator(initial, title = 'Avatar Creator') {
         }
 
         function finish(result) {
+            running = false;
+            if (prevRAF) cancelAnimationFrame(prevRAF);
+            // Cleanup 3D
+            if (pawnGroup) {
+                pawnGroup.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                    if (o.material) {
+                        const mats = Array.isArray(o.material) ? o.material : [o.material];
+                        mats.forEach(m => m.dispose?.());
+                    }
+                });
+            }
+            pRenderer.dispose();
             back.style.transition = 'opacity 0.25s ease';
             back.style.opacity = '0';
             setTimeout(() => { back.remove(); resolve(result); }, 250);
         }
 
+        rebuildPawn();
         refresh();
+        loop();
     });
 }
 
@@ -6688,7 +7150,9 @@ function addEyes3D(parent, eyes, headR) {
     const irisColor = parseHexColor(eyes?.color || '#3a2418');
     const xOff = headR * 0.32;
     const y    = headR * 0.15;
-    const z    = headR * 0.93;
+    // z naar voren: was 0.93 (binnen het hoofd) → nu 1.04 (net erbuiten)
+    // zodat fringes/pony's de ogen niet meer kunnen bedekken.
+    const z    = headR * 1.04;
 
     // For "closed-like" eyes, just a dark curved line
     const isClosed = ['closed', 'wink', 'sleepy', 'tired', 'cute_lashed'].includes(shape);
@@ -6778,7 +7242,8 @@ function addBrows3D(parent, brows, headR) {
     const color = parseHexColor(brows?.color || '#1a1010');
     const xOff = headR * 0.32;
     const y    = headR * 0.42;
-    const z    = headR * 0.91;
+    // Brauwen ook naar voren — voorheen 0.91, nu 1.03 zodat fringe ze niet bedekt
+    const z    = headR * 1.03;
     const mat  = avMat('flat', color);
 
     for (const side of [-1, 1]) {
@@ -7382,8 +7847,1480 @@ function addAccessory3D(parent, accessory, headR) {
             }
             return;
         }
+        // ── Nieuwe 3D-hoeden voor pion-creator ──
+        case 'sombrero': {
+            // Brede platte rand + cone-kroon, stro-tan kleur
+            const straw = avMat('acc', 0xe8c878);
+            const brim = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 2.3, headR * 2.3, 0.04, 28), straw);
+            brim.position.y = headR * 0.85;
+            add3DOutline(brim, 1.02);
+            parent.add(brim);
+            // Lichte opwaartse curve simulatie via 2e dunnere ring iets boven
+            const brim2 = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 2.10, headR * 2.10, 0.05, 24), straw);
+            brim2.position.y = headR * 0.92;
+            parent.add(brim2);
+            // Conische kroon
+            const crown = new THREE.Mesh(
+                new THREE.ConeGeometry(headR * 1.0, headR * 0.95, 20), straw);
+            crown.position.y = headR * 1.45;
+            add3DOutline(crown, 1.03);
+            parent.add(crown);
+            // Trim-band (rood)
+            const band = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.05, headR * 1.05, 0.06, 18, 1, true),
+                avMat('acc', 0xa03028));
+            band.position.y = headR * 0.98;
+            parent.add(band);
+            return;
+        }
+        case 'tophat': {
+            // Hoge cilinder + platte rand, zwart met rode band
+            const blk = avMat('acc', 0x101010);
+            const brim = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.5, headR * 1.5, 0.05, 24), blk);
+            brim.position.y = headR * 0.85;
+            add3DOutline(brim, 1.03);
+            parent.add(brim);
+            const crown = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.0, headR * 1.0, headR * 1.4, 20), blk);
+            crown.position.y = headR * 1.60;
+            add3DOutline(crown, 1.03);
+            parent.add(crown);
+            // Rode band onderaan
+            const band = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.02, headR * 1.02, 0.10, 18, 1, true),
+                avMat('acc', 0xc01818));
+            band.position.y = headR * 0.95;
+            parent.add(band);
+            return;
+        }
+        case 'cowboy': {
+            // Bredere rand met opwaartse zij-curve + gedeukte top
+            const brown = avMat('acc', 0x683818);
+            const brim = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.85, headR * 1.85, 0.05, 24), brown);
+            brim.position.y = headR * 0.85;
+            add3DOutline(brim, 1.03);
+            parent.add(brim);
+            // Cilinder onder gedeukte kroon
+            const crownBase = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 0.85, headR * 0.92, headR * 0.55, 18), brown);
+            crownBase.position.y = headR * 1.18;
+            add3DOutline(crownBase, 1.03);
+            parent.add(crownBase);
+            // Halfbol-top
+            const crownTop = new THREE.Mesh(
+                new THREE.SphereGeometry(headR * 0.85, 18, 10, 0, Math.PI*2, 0, Math.PI/2),
+                brown);
+            crownTop.position.y = headR * 1.45;
+            parent.add(crownTop);
+            // Lasso-snoer (dunne torus rond crownBase)
+            const cord = new THREE.Mesh(
+                new THREE.TorusGeometry(headR * 0.86, 0.012, 6, 24),
+                avMat('acc', 0xe8c068));
+            cord.rotation.x = Math.PI / 2;
+            cord.position.y = headR * 0.95;
+            parent.add(cord);
+            return;
+        }
+        case 'pirate': {
+            // Driehoekige hoed met goud-doodshoofd voorop
+            const blk = avMat('acc', 0x101010);
+            // Brede ovale rand
+            const brim = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.55, headR * 1.55, 0.04, 22), blk);
+            brim.position.y = headR * 0.85;
+            brim.scale.x = 1.25;
+            add3DOutline(brim, 1.02);
+            parent.add(brim);
+            // Driehoekige kroon (gebruik cone + breed)
+            const crown = new THREE.Mesh(
+                new THREE.ConeGeometry(headR * 1.10, headR * 0.95, 4),
+                blk);
+            crown.position.y = headR * 1.40;
+            crown.rotation.y = Math.PI / 4;
+            add3DOutline(crown, 1.05);
+            parent.add(crown);
+            // Wit doodshoofd ornament voorop
+            const skull = new THREE.Mesh(
+                new THREE.SphereGeometry(headR * 0.18, 12, 8),
+                avMat('acc', 0xfafafa));
+            skull.position.set(0, headR * 1.10, headR * 1.20);
+            parent.add(skull);
+            return;
+        }
+        case 'viking': {
+            // Zilveren helm + twee witte horens
+            const silver = avMat('acc', 0x9eaab0);
+            const helm = new THREE.Mesh(
+                new THREE.SphereGeometry(headR * 1.06, 18, 12, 0, Math.PI*2, 0, Math.PI/2),
+                silver);
+            helm.position.y = headR * 0.40;
+            add3DOutline(helm, 1.04);
+            parent.add(helm);
+            // Goud bandje onder
+            const band = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.08, headR * 1.08, 0.08, 18, 1, true),
+                avMat('acc', 0xffd54a));
+            band.position.y = headR * 0.40;
+            parent.add(band);
+            // Twee witte horens (cones, zijwaarts gericht omhoog)
+            const horn = avMat('acc', 0xfafafa);
+            for (const side of [-1, 1]) {
+                const h = new THREE.Mesh(
+                    new THREE.ConeGeometry(headR * 0.13, headR * 0.55, 10),
+                    horn);
+                h.position.set(side * headR * 0.85, headR * 0.95, 0);
+                h.rotation.z = side * (Math.PI / 2 - 0.30);
+                h.rotation.y = side * 0.10;
+                add3DOutline(h, 1.04);
+                parent.add(h);
+            }
+            return;
+        }
+        case 'jester': {
+            // Driepuntige nar-muts met belletjes
+            const red = avMat('acc', 0xd92e3a);
+            const grn = avMat('acc', 0x3acc6a);
+            const ylw = avMat('acc', 0xffd54a);
+            // Bandje rond hoofd
+            const band = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.05, headR * 1.05, 0.10, 18),
+                ylw);
+            band.position.y = headR * 0.85;
+            parent.add(band);
+            // 3 horens omhoog (rood/groen)
+            const angles = [-0.6, 0, 0.6];
+            const cols = [red, grn, red];
+            for (let i = 0; i < 3; i++) {
+                const horn = new THREE.Mesh(
+                    new THREE.ConeGeometry(headR * 0.18, headR * 0.70, 10),
+                    cols[i]);
+                horn.position.set(Math.sin(angles[i]) * headR * 0.55,
+                                   headR * 1.25, Math.cos(angles[i]) * headR * 0.25 - headR * 0.05);
+                horn.rotation.x = Math.cos(angles[i]) * 0.20;
+                horn.rotation.z = -Math.sin(angles[i]) * 0.40;
+                add3DOutline(horn, 1.05);
+                parent.add(horn);
+                // Belletje op de top
+                const bell = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.04, 10, 8),
+                    avMat('acc', 0xffe680));
+                bell.position.copy(horn.position);
+                bell.position.y += headR * 0.35;
+                parent.add(bell);
+            }
+            return;
+        }
+        case 'propeller': {
+            // Multi-color beanie + draaiende propeller bovenop
+            const blue = avMat('acc', 0x3a6acc);
+            const ylw = avMat('acc', 0xffd54a);
+            const top = new THREE.Mesh(
+                new THREE.SphereGeometry(headR * 1.08, 16, 10, 0, Math.PI*2, 0, Math.PI/2),
+                blue);
+            top.position.y = headR * 0.50;
+            add3DOutline(top, 1.04);
+            parent.add(top);
+            // Gele rand
+            const rim = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.10, headR * 1.10, 0.06, 18, 1, true),
+                ylw);
+            rim.position.y = headR * 0.45;
+            parent.add(rim);
+            // Stokje naar boven
+            const stick = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.015, 0.015, 0.10, 6),
+                avMat('dark'));
+            stick.position.y = headR * 1.45;
+            parent.add(stick);
+            // 3 propeller-vinnen
+            const pgrp = new THREE.Group();
+            for (let i = 0; i < 3; i++) {
+                const fin = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.18, 0.012, 0.05),
+                    avMat('acc', 0xff5a1f));
+                fin.rotation.y = (i / 3) * Math.PI * 2;
+                fin.position.x = 0.06;
+                fin.position.z = 0;
+                // Center on hub
+                const wrap = new THREE.Group();
+                wrap.add(fin);
+                wrap.rotation.y = (i / 3) * Math.PI * 2;
+                fin.position.set(0.09, 0, 0);
+                pgrp.add(wrap);
+            }
+            pgrp.position.y = headR * 1.55;
+            parent.add(pgrp);
+            // Cap-hub
+            const hub = new THREE.Mesh(
+                new THREE.SphereGeometry(0.03, 10, 8),
+                avMat('acc', 0xd92e3a));
+            hub.position.y = headR * 1.55;
+            parent.add(hub);
+            return;
+        }
+        case 'fez': {
+            // Korte rode cilinder + zwarte rand + gouden kwast
+            const red = avMat('acc', 0xc01818);
+            const cyl = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 0.85, headR * 0.95, headR * 0.85, 18),
+                red);
+            cyl.position.y = headR * 1.20;
+            add3DOutline(cyl, 1.03);
+            parent.add(cyl);
+            // Gouden top-disc
+            const topD = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 0.85, headR * 0.85, 0.04, 18),
+                avMat('acc', 0xffd54a));
+            topD.position.y = headR * 1.62;
+            parent.add(topD);
+            // Kwast (gouden touwtje + bolletje)
+            const tas = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.01, 0.01, 0.30, 6),
+                avMat('acc', 0xffd54a));
+            tas.position.set(headR * 0.55, headR * 1.50, 0);
+            tas.rotation.z = 0.30;
+            parent.add(tas);
+            const ball = new THREE.Mesh(
+                new THREE.SphereGeometry(0.045, 10, 8),
+                avMat('acc', 0xffd54a));
+            ball.position.set(headR * 0.65, headR * 1.30, 0);
+            parent.add(ball);
+            return;
+        }
+        case 'witch': {
+            // Pointy zwarte heks-hoed met paarse band
+            const blk = avMat('acc', 0x0a0a18);
+            const brim = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.7, headR * 1.7, 0.04, 24), blk);
+            brim.position.y = headR * 0.85;
+            add3DOutline(brim, 1.02);
+            parent.add(brim);
+            // Hoge punt-cone, gebogen indruk door 2 cones
+            const cone1 = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.02, headR * 0.85, headR * 1.50, 16),
+                blk);
+            cone1.position.y = headR * 1.65;
+            cone1.rotation.z = 0.15;
+            add3DOutline(cone1, 1.03);
+            parent.add(cone1);
+            // Paarse band
+            const band = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 0.92, headR * 0.92, 0.07, 18, 1, true),
+                avMat('acc', 0x9038c8));
+            band.position.y = headR * 0.92;
+            parent.add(band);
+            // Gouden gesp
+            const buckle = new THREE.Mesh(
+                new THREE.BoxGeometry(0.10, 0.08, 0.02),
+                avMat('acc', 0xffd54a));
+            buckle.position.set(0, headR * 0.92, headR * 0.95);
+            parent.add(buckle);
+            return;
+        }
+        case 'party': {
+            // Multi-color cone met zigzag + grote pompom
+            const cone = new THREE.Mesh(
+                new THREE.ConeGeometry(headR * 0.95, headR * 1.40, 16),
+                avMat('acc', 0xff5fa2));
+            cone.position.y = headR * 1.45;
+            add3DOutline(cone, 1.04);
+            parent.add(cone);
+            // 3 ringen in verschillende kleuren
+            const ringCols = [0x3acc6a, 0xffd54a, 0x3a6acc];
+            for (let i = 0; i < 3; i++) {
+                const r = new THREE.Mesh(
+                    new THREE.CylinderGeometry(
+                        headR * (0.80 - i * 0.20), headR * (0.80 - i * 0.20),
+                        0.04, 18, 1, true),
+                    avMat('acc', ringCols[i]));
+                r.position.y = headR * (1.10 + i * 0.30);
+                parent.add(r);
+            }
+            // Grote pompom op de top
+            const pom = new THREE.Mesh(
+                new THREE.SphereGeometry(0.10, 14, 12),
+                avMat('acc', 0xffffff));
+            pom.position.y = headR * 2.20;
+            add3DOutline(pom, 1.08);
+            parent.add(pom);
+            return;
+        }
+        // ── Mega-overdreven hoeden ──
+        case 'wizard': {
+            // SUPER hoge spitse hoed met sterren — Gandalf-style
+            const blue = avMat('acc', 0x3a2a8a);
+            const brim = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.80, headR * 1.80, 0.05, 24),
+                blue);
+            brim.position.y = headR * 0.85;
+            add3DOutline(brim, 1.02);
+            parent.add(brim);
+            // Heel hoge cone (2.5× headR hoog!)
+            const cone = new THREE.Mesh(
+                new THREE.ConeGeometry(headR * 0.95, headR * 2.40, 16),
+                blue);
+            cone.position.y = headR * 2.10;
+            cone.rotation.z = 0.10;    // schuin "magisch" effect
+            add3DOutline(cone, 1.04);
+            parent.add(cone);
+            // 5 gouden sterren rond de cone op verschillende hoogtes
+            for (let i = 0; i < 5; i++) {
+                const star = new THREE.Mesh(
+                    new THREE.OctahedronGeometry(0.07, 0),
+                    avMat('acc', 0xffd54a));
+                const ang = (i / 5) * Math.PI * 2 + 0.6;
+                const yPos = headR * (1.30 + i * 0.35);
+                const rad = headR * (0.80 - i * 0.10);
+                star.position.set(Math.sin(ang) * rad, yPos, Math.cos(ang) * rad);
+                parent.add(star);
+            }
+            // Maan op de top
+            const moon = new THREE.Mesh(
+                new THREE.SphereGeometry(0.07, 12, 10),
+                avMat('acc', 0xfff080));
+            moon.position.y = headR * 3.20;
+            parent.add(moon);
+            return;
+        }
+        case 'unicorn': {
+            // Roze regenboog-manen + gouden glitter-hoorn op het voorhoofd
+            const pink = avMat('acc', 0xff9ec0);
+            // Manen — rij van bolletjes over top van hoofd
+            const maneColors = [0xff5a8a, 0xff8a40, 0xffd54a, 0x40c860, 0x4080ff, 0x9040ff];
+            for (let i = 0; i < 6; i++) {
+                const m = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.06, 12, 10),
+                    avMat('acc', maneColors[i]));
+                const t = i / 5;
+                m.position.set(0, headR * (1.30 - t * 0.55), -headR * (t * 1.10 - 0.10));
+                m.scale.set(1.0, 0.8, 1.3);
+                parent.add(m);
+            }
+            // GOUDEN spiraal-hoorn op voorhoofd
+            const horn = new THREE.Mesh(
+                new THREE.ConeGeometry(headR * 0.15, headR * 1.20, 8),
+                avMat('acc', 0xffd54a));
+            horn.position.set(0, headR * 1.55, headR * 0.35);
+            horn.rotation.x = -0.35;
+            add3DOutline(horn, 1.06);
+            parent.add(horn);
+            // Glitter-bolletjes rond hoorn-basis
+            for (let i = 0; i < 5; i++) {
+                const ang = (i / 5) * Math.PI * 2;
+                const glitter = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.025, 8, 6),
+                    avMat('acc', 0xfff0c0));
+                glitter.position.set(
+                    Math.sin(ang) * headR * 0.30,
+                    headR * 0.95 + Math.cos(ang) * 0.05,
+                    headR * 0.45);
+                parent.add(glitter);
+            }
+            return;
+        }
+        case 'shark': {
+            // Gigantische grijze haaienvin op het hoofd
+            const gray = avMat('acc', 0x6a7a8a);
+            // Vin (driehoekige plaat)
+            const finShape = new THREE.Shape();
+            finShape.moveTo(-headR * 0.50, 0);
+            finShape.lineTo(0, headR * 1.50);
+            finShape.lineTo(headR * 0.80, 0);
+            finShape.closePath();
+            const fin = new THREE.Mesh(
+                new THREE.ExtrudeGeometry(finShape, {
+                    depth: 0.08, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02,
+                    bevelSegments: 2 }),
+                gray);
+            fin.position.set(-0.04, headR * 0.85, 0);
+            fin.rotation.y = Math.PI / 2;
+            add3DOutline(fin, 1.03);
+            parent.add(fin);
+            // Witte buik-strook op de zijkant
+            const stripe = new THREE.Mesh(
+                new THREE.BoxGeometry(0.04, headR * 1.40, 0.02),
+                avMat('acc', 0xeaeaea));
+            stripe.position.set(0.04, headR * 1.40, 0);
+            stripe.rotation.z = 0.20;
+            parent.add(stripe);
+            return;
+        }
+        case 'astronaut': {
+            // Glanzende ruimtevaarthelm — witte ring + doorzichtige bol
+            const white = avMat('acc', 0xeaeaea);
+            // Ring/basis onderaan helm
+            const ring = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.20, headR * 1.20, 0.10, 22),
+                white);
+            ring.position.y = headR * 0.40;
+            add3DOutline(ring, 1.03);
+            parent.add(ring);
+            // Bubble-bovenkant (helder/semi-transparent)
+            const bubble = new THREE.Mesh(
+                new THREE.SphereGeometry(headR * 1.30, 22, 14, 0, Math.PI * 2, 0, Math.PI * 0.55),
+                new THREE.MeshToonMaterial({
+                    color: 0xc0e8ff, gradientMap: toon,
+                    transparent: true, opacity: 0.35,
+                    emissive: 0x408fbf, emissiveIntensity: 0.20 }));
+            bubble.position.y = headR * 0.40;
+            parent.add(bubble);
+            // Antenne bovenop
+            const ant = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.012, 0.012, 0.25, 6),
+                white);
+            ant.position.y = headR * 1.85;
+            parent.add(ant);
+            // Lampje aan top van antenne
+            const lamp = new THREE.Mesh(
+                new THREE.SphereGeometry(0.035, 10, 8),
+                new THREE.MeshToonMaterial({ color: 0xff4040, gradientMap: toon,
+                    emissive: 0xff2020, emissiveIntensity: 0.7 }));
+            lamp.position.y = headR * 2.10;
+            parent.add(lamp);
+            // NASA-style logo (rode strepen aan zijkant van ring)
+            for (const side of [-1, 1]) {
+                const logo = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.08, 0.04, 0.01),
+                    avMat('acc', 0xc01818));
+                logo.position.set(side * headR * 1.18, headR * 0.40, 0);
+                parent.add(logo);
+            }
+            return;
+        }
+        case 'mega_crown': {
+            // ENORME kroon met 8 punten + meerdere edelstenen
+            const gold = avMat('acc', 0xffcc20);
+            // Brede onderring
+            const ring = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.35, headR * 1.35, headR * 0.65, 22, 1, true),
+                gold);
+            ring.position.y = headR * 1.15;
+            add3DOutline(ring, 1.03);
+            parent.add(ring);
+            // 8 zigzag punten (cones)
+            for (let i = 0; i < 8; i++) {
+                const ang = (i / 8) * Math.PI * 2;
+                const h = headR * (i % 2 === 0 ? 0.85 : 0.55);
+                const spike = new THREE.Mesh(
+                    new THREE.ConeGeometry(headR * 0.16, h, 6),
+                    gold);
+                spike.position.set(
+                    Math.sin(ang) * headR * 1.35,
+                    headR * 1.48 + h / 2 - 0.05,
+                    Math.cos(ang) * headR * 1.35);
+                parent.add(spike);
+                // Edelsteen op alle hoge punten
+                if (i % 2 === 0) {
+                    const gemCols = [0xff2040, 0x40b0ff, 0x40d060, 0xff80c0];
+                    const gem = new THREE.Mesh(
+                        new THREE.OctahedronGeometry(0.04, 0),
+                        new THREE.MeshToonMaterial({
+                            color: gemCols[(i/2) % gemCols.length], gradientMap: toon,
+                            emissive: gemCols[(i/2) % gemCols.length], emissiveIntensity: 0.4 }));
+                    gem.position.copy(spike.position);
+                    gem.position.y += h / 2 + 0.04;
+                    parent.add(gem);
+                }
+            }
+            // GROTE rode edelsteen middenvoor
+            const bigGem = new THREE.Mesh(
+                new THREE.SphereGeometry(0.10, 14, 10),
+                new THREE.MeshToonMaterial({
+                    color: 0xff2040, gradientMap: toon,
+                    emissive: 0xa01020, emissiveIntensity: 0.5 }));
+            bigGem.position.set(0, headR * 1.25, headR * 1.35);
+            bigGem.scale.set(1.0, 1.2, 0.5);
+            parent.add(bigGem);
+            return;
+        }
+        case 'cone': {
+            // Verkeers-pylon op het hoofd
+            const orange = avMat('acc', 0xff6020);
+            const cone = new THREE.Mesh(
+                new THREE.ConeGeometry(headR * 1.20, headR * 2.20, 16),
+                orange);
+            cone.position.y = headR * 2.00;
+            add3DOutline(cone, 1.04);
+            parent.add(cone);
+            // 2 witte reflectie-strepen
+            for (let i = 0; i < 2; i++) {
+                const stripe = new THREE.Mesh(
+                    new THREE.CylinderGeometry(
+                        headR * (0.95 - i * 0.30), headR * (1.05 - i * 0.30),
+                        0.08, 18, 1, true),
+                    avMat('acc', 0xeaeaea));
+                stripe.position.y = headR * (1.55 + i * 0.50);
+                parent.add(stripe);
+            }
+            // Onderste vierkante voet
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(headR * 2.40, 0.06, headR * 2.40),
+                orange);
+            base.position.y = headR * 0.85;
+            add3DOutline(base, 1.02);
+            parent.add(base);
+            return;
+        }
+        case 'tiara': {
+            // Sierlijke gouden tiara — dunne band + 3 sierpunten + roze edelsteen
+            const gold = avMat('acc', 0xffcc20);
+            // Dunne band
+            const band = new THREE.Mesh(
+                new THREE.TorusGeometry(headR * 0.92, 0.025, 8, 24, Math.PI),
+                gold);
+            band.rotation.x = -Math.PI / 2;
+            band.rotation.z = Math.PI;
+            band.position.set(0, headR * 0.90, 0);
+            parent.add(band);
+            // 3 puntjes (groot-klein-klein)
+            const sizes = [0.18, 0.13, 0.13];
+            const xPos  = [0,    -0.30, 0.30];
+            for (let i = 0; i < 3; i++) {
+                const spike = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.04, sizes[i], 6),
+                    gold);
+                spike.position.set(
+                    xPos[i] * headR,
+                    headR * 0.92 + sizes[i] / 2,
+                    headR * 0.92);
+                parent.add(spike);
+            }
+            // Centrale roze diamant
+            const diamond = new THREE.Mesh(
+                new THREE.OctahedronGeometry(0.045, 0),
+                new THREE.MeshToonMaterial({
+                    color: 0xff5fa2, gradientMap: toon,
+                    emissive: 0xc02060, emissiveIntensity: 0.5 }));
+            diamond.position.set(0, headR * 1.00, headR * 0.95);
+            parent.add(diamond);
+            // 2 kleine witte parels naast diamant
+            for (const side of [-1, 1]) {
+                const pearl = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.025, 10, 8),
+                    avMat('acc', 0xffffff));
+                pearl.position.set(side * 0.14, headR * 0.95, headR * 0.92);
+                parent.add(pearl);
+            }
+            return;
+        }
+        case 'cat_ears': {
+            // Zwarte poesjes-oortjes met roze binnenkant
+            const black = avMat('acc', 0x101010);
+            const pink = avMat('acc', 0xff9ec0);
+            for (const side of [-1, 1]) {
+                // Buitenste oortje (driehoek-cone)
+                const ear = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.12, 0.28, 4),
+                    black);
+                ear.position.set(side * headR * 0.65, headR * 1.30, 0);
+                ear.rotation.y = Math.PI / 4;
+                ear.rotation.z = -side * 0.15;
+                add3DOutline(ear, 1.05);
+                parent.add(ear);
+                // Roze binnenkant (kleiner cone)
+                const inner = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.08, 0.20, 4),
+                    pink);
+                inner.position.set(side * headR * 0.65, headR * 1.30, 0.02);
+                inner.rotation.y = Math.PI / 4;
+                inner.rotation.z = -side * 0.15;
+                parent.add(inner);
+            }
+            return;
+        }
+        case 'flower_crown': {
+            // Krans van bloemen rond het hoofd — 7 bloempjes in pastels
+            const flowerCols = [0xff9ec0, 0xffe680, 0xc0e0ff, 0xff8a40, 0xb0e890, 0xe080ff, 0xff5fa2];
+            const center = avMat('acc', 0xffe680);
+            const leaf = avMat('acc', 0x60a040);
+            for (let i = 0; i < 7; i++) {
+                const ang = (i / 7) * Math.PI * 2;
+                const cx = Math.sin(ang) * headR * 0.95;
+                const cz = Math.cos(ang) * headR * 0.95;
+                const cy = headR * 0.92;
+                // 5 bloemblaadjes
+                for (let p = 0; p < 5; p++) {
+                    const pang = (p / 5) * Math.PI * 2;
+                    const petal = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.035, 8, 6),
+                        avMat('acc', flowerCols[i]));
+                    petal.position.set(
+                        cx + Math.cos(pang) * 0.038,
+                        cy + Math.sin(pang) * 0.02,
+                        cz + Math.sin(pang) * 0.038);
+                    parent.add(petal);
+                }
+                // Geel hartje
+                const heart = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.020, 8, 6), center);
+                heart.position.set(cx, cy + 0.01, cz);
+                parent.add(heart);
+                // Klein groen blaadje tussen 2 bloemen
+                const lf = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.030, 8, 6), leaf);
+                lf.scale.set(0.7, 0.4, 1.2);
+                const ang2 = ang + Math.PI / 7;
+                lf.position.set(
+                    Math.sin(ang2) * headR * 0.95,
+                    cy - 0.04,
+                    Math.cos(ang2) * headR * 0.95);
+                parent.add(lf);
+            }
+            return;
+        }
+        case 'hardhat': {
+            // Bouwvakker-helm: gele kap + zwarte strip + groef
+            const yellow = avMat('acc', 0xffcc00);
+            const blk = avMat('acc', 0x202020);
+            // Half-bol bovenkant
+            const dome = new THREE.Mesh(
+                new THREE.SphereGeometry(headR * 1.12, 18, 12, 0, Math.PI*2, 0, Math.PI/2),
+                yellow);
+            dome.position.y = headR * 0.55;
+            add3DOutline(dome, 1.03);
+            parent.add(dome);
+            // Brede plat-rand
+            const brim = new THREE.Mesh(
+                new THREE.CylinderGeometry(headR * 1.30, headR * 1.30, 0.04, 22),
+                yellow);
+            brim.position.y = headR * 0.55;
+            // Maak 'm langer aan de voorkant
+            brim.scale.z = 1.20;
+            add3DOutline(brim, 1.02);
+            parent.add(brim);
+            // Centrale verstevigings-groef
+            const groove = new THREE.Mesh(
+                new THREE.BoxGeometry(0.03, 0.04, headR * 2.20),
+                blk);
+            groove.position.y = headR * 1.05;
+            parent.add(groove);
+            // Witte logo cirkel voorop
+            const logo = new THREE.Mesh(
+                new THREE.CircleGeometry(0.06, 18),
+                new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+            logo.position.set(0, headR * 0.95, headR * 1.13);
+            parent.add(logo);
+            return;
+        }
         default: return;
     }
+}
+
+// ── Pion-mustache 3D factory ──
+function makePawnMustache3D(type, colorHex = 0x2a1a10) {
+    const g = new THREE.Group();
+    if (type === 'none' || !type) return g;
+    const mat = new THREE.MeshToonMaterial({ color: colorHex, gradientMap: toon });
+    const stroke = new THREE.MeshBasicMaterial({ color: 0x0a0606, side: THREE.BackSide });
+    switch (type) {
+        case 'big': {
+            // Dik horizontaal "kussen" onder neus
+            const m = new THREE.Mesh(new THREE.SphereGeometry(0.10, 18, 10), mat);
+            m.scale.set(2.0, 0.45, 0.55);
+            g.add(m);
+            const o = new THREE.Mesh(m.geometry, stroke); o.scale.copy(m.scale).multiplyScalar(1.08); g.add(o);
+            break;
+        }
+        case 'curly': {
+            // Twee halften met krullende uiteinden
+            for (const side of [-1, 1]) {
+                const half = new THREE.Mesh(new THREE.SphereGeometry(0.08, 14, 8), mat);
+                half.scale.set(1.8, 0.45, 0.55);
+                half.position.x = side * 0.07;
+                g.add(half);
+                // Krul aan uiteinde — kleine torus
+                const curl = new THREE.Mesh(
+                    new THREE.TorusGeometry(0.035, 0.018, 8, 14, Math.PI * 1.5),
+                    mat);
+                curl.position.set(side * 0.20, 0.035, 0);
+                curl.rotation.x = Math.PI / 2;
+                curl.rotation.z = side * 0.5;
+                g.add(curl);
+            }
+            break;
+        }
+        case 'goatee': {
+            // Klein driehoekje hangend onder kin
+            const goat = new THREE.Mesh(
+                new THREE.ConeGeometry(0.07, 0.20, 8), mat);
+            goat.position.y = -0.10;
+            goat.rotation.x = Math.PI;
+            g.add(goat);
+            const o = new THREE.Mesh(goat.geometry, stroke); o.position.copy(goat.position); o.rotation.copy(goat.rotation); o.scale.setScalar(1.08); g.add(o);
+            break;
+        }
+        case 'pencil': {
+            // Dunne lijn onder neus
+            const p = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.020, 0.04), mat);
+            g.add(p);
+            break;
+        }
+        case 'horseshoe': {
+            // Boven-snor + twee lange neerwaartse takken (Hulk Hogan)
+            const top = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.04, 0.06), mat);
+            g.add(top);
+            for (const side of [-1, 1]) {
+                const arm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.18, 0.05), mat);
+                arm.position.set(side * 0.13, -0.10, 0);
+                g.add(arm);
+            }
+            break;
+        }
+        case 'chevron': {
+            // Brede bushy chevron — schuin omlaag uitlopend
+            const m = new THREE.Mesh(new THREE.SphereGeometry(0.10, 18, 10), mat);
+            m.scale.set(2.4, 0.55, 0.45);
+            g.add(m);
+            // Hangende uiteinden
+            for (const side of [-1, 1]) {
+                const droop = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 8), mat);
+                droop.scale.set(0.7, 1.2, 0.55);
+                droop.position.set(side * 0.22, -0.08, 0);
+                g.add(droop);
+            }
+            break;
+        }
+        case 'walrus': {
+            // Lange droopy walrus-snor — twee hangende strengen
+            const top = new THREE.Mesh(new THREE.SphereGeometry(0.10, 14, 8), mat);
+            top.scale.set(2.0, 0.40, 0.50);
+            g.add(top);
+            for (const side of [-1, 1]) {
+                const droop = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 10), mat);
+                droop.scale.set(0.60, 2.4, 0.55);
+                droop.position.set(side * 0.16, -0.18, 0);
+                g.add(droop);
+            }
+            break;
+        }
+        case 'fu_manchu': {
+            // Bovensnor + twee lange dunne neerwaartse linten
+            const top = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.030, 0.05), mat);
+            g.add(top);
+            for (const side of [-1, 1]) {
+                const strand = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.008, 0.45, 6), mat);
+                strand.position.set(side * 0.08, -0.22, 0);
+                g.add(strand);
+            }
+            break;
+        }
+        case 'soulpatch': {
+            // Klein soulpatch — alleen iets onder de lip
+            const sp = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 8), mat);
+            sp.scale.set(1.0, 1.2, 0.5);
+            sp.position.y = -0.05;
+            g.add(sp);
+            break;
+        }
+    }
+    return g;
+}
+
+// ── Pion-item 3D factory (hangt aan zijkant body) ──
+function makePawnItem3D(type) {
+    const g = new THREE.Group();
+    if (type === 'none' || !type) return g;
+    switch (type) {
+        case 'guitar': {
+            const bodyMat = new THREE.MeshToonMaterial({ color: 0xa03020, gradientMap: toon });
+            const neckMat = new THREE.MeshToonMaterial({ color: 0x2a1810, gradientMap: toon });
+            // Lichaam (ovaal)
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 18, 12), bodyMat);
+            body.scale.set(1.0, 1.15, 0.35);
+            g.add(body);
+            // Hals
+            const neck = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.60, 0.06), neckMat);
+            neck.position.y = 0.40;
+            g.add(neck);
+            // Headstock
+            const headstock = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.13, 0.07), neckMat);
+            headstock.position.y = 0.75;
+            g.add(headstock);
+            // Klankgat
+            const hole = new THREE.Mesh(new THREE.CircleGeometry(0.06, 16),
+                new THREE.MeshBasicMaterial({ color: 0x0a0606 }));
+            hole.position.set(0, 0.03, 0.078);
+            g.add(hole);
+            // 3 frets
+            for (let i = 0; i < 4; i++) {
+                const fret = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.06, 0.005, 0.061),
+                    new THREE.MeshBasicMaterial({ color: 0xc8c0a8 }));
+                fret.position.y = 0.18 + i * 0.13;
+                g.add(fret);
+            }
+            break;
+        }
+        case 'ukulele': {
+            const bodyMat = new THREE.MeshToonMaterial({ color: 0xe8c068, gradientMap: toon });
+            const neckMat = new THREE.MeshToonMaterial({ color: 0xa07840, gradientMap: toon });
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 10), bodyMat);
+            body.scale.set(1.0, 1.15, 0.40);
+            g.add(body);
+            const neck = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.05), neckMat);
+            neck.position.y = 0.24;
+            g.add(neck);
+            const headstock = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.10, 0.05), neckMat);
+            headstock.position.y = 0.43;
+            g.add(headstock);
+            const hole = new THREE.Mesh(new THREE.CircleGeometry(0.04, 16),
+                new THREE.MeshBasicMaterial({ color: 0x0a0606 }));
+            hole.position.set(0, 0.02, 0.065);
+            g.add(hole);
+            break;
+        }
+        case 'mic': {
+            const headMat = new THREE.MeshToonMaterial({ color: 0x505050, gradientMap: toon, emissive: 0x202020 });
+            const handleMat = new THREE.MeshToonMaterial({ color: 0x101010, gradientMap: toon });
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.10, 14, 12), headMat);
+            head.position.y = 0.22;
+            g.add(head);
+            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.30, 10), handleMat);
+            handle.position.y = 0.05;
+            g.add(handle);
+            // Gouden ring tussen
+            const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.02, 10),
+                new THREE.MeshToonMaterial({ color: 0xffd54a, gradientMap: toon }));
+            ring.position.y = 0.13;
+            g.add(ring);
+            break;
+        }
+        case 'beer': {
+            const glassMat = new THREE.MeshToonMaterial({
+                color: 0xffd070, gradientMap: toon, transparent: true, opacity: 0.85 });
+            const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 0.26, 16), glassMat);
+            g.add(mug);
+            const foam = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 10),
+                new THREE.MeshToonMaterial({ color: 0xfffff0, gradientMap: toon }));
+            foam.position.y = 0.14;
+            foam.scale.y = 0.45;
+            g.add(foam);
+            // Handvat
+            const handle = new THREE.Mesh(
+                new THREE.TorusGeometry(0.07, 0.018, 8, 16, Math.PI),
+                new THREE.MeshToonMaterial({ color: 0xa07020, gradientMap: toon }));
+            handle.position.set(0.13, 0.00, 0);
+            handle.rotation.y = Math.PI / 2;
+            g.add(handle);
+            break;
+        }
+        case 'torch': {
+            // Tiki-toorts: stok + vuur
+            const stickMat = new THREE.MeshToonMaterial({ color: 0x402010, gradientMap: toon });
+            const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.50, 8), stickMat);
+            stick.position.y = -0.05;
+            g.add(stick);
+            // Vlam (oranje cone)
+            const flame = new THREE.Mesh(new THREE.ConeGeometry(0.10, 0.30, 12),
+                new THREE.MeshToonMaterial({ color: 0xff8020, gradientMap: toon,
+                    emissive: 0xff6010, emissiveIntensity: 0.6 }));
+            flame.position.y = 0.32;
+            g.add(flame);
+            // Heldere top
+            const tip = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8),
+                new THREE.MeshBasicMaterial({ color: 0xfff080 }));
+            tip.position.y = 0.42;
+            g.add(tip);
+            break;
+        }
+        case 'rubber_chicken': {
+            // Geel rubber kippie — body + kop + snavel + kammetje
+            const ylw = new THREE.MeshToonMaterial({ color: 0xffd540, gradientMap: toon });
+            const orng = new THREE.MeshToonMaterial({ color: 0xff8020, gradientMap: toon });
+            const red = new THREE.MeshToonMaterial({ color: 0xd92e3a, gradientMap: toon });
+            // Lichaam (peer-vorm)
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), ylw);
+            body.scale.set(0.9, 1.4, 0.7);
+            body.position.y = -0.05;
+            g.add(body);
+            // Hals + kop
+            const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.12, 8), ylw);
+            neck.position.y = 0.13;
+            g.add(neck);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.10, 14, 10), ylw);
+            head.position.y = 0.22;
+            g.add(head);
+            // Snavel
+            const beak = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.08, 6), orng);
+            beak.position.set(0, 0.22, 0.10);
+            beak.rotation.x = Math.PI / 2;
+            g.add(beak);
+            // Kammetje
+            for (let i = 0; i < 3; i++) {
+                const c = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.05, 5), red);
+                c.position.set(0, 0.32, -0.02 + i * 0.025);
+                g.add(c);
+            }
+            // Oog
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6),
+                new THREE.MeshBasicMaterial({ color: 0x101010 }));
+            eye.position.set(0.07, 0.24, 0.05);
+            g.add(eye);
+            break;
+        }
+        case 'fishing_rod': {
+            // Lange dunne hengel + lijntje + dobber
+            const rodMat = new THREE.MeshToonMaterial({ color: 0x302820, gradientMap: toon });
+            const rod = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.018, 0.008, 0.95, 8), rodMat);
+            rod.position.y = 0.20;
+            rod.rotation.z = -0.20;
+            g.add(rod);
+            // Reel (zwart kort cilindertje)
+            const reel = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.04, 0.04, 0.05, 12),
+                new THREE.MeshToonMaterial({ color: 0x202020, gradientMap: toon }));
+            reel.rotation.x = Math.PI / 2;
+            reel.position.set(0.04, 0.00, 0);
+            g.add(reel);
+            // Lijn (dun cilindertje) van top naar omlaag
+            const line = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.003, 0.003, 0.40, 4),
+                new THREE.MeshBasicMaterial({ color: 0xfafafa }));
+            line.position.set(-0.10, 0.50, 0);
+            g.add(line);
+            // Dobber
+            const float_ = new THREE.Mesh(
+                new THREE.SphereGeometry(0.035, 10, 8),
+                new THREE.MeshToonMaterial({ color: 0xd92e3a, gradientMap: toon }));
+            float_.position.set(-0.10, 0.30, 0);
+            g.add(float_);
+            break;
+        }
+        case 'ice_cream': {
+            // Waffle-cone + 2 scoops
+            const cone = new THREE.Mesh(
+                new THREE.ConeGeometry(0.10, 0.30, 16),
+                new THREE.MeshToonMaterial({ color: 0xc8a070, gradientMap: toon }));
+            cone.position.y = -0.05;
+            cone.rotation.x = Math.PI;
+            g.add(cone);
+            // Onderste scoop (chocola)
+            const scoop1 = new THREE.Mesh(
+                new THREE.SphereGeometry(0.13, 14, 12),
+                new THREE.MeshToonMaterial({ color: 0x5a3a20, gradientMap: toon }));
+            scoop1.position.y = 0.13;
+            g.add(scoop1);
+            // Bovenste scoop (aardbei)
+            const scoop2 = new THREE.Mesh(
+                new THREE.SphereGeometry(0.11, 14, 12),
+                new THREE.MeshToonMaterial({ color: 0xff9ec0, gradientMap: toon }));
+            scoop2.position.y = 0.26;
+            g.add(scoop2);
+            // Kers op de top
+            const cherry = new THREE.Mesh(
+                new THREE.SphereGeometry(0.04, 10, 8),
+                new THREE.MeshToonMaterial({ color: 0xd92e3a, gradientMap: toon,
+                    emissive: 0x801818, emissiveIntensity: 0.3 }));
+            cherry.position.y = 0.38;
+            g.add(cherry);
+            break;
+        }
+        case 'umbrella': {
+            // Opened paraplu — koepel + stok
+            const cols = [0xd92e3a, 0xffd54a, 0x3a6acc, 0x3acc6a];
+            // Stok
+            const stick = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.015, 0.015, 0.50, 6),
+                new THREE.MeshToonMaterial({ color: 0x402810, gradientMap: toon }));
+            stick.position.y = 0.00;
+            g.add(stick);
+            // Handle (krul) — kleine torus onderaan
+            const handle = new THREE.Mesh(
+                new THREE.TorusGeometry(0.05, 0.012, 6, 14, Math.PI),
+                new THREE.MeshToonMaterial({ color: 0x402810, gradientMap: toon }));
+            handle.position.set(0, -0.27, 0);
+            handle.rotation.z = Math.PI;
+            g.add(handle);
+            // Koepel — half sphere with 4 colored segments
+            for (let i = 0; i < 4; i++) {
+                const seg = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.22, 12, 8,
+                        i * Math.PI / 2, Math.PI / 2, 0, Math.PI / 2),
+                    new THREE.MeshToonMaterial({ color: cols[i], gradientMap: toon }));
+                seg.position.y = 0.25;
+                g.add(seg);
+            }
+            break;
+        }
+        case 'sword': {
+            // Zwaard — blade + handvat + crossguard
+            const blade = new THREE.Mesh(
+                new THREE.BoxGeometry(0.05, 0.50, 0.015),
+                new THREE.MeshToonMaterial({ color: 0xc0c8d0, gradientMap: toon,
+                    emissive: 0x404048, emissiveIntensity: 0.2 }));
+            blade.position.y = 0.20;
+            g.add(blade);
+            // Pointy tip
+            const tip = new THREE.Mesh(
+                new THREE.ConeGeometry(0.025, 0.08, 6),
+                new THREE.MeshToonMaterial({ color: 0xc0c8d0, gradientMap: toon }));
+            tip.position.y = 0.49;
+            g.add(tip);
+            // Crossguard
+            const cross = new THREE.Mesh(
+                new THREE.BoxGeometry(0.18, 0.03, 0.04),
+                new THREE.MeshToonMaterial({ color: 0xffd54a, gradientMap: toon }));
+            cross.position.y = -0.05;
+            g.add(cross);
+            // Handvat (gewikkelde grip)
+            const grip = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.025, 0.025, 0.18, 8),
+                new THREE.MeshToonMaterial({ color: 0x5a3a20, gradientMap: toon }));
+            grip.position.y = -0.16;
+            g.add(grip);
+            // Pommel
+            const pommel = new THREE.Mesh(
+                new THREE.SphereGeometry(0.04, 12, 8),
+                new THREE.MeshToonMaterial({ color: 0xffd54a, gradientMap: toon }));
+            pommel.position.y = -0.27;
+            g.add(pommel);
+            break;
+        }
+        case 'balloon': {
+            // Twee ballonnen op touwtjes
+            const cols = [0xd92e3a, 0x3a6acc];
+            for (let i = 0; i < 2; i++) {
+                const ball = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.10, 14, 12),
+                    new THREE.MeshToonMaterial({ color: cols[i], gradientMap: toon,
+                        emissive: cols[i], emissiveIntensity: 0.15 }));
+                ball.scale.y = 1.15;
+                ball.position.set((i - 0.5) * 0.08, 0.42 + i * 0.06, 0);
+                g.add(ball);
+                // Knoopje onderaan
+                const knot = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.03, 0.04, 6),
+                    new THREE.MeshToonMaterial({ color: cols[i], gradientMap: toon }));
+                knot.position.set((i - 0.5) * 0.08, 0.32 + i * 0.06, 0);
+                knot.rotation.x = Math.PI;
+                g.add(knot);
+                // Touwtje
+                const string = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.003, 0.003, 0.30, 4),
+                    new THREE.MeshBasicMaterial({ color: 0xeaeaea }));
+                string.position.set((i - 0.5) * 0.08, 0.16 + i * 0.03, 0);
+                g.add(string);
+            }
+            break;
+        }
+        // ── Vrouwelijke items ──
+        case 'lipstick': {
+            // Lippenstift-tube: gouden onderkant + rode "stick" eruit
+            const gold = new THREE.MeshToonMaterial({ color: 0xffcc20, gradientMap: toon });
+            const red = new THREE.MeshToonMaterial({ color: 0xd0205a, gradientMap: toon,
+                emissive: 0x501020, emissiveIntensity: 0.20 });
+            const tube = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.08, 0.08, 0.22, 16), gold);
+            tube.position.y = 0;
+            g.add(tube);
+            // Stick (afgeschuinde cilinder)
+            const stick = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.055, 0.07, 0.13, 14), red);
+            stick.position.y = 0.16;
+            g.add(stick);
+            // Punt
+            const tip = new THREE.Mesh(
+                new THREE.ConeGeometry(0.055, 0.06, 12), red);
+            tip.position.y = 0.245;
+            tip.rotation.x = 0.25;
+            g.add(tip);
+            break;
+        }
+        case 'handbag': {
+            // Klein roze tasje met goud-detail + handvat
+            const pink = new THREE.MeshToonMaterial({ color: 0xff5fa2, gradientMap: toon });
+            const gold = new THREE.MeshToonMaterial({ color: 0xffcc20, gradientMap: toon });
+            // Tas-body (rounded box-ish via sphere scale)
+            const bag = new THREE.Mesh(
+                new THREE.SphereGeometry(0.18, 16, 12), pink);
+            bag.scale.set(1.4, 1.0, 0.55);
+            bag.position.y = 0;
+            g.add(bag);
+            // Goud-clip
+            const clip = new THREE.Mesh(
+                new THREE.BoxGeometry(0.10, 0.05, 0.12), gold);
+            clip.position.y = 0.15;
+            g.add(clip);
+            // Handvat (torus)
+            const handle = new THREE.Mesh(
+                new THREE.TorusGeometry(0.13, 0.018, 8, 18, Math.PI),
+                gold);
+            handle.position.set(0, 0.20, 0);
+            handle.rotation.x = -Math.PI / 2;
+            handle.rotation.z = Math.PI;
+            g.add(handle);
+            break;
+        }
+        case 'hand_mirror': {
+            // Hand-spiegel: zilveren disc + roze handvat
+            const silver = new THREE.MeshToonMaterial({ color: 0xc8d0d8, gradientMap: toon,
+                emissive: 0x405060, emissiveIntensity: 0.25 });
+            const pink = new THREE.MeshToonMaterial({ color: 0xff5fa2, gradientMap: toon });
+            const glass = new THREE.MeshToonMaterial({ color: 0xa0d8f0, gradientMap: toon,
+                emissive: 0x4080a0, emissiveIntensity: 0.40 });
+            // Disc-rand
+            const rim = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.16, 0.16, 0.025, 22), silver);
+            rim.position.y = 0.20;
+            rim.rotation.x = Math.PI / 2;
+            g.add(rim);
+            // Glas
+            const glassDisc = new THREE.Mesh(
+                new THREE.CircleGeometry(0.13, 22), glass);
+            glassDisc.position.set(0, 0.20, 0.014);
+            g.add(glassDisc);
+            // Handvat
+            const handle = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.025, 0.030, 0.30, 10), pink);
+            handle.position.y = -0.05;
+            g.add(handle);
+            // Bolletje aan einde
+            const knob = new THREE.Mesh(
+                new THREE.SphereGeometry(0.035, 10, 8), pink);
+            knob.position.y = -0.22;
+            g.add(knob);
+            break;
+        }
+        case 'flower_bouquet': {
+            // Boeketje van bloemen op stelen
+            const stem = new THREE.MeshToonMaterial({ color: 0x408050, gradientMap: toon });
+            const cols = [0xff5fa2, 0xff8a40, 0xffe680, 0xb080ff, 0xeaeaea];
+            // Stelen-bundel
+            for (let i = 0; i < 5; i++) {
+                const stemM = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.012, 0.012, 0.32, 6), stem);
+                const ang = (i / 5) * Math.PI * 2;
+                stemM.position.set(Math.sin(ang) * 0.025, -0.05, Math.cos(ang) * 0.025);
+                g.add(stemM);
+            }
+            // Bloemkoppen
+            for (let i = 0; i < 5; i++) {
+                const ang = (i / 5) * Math.PI * 2;
+                const cx = Math.sin(ang) * 0.06;
+                const cz = Math.cos(ang) * 0.06;
+                const cy = 0.16 + Math.sin(i * 1.3) * 0.02;
+                // 5 blaadjes per bloem
+                for (let p = 0; p < 5; p++) {
+                    const pang = (p / 5) * Math.PI * 2;
+                    const petal = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.035, 8, 6),
+                        new THREE.MeshToonMaterial({ color: cols[i], gradientMap: toon }));
+                    petal.position.set(
+                        cx + Math.cos(pang) * 0.035,
+                        cy + Math.sin(pang) * 0.02,
+                        cz + Math.sin(pang) * 0.035);
+                    g.add(petal);
+                }
+                // Geel hartje
+                const heart = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.022, 8, 6),
+                    new THREE.MeshToonMaterial({ color: 0xffe680, gradientMap: toon }));
+                heart.position.set(cx, cy, cz);
+                g.add(heart);
+            }
+            // Wikkel-papier onderaan
+            const wrap = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.08, 0.04, 0.10, 12),
+                new THREE.MeshToonMaterial({ color: 0xc0e0ff, gradientMap: toon }));
+            wrap.position.y = -0.17;
+            g.add(wrap);
+            break;
+        }
+        case 'heart_balloon': {
+            // Hart-vormige ballon (2 bollen + cone) + touwtje
+            const red = new THREE.MeshToonMaterial({ color: 0xff3060, gradientMap: toon,
+                emissive: 0xa01030, emissiveIntensity: 0.25 });
+            // 2 hart-lobjes
+            for (const side of [-1, 1]) {
+                const lobe = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.10, 14, 12), red);
+                lobe.position.set(side * 0.07, 0.42, 0);
+                lobe.scale.y = 1.0;
+                g.add(lobe);
+            }
+            // Onderpunt (cone naar beneden)
+            const tip = new THREE.Mesh(
+                new THREE.ConeGeometry(0.13, 0.18, 14), red);
+            tip.position.set(0, 0.27, 0);
+            tip.rotation.x = Math.PI;
+            tip.scale.set(1.0, 1.0, 0.85);
+            g.add(tip);
+            // Knoopje
+            const knot = new THREE.Mesh(
+                new THREE.ConeGeometry(0.025, 0.03, 6), red);
+            knot.position.set(0, 0.18, 0);
+            knot.rotation.x = Math.PI;
+            g.add(knot);
+            // Touwtje
+            const string = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.004, 0.004, 0.30, 4),
+                new THREE.MeshBasicMaterial({ color: 0xeaeaea }));
+            string.position.set(0, 0.03, 0);
+            g.add(string);
+            break;
+        }
+        // ── Stereotype mannen-items ──
+        case 'cigar': {
+            // Bruine sigaar met oranje gloeiende punt + rook-bolletje
+            const brown = new THREE.MeshToonMaterial({ color: 0x4a2a18, gradientMap: toon });
+            const glow = new THREE.MeshToonMaterial({ color: 0xff8020, gradientMap: toon,
+                emissive: 0xff4010, emissiveIntensity: 0.7 });
+            const stick = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.035, 0.035, 0.35, 14), brown);
+            stick.position.y = 0;
+            stick.rotation.z = -0.30;
+            g.add(stick);
+            // Glow-tip
+            const tip = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.035, 0.025, 0.03, 12), glow);
+            tip.position.set(0.06, 0.18, 0);
+            tip.rotation.z = -0.30;
+            g.add(tip);
+            // As (donkere ring)
+            const ash = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.038, 0.038, 0.04, 12),
+                new THREE.MeshToonMaterial({ color: 0x806050, gradientMap: toon }));
+            ash.position.set(0.04, 0.13, 0);
+            ash.rotation.z = -0.30;
+            g.add(ash);
+            // Rook-bolletje (semi-transparent)
+            const smoke = new THREE.Mesh(
+                new THREE.SphereGeometry(0.06, 12, 8),
+                new THREE.MeshToonMaterial({ color: 0xeaeaea, gradientMap: toon,
+                    transparent: true, opacity: 0.35 }));
+            smoke.position.set(0.10, 0.30, 0);
+            g.add(smoke);
+            break;
+        }
+        case 'dumbbell': {
+            // Halter: zwarte handle + 2 grijze gewichten
+            const dark = new THREE.MeshToonMaterial({ color: 0x202028, gradientMap: toon });
+            const gray = new THREE.MeshToonMaterial({ color: 0x404048, gradientMap: toon,
+                emissive: 0x101015 });
+            // Handle
+            const handle = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.025, 0.025, 0.32, 10), dark);
+            handle.rotation.z = Math.PI / 2;
+            handle.position.y = 0.10;
+            g.add(handle);
+            // 2 gewichten (cilinders aan beide kanten)
+            for (const side of [-1, 1]) {
+                const weight = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.10, 0.10, 0.08, 16), gray);
+                weight.rotation.z = Math.PI / 2;
+                weight.position.set(side * 0.17, 0.10, 0);
+                g.add(weight);
+                // Binnenring (zwart)
+                const inner = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.08, 0.08, 0.085, 14), dark);
+                inner.rotation.z = Math.PI / 2;
+                inner.position.set(side * 0.17, 0.10, 0);
+                g.add(inner);
+            }
+            break;
+        }
+        case 'hammer': {
+            // Hamer met houten steel + zware metalen kop
+            const wood = new THREE.MeshToonMaterial({ color: 0x6a4020, gradientMap: toon });
+            const metal = new THREE.MeshToonMaterial({ color: 0x404048, gradientMap: toon,
+                emissive: 0x202028 });
+            // Steel
+            const handle = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.025, 0.030, 0.45, 10), wood);
+            handle.position.y = 0;
+            g.add(handle);
+            // Hoofd (rechthoekige metal box)
+            const head = new THREE.Mesh(
+                new THREE.BoxGeometry(0.08, 0.10, 0.20), metal);
+            head.position.y = 0.24;
+            g.add(head);
+            // Klauw aan achterkant
+            const claw1 = new THREE.Mesh(
+                new THREE.BoxGeometry(0.06, 0.06, 0.08), metal);
+            claw1.position.set(0, 0.30, -0.12);
+            claw1.rotation.x = -0.4;
+            g.add(claw1);
+            // Bolletje boven steel (hoofd-grip)
+            const grip = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.035, 0.030, 0.04, 10),
+                new THREE.MeshToonMaterial({ color: 0x3a2418, gradientMap: toon }));
+            grip.position.y = -0.20;
+            g.add(grip);
+            break;
+        }
+    }
+    return g;
+}
+
+// ── Pion-schoenen 3D factory (vervangt base disc) ──
+// Type: 'big', 'clown', 'flippers', 'roller_skates', 'cowboy_boots', 'high_heels'
+function makePawnShoes3D(type = 'big') {
+    const g = new THREE.Group();
+    switch (type) {
+        case 'big': {
+            // Twee grote ellipsoid clown-schoenen
+            const mat = new THREE.MeshToonMaterial({ color: 0x401810, gradientMap: toon });
+            const sole = new THREE.MeshToonMaterial({ color: 0x802818, gradientMap: toon });
+            for (const side of [-1, 1]) {
+                const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.20, 16, 10), mat);
+                shoe.scale.set(0.85, 0.5, 1.55);
+                shoe.position.set(side * 0.18, 0.08, 0.10);
+                g.add(shoe);
+                const soleM = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.04, 0.62), sole);
+                soleM.position.set(side * 0.18, 0.02, 0.10);
+                g.add(soleM);
+            }
+            return g;
+        }
+        case 'clown': {
+            // GIGANTISCHE rood-witte clown-schoenen — overdreven groot
+            const red = new THREE.MeshToonMaterial({ color: 0xd92e3a, gradientMap: toon });
+            const white = new THREE.MeshToonMaterial({ color: 0xfafafa, gradientMap: toon });
+            for (const side of [-1, 1]) {
+                // Hoofd-schoen (rood, super groot)
+                const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.28, 18, 12), red);
+                shoe.scale.set(1.0, 0.55, 2.2);
+                shoe.position.set(side * 0.22, 0.12, 0.20);
+                g.add(shoe);
+                // Witte teen
+                const toe = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 10), white);
+                toe.scale.set(1.0, 0.7, 1.0);
+                toe.position.set(side * 0.22, 0.12, 0.60);
+                g.add(toe);
+                // Bobbel achter
+                const heel = new THREE.Mesh(new THREE.SphereGeometry(0.10, 12, 8), red);
+                heel.scale.set(1.2, 0.7, 1.0);
+                heel.position.set(side * 0.22, 0.16, -0.12);
+                g.add(heel);
+            }
+            return g;
+        }
+        case 'flippers': {
+            // Lange platte zwemvliezen, blauw/zwart
+            const black = new THREE.MeshToonMaterial({ color: 0x101820, gradientMap: toon });
+            const blue = new THREE.MeshToonMaterial({ color: 0x3a6acc, gradientMap: toon });
+            for (const side of [-1, 1]) {
+                // Voet (zwart, kort)
+                const foot = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), black);
+                foot.scale.set(0.85, 0.5, 1.1);
+                foot.position.set(side * 0.18, 0.08, 0.05);
+                g.add(foot);
+                // Vin (blauw, lang, plat)
+                const fin = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.22, 0.04, 0.55),
+                    blue);
+                fin.position.set(side * 0.18, 0.04, 0.42);
+                fin.rotation.x = -0.10;
+                g.add(fin);
+                // Vin-rand (lichter blauw)
+                const rim = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.24, 0.015, 0.05),
+                    new THREE.MeshToonMaterial({ color: 0x6090e0, gradientMap: toon }));
+                rim.position.set(side * 0.18, 0.06, 0.70);
+                g.add(rim);
+            }
+            return g;
+        }
+        case 'roller_skates': {
+            // Witte schoenen met 4 wieltjes elk
+            const white = new THREE.MeshToonMaterial({ color: 0xfafafa, gradientMap: toon });
+            const blk = new THREE.MeshToonMaterial({ color: 0x202020, gradientMap: toon });
+            const pink = new THREE.MeshToonMaterial({ color: 0xff5fa2, gradientMap: toon });
+            for (const side of [-1, 1]) {
+                // Bovenste schoen (laars-stijl)
+                const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 10), white);
+                shoe.scale.set(0.85, 0.7, 1.5);
+                shoe.position.set(side * 0.20, 0.18, 0.08);
+                g.add(shoe);
+                // Roze veters
+                const lace = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.06, 0.03, 0.20),
+                    pink);
+                lace.position.set(side * 0.20, 0.25, 0.10);
+                g.add(lace);
+                // Wieltjes-plaat onderaan
+                const plate = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.20, 0.025, 0.42),
+                    blk);
+                plate.position.set(side * 0.20, 0.08, 0.10);
+                g.add(plate);
+                // 4 wieltjes
+                for (let i = 0; i < 4; i++) {
+                    const wh = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.05, 0.05, 0.04, 12),
+                        new THREE.MeshToonMaterial({ color: 0xff8020, gradientMap: toon }));
+                    wh.rotation.z = Math.PI / 2;
+                    wh.position.set(side * 0.20, 0.04, -0.12 + i * 0.14);
+                    g.add(wh);
+                }
+            }
+            return g;
+        }
+        case 'cowboy_boots': {
+            // Hoge bruine puntige cowboy-laarzen
+            const brown = new THREE.MeshToonMaterial({ color: 0x5a3a20, gradientMap: toon });
+            const sole = new THREE.MeshToonMaterial({ color: 0x2a1810, gradientMap: toon });
+            const gold = new THREE.MeshToonMaterial({ color: 0xffd54a, gradientMap: toon });
+            for (const side of [-1, 1]) {
+                // Hoge schacht (cylinder)
+                const shaft = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.10, 0.10, 0.30, 14),
+                    brown);
+                shaft.position.set(side * 0.18, 0.30, 0.00);
+                g.add(shaft);
+                // Voet
+                const foot = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), brown);
+                foot.scale.set(0.85, 0.55, 1.45);
+                foot.position.set(side * 0.18, 0.12, 0.15);
+                g.add(foot);
+                // Zool
+                const soleM = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.03, 0.45), sole);
+                soleM.position.set(side * 0.18, 0.04, 0.15);
+                g.add(soleM);
+                // Gouden gesp
+                const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.03), gold);
+                buckle.position.set(side * 0.18, 0.42, 0.10);
+                g.add(buckle);
+                // Spoor (klein wiel achter)
+                const spur = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.03, 0.03, 0.015, 6), gold);
+                spur.rotation.z = Math.PI / 2;
+                spur.position.set(side * 0.30, 0.10, -0.10);
+                g.add(spur);
+            }
+            return g;
+        }
+        case 'high_heels': {
+            // Roze stiletto-hakken
+            const pink = new THREE.MeshToonMaterial({ color: 0xff5fa2, gradientMap: toon });
+            const dark = new THREE.MeshToonMaterial({ color: 0x802040, gradientMap: toon });
+            for (const side of [-1, 1]) {
+                // Voet (smaller, langer)
+                const foot = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), pink);
+                foot.scale.set(0.75, 0.40, 1.55);
+                foot.position.set(side * 0.18, 0.08, 0.12);
+                g.add(foot);
+                // Hak (dunne cilinder)
+                const heel = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.018, 0.012, 0.20, 8),
+                    dark);
+                heel.position.set(side * 0.18, -0.02, -0.10);
+                g.add(heel);
+                // Open teen — donkere stip
+                const tip = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 8), dark);
+                tip.scale.set(0.6, 0.4, 0.4);
+                tip.position.set(side * 0.18, 0.08, 0.30);
+                g.add(tip);
+            }
+            return g;
+        }
+    }
+    return g;
 }
 
 /**
@@ -7433,6 +9370,178 @@ function build3DAvatarHead(avatar) {
     return g;
 }
 
+// ── Pion-puppy 3D factory ─────────────────────────────────────────
+// Klein 3D hondje naast de pion. Verschillende rassen via type-param.
+// Group wordt aan de pion toegevoegd → beweegt en draait mee.
+function makePuppy3D(type = 'shiba') {
+    const g = new THREE.Group();
+    if (type === 'none' || !type) return g;
+
+    // Kleur-paletten per ras (body / accent / oor)
+    const PUP_PAL = {
+        shiba:     { body: 0xd87838, accent: 0xfffff0, ear: 0xa05820 },
+        dalmatian: { body: 0xfafafa, accent: 0x101010, ear: 0xeaeaea },
+        pug:       { body: 0xc8a878, accent: 0x303028, ear: 0x9a7848 },
+        husky:     { body: 0xc8d0e0, accent: 0xfafafa, ear: 0x6a7080 },
+        corgi:     { body: 0xe89858, accent: 0xfffff0, ear: 0xb87038 },
+        poodle:    { body: 0xfaf0e0, accent: 0xc8a878, ear: 0xfaf0e0 },
+        chihuahua: { body: 0xd8b878, accent: 0xfafafa, ear: 0x886040 },
+    };
+    const p = PUP_PAL[type] || PUP_PAL.shiba;
+    const bodyMat   = new THREE.MeshToonMaterial({ color: p.body,   gradientMap: toon });
+    const accentMat = new THREE.MeshToonMaterial({ color: p.accent, gradientMap: toon });
+    const earMat    = new THREE.MeshToonMaterial({ color: p.ear,    gradientMap: toon });
+    const blkMat    = new THREE.MeshToonMaterial({ color: 0x101010, gradientMap: toon });
+
+    // Lichaam (ei-vormig)
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 10), bodyMat);
+    body.scale.set(1.0, 0.9, 1.4);
+    body.position.set(0, 0.18, 0);
+    body.castShadow = true;
+    g.add(body);
+
+    // Kop
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), bodyMat);
+    head.position.set(0, 0.32, 0.18);
+    head.castShadow = true;
+    g.add(head);
+
+    // Snuit + neus
+    const snout = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), accentMat);
+    snout.scale.set(1.0, 0.7, 1.4);
+    snout.position.set(0, 0.28, 0.30);
+    g.add(snout);
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), blkMat);
+    nose.position.set(0, 0.30, 0.38);
+    g.add(nose);
+
+    // Oogjes
+    for (const side of [-1, 1]) {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.020, 8, 6), blkMat);
+        eye.position.set(side * 0.06, 0.36, 0.28);
+        g.add(eye);
+    }
+
+    // Oortjes (puntig of slap)
+    const pointy = ['shiba','husky','chihuahua','corgi'].includes(type);
+    if (pointy) {
+        for (const side of [-1, 1]) {
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.11, 6), earMat);
+            ear.position.set(side * 0.08, 0.44, 0.12);
+            ear.rotation.x = -0.20;
+            ear.rotation.z = side * 0.15;
+            g.add(ear);
+        }
+    } else {
+        for (const side of [-1, 1]) {
+            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), earMat);
+            ear.scale.set(0.6, 1.4, 0.6);
+            ear.position.set(side * 0.11, 0.38, 0.10);
+            g.add(ear);
+        }
+    }
+
+    // 4 pootjes
+    const legHeight = type === 'corgi' ? 0.07 : 0.12;
+    for (const side of [-1, 1]) {
+        for (const front of [-1, 1]) {
+            const leg = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.030, 0.030, legHeight, 6), bodyMat);
+            leg.position.set(side * 0.09, legHeight / 2, front * 0.12);
+            g.add(leg);
+            if (['corgi','shiba','poodle','chihuahua'].includes(type)) {
+                const paw = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.035, 8, 6), accentMat);
+                paw.scale.y = 0.5;
+                paw.position.set(side * 0.09, 0.012, front * 0.12);
+                g.add(paw);
+            }
+        }
+    }
+
+    // Staart (krullend of recht)
+    const curly = ['shiba','pug','corgi','poodle'].includes(type);
+    if (curly) {
+        const tail = new THREE.Mesh(
+            new THREE.TorusGeometry(0.05, 0.025, 6, 12, Math.PI * 1.5),
+            bodyMat);
+        tail.position.set(0, 0.30, -0.18);
+        tail.rotation.x = Math.PI / 2;
+        tail.rotation.z = Math.PI;
+        g.add(tail);
+    } else {
+        const tail = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.020, 0.012, 0.18, 6), bodyMat);
+        tail.position.set(0, 0.24, -0.20);
+        tail.rotation.x = -0.65;
+        g.add(tail);
+    }
+
+    // Ras-specifieke details
+    if (type === 'dalmatian') {
+        // Zwarte vlekken op lichaam + kop
+        const spotPos = [
+            [0.10, 0.22, 0.05], [-0.12, 0.16, 0.10],
+            [0.06, 0.30, -0.05], [-0.08, 0.20, -0.10],
+            [0.05, 0.36, 0.18], [-0.08, 0.30, 0.20],
+        ];
+        for (const [x, y, z] of spotPos) {
+            const spot = new THREE.Mesh(
+                new THREE.SphereGeometry(0.025, 8, 6), blkMat);
+            spot.position.set(x, y, z);
+            g.add(spot);
+        }
+    } else if (type === 'poodle') {
+        // Pompon-pluisjes op kop + staart + benen
+        const puffs = [
+            [0, 0.45, 0.18, 0.07],
+            [0, 0.30, -0.22, 0.06],
+            [0.09, 0.13, 0.12, 0.04],
+            [-0.09, 0.13, 0.12, 0.04],
+            [0.09, 0.13, -0.12, 0.04],
+            [-0.09, 0.13, -0.12, 0.04],
+        ];
+        for (const [px, py, pz, ps] of puffs) {
+            const puff = new THREE.Mesh(
+                new THREE.SphereGeometry(ps, 12, 10), bodyMat);
+            puff.position.set(px, py, pz);
+            g.add(puff);
+        }
+    } else if (type === 'pug') {
+        // Platte snuit + extra wrinkle
+        snout.scale.set(1.1, 0.6, 0.85);
+        snout.position.z = 0.26;
+        nose.position.z = 0.32;
+        const wrinkle = new THREE.Mesh(
+            new THREE.TorusGeometry(0.06, 0.012, 6, 14, Math.PI),
+            earMat);
+        wrinkle.position.set(0, 0.34, 0.27);
+        wrinkle.rotation.x = Math.PI / 2;
+        g.add(wrinkle);
+    } else if (type === 'husky') {
+        // Donker masker rond ogen
+        const mask = new THREE.Mesh(
+            new THREE.BoxGeometry(0.20, 0.06, 0.04),
+            new THREE.MeshToonMaterial({ color: 0x404048, gradientMap: toon }));
+        mask.position.set(0, 0.36, 0.25);
+        g.add(mask);
+    }
+
+    // Roze tongetje (alleen voor sommige)
+    if (['shiba','husky','corgi','pug'].includes(type)) {
+        const tongue = new THREE.Mesh(
+            new THREE.SphereGeometry(0.025, 8, 6),
+            new THREE.MeshToonMaterial({ color: 0xff7fa0, gradientMap: toon }));
+        tongue.scale.set(1.0, 0.4, 1.5);
+        tongue.position.set(0, 0.245, 0.36);
+        g.add(tongue);
+    }
+
+    // Schaal iets kleiner dan pion zodat 'ie als sidekick voelt
+    g.scale.setScalar(0.85);
+    return g;
+}
+
 /**
  * Create a 3D pawn. If `avatar` is supplied, builds a full 3D head with
  * separate meshes for eyes/mouth/hair/accessories. Else falls back to the
@@ -7441,25 +9550,214 @@ function build3DAvatarHead(avatar) {
  * visually consistent.
  */
 function makePlayerAvatarToken(colorHex, avatar = null) {
+    const g = buildPawnGroup(colorHex, avatar);
+    tokenGroup.add(g);
+    return g;
+}
+
+// ── Off-screen renderer voor 3D pion-thumbnails ──────────────────
+// Eén gedeelde WebGL-context (browser-limiet ~16). Maakt PNG-dataURLs
+// voor option-buttons in de creator + avatar-thumbs op de home page.
+// preserveDrawingBuffer=true is nodig voor toDataURL na .render().
+let _thumbR = null, _thumbS = null, _thumbCam = null;
+const _thumbCache = new Map();   // key → dataURL
+function _getThumbRig() {
+    if (_thumbR) return { r: _thumbR, s: _thumbS, c: _thumbCam };
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 160;
+    _thumbR = new THREE.WebGLRenderer({
+        canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+    _thumbR.setClearColor(0x000000, 0);
+    _thumbS = new THREE.Scene();
+    _thumbS.add(new THREE.AmbientLight(0xffffff, 0.90));
+    const d = new THREE.DirectionalLight(0xffffff, 0.85);
+    d.position.set(2.5, 4.5, 3);
+    _thumbS.add(d);
+    _thumbCam = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
+    _thumbCam.position.set(0, 1.55, 5.5);
+    _thumbCam.lookAt(0, 1.1, 0);
+    return { r: _thumbR, s: _thumbS, c: _thumbCam };
+}
+function _disposePawn(grp) {
+    grp.traverse(o => {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) {
+            const mats = Array.isArray(o.material) ? o.material : [o.material];
+            mats.forEach(m => m.dispose?.());
+        }
+    });
+}
+// Render een pion-thumbnail naar PNG-dataURL.
+// cacheKey is optioneel — als gezet, wordt het resultaat gecached.
+function renderPawnThumb3D(avatar, colorHex, cacheKey = null) {
+    if (cacheKey && _thumbCache.has(cacheKey)) return _thumbCache.get(cacheKey);
+    const { r, s, c } = _getThumbRig();
+    // Reset naar default camera (volle pion-shot)
+    c.position.set(0, 1.55, 5.5);
+    c.lookAt(0, 1.1, 0);
+    c.updateProjectionMatrix();
+    // Verwijder vorige pawn(s) — eerste 2 children zijn ambient + dir light
+    while (s.children.length > 2) {
+        const old = s.children[2];
+        s.remove(old);
+        _disposePawn(old);
+    }
+    const pawn = buildPawnGroup(colorHex, avatar);
+    s.add(pawn);
+    r.render(s, c);
+    const url = r.domElement.toDataURL('image/png');
+    if (cacheKey) _thumbCache.set(cacheKey, url);
+    return url;
+}
+
+// Render alleen één attribuut (hoed, snor, pruik, item, schoen) groot
+// in beeld — zónder de hele pion eromheen. Bedoeld voor de option-
+// carousel in de creator zodat de spelers het accessoire-design écht
+// kunnen zien op een klein scherm. Voor 'gender' rendert hij een
+// hoofd-shot (want geslacht IS de gezichtskeuze).
+function renderAttributeOnlyThumb(catId, optValue, avatar) {
+    const headR = 0.34;
+    const hairCol = avatar.hair?.color || '#3a2a1a';
+    const mustCol = avatar.pawnMustacheColor || '#2a1a10';
+    const skin = avatar.skin || '#fbcfa6';
+    const cacheKey = `attr|${catId}|${optValue}|${hairCol}|${mustCol}|${skin}`;
+    if (_thumbCache.has(cacheKey)) return _thumbCache.get(cacheKey);
+
+    const { r, s, c } = _getThumbRig();
+    while (s.children.length > 2) {
+        const old = s.children[2];
+        s.remove(old);
+        _disposePawn(old);
+    }
+
+    const grp = new THREE.Group();
+    switch (catId) {
+        case 'gender': {
+            // Hoofd-shot met gender-specifieke styling
+            const v = JSON.parse(JSON.stringify(avatar));
+            ensurePawnFields(v);
+            v.pawnMustache = 'none';
+            v.accessory = 'none';
+            if (optValue === 'female') {
+                v.gender = 'female';
+                v.face = 'oval';
+                v.eyes.shape = 'lashed';
+                v.brows.shape = 'thin';
+                v.mouth = 'lips_red';
+                v.hair.style = 'long_straight';
+                v.blush = 'soft_pink';
+            } else {
+                v.gender = 'male';
+                v.face = 'square';
+                v.eyes.shape = 'normal';
+                v.brows.shape = 'thick';
+                v.mouth = 'smile';
+                v.hair.style = 'short_messy';
+            }
+            const head = build3DAvatarHead(v);
+            grp.add(head);
+            break;
+        }
+        case 'hat': {
+            if (optValue !== 'none') addAccessory3D(grp, optValue, headR);
+            break;
+        }
+        case 'hair': {
+            if (optValue !== 'bald') {
+                addHair3D(grp, { style: optValue, color: hairCol }, headR);
+            }
+            break;
+        }
+        case 'mustache': {
+            if (optValue !== 'none') {
+                const stache = makePawnMustache3D(optValue, parseHexColor(mustCol, 0x2a1a10));
+                grp.add(stache);
+            }
+            break;
+        }
+        case 'item': {
+            if (optValue !== 'none') {
+                grp.add(makePawnItem3D(optValue));
+            }
+            break;
+        }
+        case 'shoes': {
+            if (optValue !== 'normal') {
+                grp.add(makePawnShoes3D(optValue));
+            } else {
+                // Toon de default dark base disc als 'normal'
+                const base = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.42, 0.5, 0.18, 18),
+                    new THREE.MeshToonMaterial({ color: 0x101820, gradientMap: toon }));
+                base.position.y = 0.09;
+                grp.add(base);
+            }
+            break;
+        }
+        case 'puppy': {
+            if (optValue !== 'none') grp.add(makePuppy3D(optValue));
+            break;
+        }
+    }
+    s.add(grp);
+
+    // Auto-fit camera op de bounding-box van het attribuut zodat het
+    // ALTIJD groot in beeld staat (geen kleine puntjes in het canvas).
+    if (grp.children.length > 0) {
+        const bbox = new THREE.Box3().setFromObject(grp);
+        const size = bbox.getSize(new THREE.Vector3());
+        const center = bbox.getCenter(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y) * 1.20;    // 20% padding
+        const fov = c.fov;
+        const dist = (maxDim / 2) / Math.tan((fov / 2) * Math.PI / 180) + 0.25;
+        c.position.set(center.x, center.y, dist);
+        c.lookAt(center);
+    } else {
+        // 'none' — leeg canvas (transparant, label "Geen" zegt al genoeg)
+        c.position.set(0, 0, 2);
+        c.lookAt(0, 0, 0);
+    }
+    c.updateProjectionMatrix();
+
+    r.render(s, c);
+    const url = r.domElement.toDataURL('image/png');
+    _thumbCache.set(cacheKey, url);
+    return url;
+}
+
+// Bouwt de pion-mesh zónder hem aan tokenGroup te hangen. Door deze
+// splitsing kan de avatar-creator 'm in z'n eigen mini-scene tonen.
+function buildPawnGroup(colorHex, avatar = null) {
+    if (avatar) ensurePawnFields(avatar);
+    // Body-kleur is ALTIJD de identity-color van de speler (de swatch
+    // op de home page). Geen avatar-override meer — anders zou de
+    // pion een andere kleur tonen dan z'n swatch in de UI.
+    const bodyCol = colorHex;
+
     const g = new THREE.Group();
-    const colMat   = new THREE.MeshToonMaterial({ color: colorHex, gradientMap: toon, emissive: colorHex, emissiveIntensity: 0.25 });
+    const colMat   = new THREE.MeshToonMaterial({ color: bodyCol, gradientMap: toon, emissive: bodyCol, emissiveIntensity: 0.25 });
     const darkMat  = new THREE.MeshToonMaterial({ color: 0x101820, gradientMap: toon });
 
-    // Base disc (dark)
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.18, 18), darkMat);
-    base.position.y = 0.09; base.castShadow = true; g.add(base);
+    // Base disc — vervangen door schoenen als pawnShoes !== 'normal'
+    const wantCustomShoes = avatar?.pawnShoes && avatar.pawnShoes !== 'normal';
+    if (!wantCustomShoes) {
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.18, 18), darkMat);
+        base.position.y = 0.09; base.castShadow = true; g.add(base);
+    } else {
+        const shoes = makePawnShoes3D(avatar.pawnShoes);
+        g.add(shoes);
+    }
 
-    // Body cone (in player identity color)
+    // Body cone (in player/pion-kleur)
     const body = new THREE.Mesh(new THREE.ConeGeometry(0.36, 1.0, 16), colMat);
     body.position.y = 0.68; body.castShadow = true; g.add(body);
 
-    // White cartoon outline on body
+    // Witte cartoon-outline op body
     const outlineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide });
     const bodyOut = new THREE.Mesh(body.geometry, outlineMat);
     bodyOut.scale.set(1.12, 1.06, 1.12); body.add(bodyOut);
 
     if (avatar) {
-        // Skin-colored neck so head connects to body
         const skinHex = parseHexColor(avatar.skin, 0xfbcfa6);
         const neck = new THREE.Mesh(
             new THREE.CylinderGeometry(0.12, 0.16, 0.12, 12),
@@ -7468,33 +9766,95 @@ function makePlayerAvatarToken(colorHex, avatar = null) {
         neck.position.y = 1.20; neck.castShadow = true;
         g.add(neck);
 
-        // The actual 3D head, built from primitives
         const head = build3DAvatarHead(avatar);
-        head.position.y = 1.50;     // sits on top of the body cone
+        head.position.y = 1.50;
         head.castShadow = true;
         g.add(head);
         g.userData.headGroup = head;
+
+        // ── Mustache (op de voorkant van het hoofd) ──
+        if (avatar.pawnMustache && avatar.pawnMustache !== 'none') {
+            const headR = 0.34;
+            const mst = makePawnMustache3D(avatar.pawnMustache,
+                parseHexColor(avatar.pawnMustacheColor, 0x2a1a10));
+            // Goatee hangt onder kin; rest zit onder neus
+            if (avatar.pawnMustache === 'goatee') {
+                mst.position.set(0, -headR * 0.60, headR * 0.95);
+            } else if (avatar.pawnMustache === 'horseshoe') {
+                mst.position.set(0, -headR * 0.30, headR * 1.00);
+            } else {
+                mst.position.set(0, -headR * 0.10, headR * 1.00);
+            }
+            head.add(mst);
+        }
     } else {
-        // Classic fallback: spherical head in player color (legacy behaviour)
+        // Legacy fallback: simpele sferische kop in pion-kleur
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 12), colMat);
         head.position.y = 1.32; head.castShadow = true; g.add(head);
         const headOut = new THREE.Mesh(head.geometry, outlineMat);
         headOut.scale.setScalar(1.12); head.add(headOut);
     }
 
-    tokenGroup.add(g);
+    // ── Item in "hand" (rechterkant body, op heuphoogte) ──
+    if (avatar?.pawnItem && avatar.pawnItem !== 'none') {
+        const item = makePawnItem3D(avatar.pawnItem);
+        if (item.children.length) {
+            // Positie naast body — gitaar/uku omarmend, mic/beer rechtop
+            if (avatar.pawnItem === 'guitar' || avatar.pawnItem === 'ukulele') {
+                item.position.set(0.32, 0.80, 0.20);
+                item.rotation.set(-0.10, -0.55, -0.40);
+            } else if (avatar.pawnItem === 'torch') {
+                item.position.set(0.40, 0.95, 0.05);
+                item.rotation.z = -0.10;
+            } else {
+                // mic, beer
+                item.position.set(0.38, 0.85, 0.10);
+                item.rotation.z = -0.20;
+            }
+            g.add(item);
+        }
+    }
+
+    // ── Puppy naast pion (sidekick, beweegt en draait mee) ──
+    if (avatar?.pawnPuppy && avatar.pawnPuppy !== 'none') {
+        const pup = makePuppy3D(avatar.pawnPuppy);
+        if (pup.children.length) {
+            // Links naast de pion, iets naar voren gericht
+            pup.position.set(-0.55, 0, 0.10);
+            pup.rotation.y = 0.30;
+            g.add(pup);
+        }
+    }
+
     return g;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DOM helper for minigames / HUD: render avatar as an HTML/SVG element
+   DOM helper for minigames / HUD: render avatar as a 3D-rendered <img>
    ═══════════════════════════════════════════════════════════════════════════ */
+// Helper: maakt een <img>-tag met PNG-dataURL van de 3D pion. Wordt
+// overal gebruikt waar voorheen 2D SVG-avatar te zien was, zodat ook
+// hat/snor/item/schoenen/gender-keuze meteen verschijnen.
+function pawnThumbImg(avatar, colorHex) {
+    if (!avatar) return '';
+    const hex = (typeof colorHex === 'number')
+        ? '0x' + colorHex.toString(16)
+        : String(colorHex || '#e63b3b');
+    const ckey = `dom|${hex}|${JSON.stringify(avatar)}`;
+    const url = renderPawnThumb3D(avatar, colorHex, ckey);
+    return `<img src="${url}" style="width:100%;height:100%;object-fit:contain;display:block">`;
+}
+
 function renderPlayerAvatarDOM(player, size = 64, mode = 'head') {
     const wrap = document.createElement('div');
     wrap.className = 'player-avatar';
     wrap.style.width = wrap.style.height = size + 'px';
     if (player?.avatar) {
-        wrap.innerHTML = renderAvatarSVG(player.avatar, mode, `width="${size}" height="${size}"`);
+        // 3D pion-render i.p.v. legacy SVG — zo zie je hat/snor/item/etc.
+        const colorHex = player?.color?.hex !== undefined
+            ? player.color.hex
+            : (player?.color?.css || '#e63b3b');
+        wrap.innerHTML = pawnThumbImg(player.avatar, colorHex);
     } else {
         // Fallback dot
         wrap.style.background = player?.color?.css || '#888';
@@ -7707,19 +10067,43 @@ function renderSetup() {
         clear(card);
         draft.forEach((p, i) => {
             const row = el('div', { className: 'player-row' });
-            // ── Avatar thumb (tap to open the Avatar Creator) ──
-            const thumb = el('div', { className: 'av-thumb', title: 'Avatar bewerken' });
+            // ── Avatar thumb: 3D pion-render (geen SVG-cartoon meer) ──
+            const thumb = el('div', { className: 'av-thumb av-thumb-3d', title: 'Pion bewerken' });
             thumb.style.color = PLAYER_COLORS[p.colorIdx].css;     // glow color
-            thumb.innerHTML = renderAvatarSVG(p.avatar, 'head');
+            const colorHex = PLAYER_COLORS[p.colorIdx].hex !== undefined
+                ? PLAYER_COLORS[p.colorIdx].hex
+                : PLAYER_COLORS[p.colorIdx].css;
+            // Cache-sleutel: zelfde avatar+kleur ⇒ herbruikt dataURL
+            const ckey = `home|${p.colorIdx}|${JSON.stringify(p.avatar || {})}`;
+            const url = renderPawnThumb3D(p.avatar, colorHex, ckey);
+            thumb.innerHTML = `<img src="${url}" alt="pion ${i+1}">`;
             thumb.addEventListener('click', async () => {
+                // Verzamel de kleur-indices die andere spelers AL hebben
+                const taken = draft
+                    .map((q, j) => (j !== i ? q.colorIdx : -1))
+                    .filter(x => x >= 0);
                 const updated = await openAvatarCreator(
                     p.avatar,
-                    `Avatar voor ${p.name || 'Speler ' + (i+1)}`,
+                    `Pion van ${p.name || 'Speler ' + (i+1)}`,
+                    PLAYER_COLORS[p.colorIdx].css,
+                    {
+                        currentColorIdx: p.colorIdx,
+                        takenColorIndices: taken,
+                        onColorChange: (newIdx) => {
+                            // Update direct in draft zodat de buitenwereld synced is
+                            // (saveSetupDraft volgt na save in onderstaande block)
+                            p.colorIdx = newIdx;
+                        },
+                    },
                 );
                 if (updated) {
                     p.avatar = updated;
                     saveAvatar(p.colorIdx, updated);
                     saveSetupDraft();
+                    // Invalidate cached thumbnail voor deze speler
+                    for (const k of Array.from(_thumbCache.keys())) {
+                        if (k.startsWith(`home|${p.colorIdx}|`)) _thumbCache.delete(k);
+                    }
                     renderGame();
                 }
             });
@@ -7730,6 +10114,11 @@ function renderSetup() {
                 const taken = new Set(draft.map((q, j) => j !== i ? q.colorIdx : -1));
                 let next = (p.colorIdx + 1) % PLAYER_COLORS.length;
                 while (taken.has(next)) next = (next + 1) % PLAYER_COLORS.length;
+                // Invalidate cached thumbs voor OUDE EN NIEUWE color-slot
+                for (const k of Array.from(_thumbCache.keys())) {
+                    if (k.startsWith(`home|${p.colorIdx}|`) ||
+                        k.startsWith(`home|${next}|`)) _thumbCache.delete(k);
+                }
                 p.colorIdx = next;
                 // Try to load a previously saved avatar for the new color slot,
                 // OR keep the current avatar but adopt the new slot's default outfit.
@@ -7888,9 +10277,7 @@ function renderSetup() {
             boxShadow: '0 0 6px ' + col,
         }});
         const avatar = p.avatar || loadAvatarForColor(p.colorIdx) || defaultAvatar(p.colorIdx);
-        av.innerHTML = renderAvatarSVG(avatar, 'head');
-        const svg = av.querySelector('svg');
-        if (svg) { svg.style.width = '140%'; svg.style.height = '140%'; svg.style.marginTop = '3px'; }
+        av.innerHTML = pawnThumbImg(avatar, PLAYER_COLORS[p.colorIdx].hex);
         chip.append(av, document.createTextNode(p.name || `Speler`));
         chips.append(chip);
     }
@@ -8470,14 +10857,7 @@ function refreshHUD() {
     if (cur.avatar) {
         av.style.background = 'rgba(0,0,0,0.25)';
         av.style.overflow = 'hidden';
-        av.innerHTML = renderAvatarSVG(cur.avatar, 'head', 'width="100%" height="100%"');
-        // Bump the SVG so the head fills the circle nicely
-        const svg = av.firstChild;
-        if (svg && svg.style) {
-            svg.style.width  = '140%';
-            svg.style.height = '140%';
-            svg.style.marginTop = '4px';
-        }
+        av.innerHTML = pawnThumbImg(cur.avatar, cur.color.hex);
     } else {
         av.style.background = cur.color.css;
     }
@@ -15488,8 +17868,7 @@ function playSchnapsCall({ player = null, mode = 'standalone' } = {}) {
             // Render speler avatar als achtergrond, met behoud van pulse-animatie
             avatar.style.padding = '0';
             avatar.style.overflow = 'hidden';
-            avatar.innerHTML = renderAvatarSVG(player.avatar, 'square',
-                'width="100%" height="100%"');
+            avatar.innerHTML = pawnThumbImg(player.avatar, player.color?.hex ?? player.color?.css);
         } else {
             avatar.textContent = '🥃';
         }
