@@ -1,5 +1,5 @@
 --- /mnt/user-data/uploads/index.html	2026-05-14 18:01:04.149813000 +0000
-+++ /home/claude/work/index.html	2026-05-15 10:49:15.653273469 +0000
++++ /home/claude/work/index.html	2026-05-15 16:49:18.246900899 +0000
 @@ -1376,6 +1376,15 @@
        display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
        user-select: none; overflow: hidden; touch-action: none;
@@ -1475,7 +1475,23 @@
  const MYSTERY_OPTIONS = [
      { id: 'krokodil',    emoji: '🐊', label: 'Krokodil',     color: '#b87aff' },
      { id: 'paddle',      emoji: '🏓', label: 'Paddle Duel',  color: '#4af2ff' },
-@@ -14857,23 +15601,30 @@
+@@ -14848,7 +15592,14 @@
+         // Bouw stall (1× lazy) + pas opties toe
+         buildMysteryStallOnce();
+         applyMysteryOptionsToWheel(options);
+-        if (mysteryWheelSpin) mysteryWheelSpin.rotation.x = 0;
++        // RANDOM start-hoek elke keer dat het rad opent. Voorheen
++        // begon 'ie altijd op rotation.x = 0 → segment 0 stond steeds
++        // bovenaan onder de pointer, en bij dezelfde swipe-snelheid
++        // landde je elke keer in dezelfde buurt. Met random startpunt
++        // (0 → 2π) verspreidt de "comfort-zone" zich over alle wedges
++        // → veel minder vaak dezelfde minigame na een paar spins.
++        const randomStartAngle = Math.random() * Math.PI * 2;
++        if (mysteryWheelSpin) mysteryWheelSpin.rotation.x = randomStartAngle;
+         if (mysteryStall)     mysteryStall.visible = true;
+ 
+         console.log('[MysteryWheel] stall built:', !!mysteryStall,
+@@ -14857,23 +15608,30 @@
              'spin children:', mysteryWheelSpin?.children?.length);
  
          // ════════════════════════════════════════════════════════
@@ -1514,7 +1530,18 @@
  
          console.log('[MysteryWheel] camera snapped to',
              CAM_POS.toArray(), 'looking at', CAM_TGT.toArray());
-@@ -15045,22 +15796,29 @@
+@@ -14915,7 +15673,9 @@
+         // angle (rad) = wheelSpin.rotation.x. Positieve waarden roteren
+         // het rad CCW vanuit kamera-POV (top schuift naar viewer's LEFT).
+         // We berekenen winnaar door angle modulo 2π → segment-index.
+-        let angle = 0;
++        // Start bij randomStartAngle (zie hierboven) zodat de state
++        // in sync is met de visuele rotation van het 3D-mesh.
++        let angle = randomStartAngle;
+         let angVel = 0;            // rad/sec
+         const FRICTION_PER_FRAME = 0.985;
+         const STOP_THRESHOLD = 0.15;   // rad/sec
+@@ -15045,22 +15805,29 @@
          });
  
          // ════════════════════════════════════════════════════════
@@ -1550,7 +1577,7 @@
              camera.position.copy(CAM_POS);
              controls.target.copy(CAM_TGT);
              camera.lookAt(controls.target);
-@@ -15093,10 +15851,7 @@
+@@ -15093,10 +15860,7 @@
                      announceWinner();
                  }
              }
@@ -1562,7 +1589,7 @@
  
          // ════════════════════════════════════════════════════════
          //  H. WINNER-ANNOUNCE — eindbanner met emoji + Start-knop
-@@ -15125,7 +15880,8 @@
+@@ -15125,7 +15889,8 @@
          // ════════════════════════════════════════════════════════
          function finish(id) {
              alive = false;
@@ -1572,7 +1599,7 @@
  
              stage.removeEventListener('pointerdown', onPointerDown);
              stage.removeEventListener('pointermove', onPointerMove);
-@@ -15143,6 +15899,8 @@
+@@ -15143,6 +15908,8 @@
              controls.enabled = savedCam.enabled;
              controls.enableDamping = savedCam.enableDamping;
              camera.lookAt(controls.target);
@@ -1581,7 +1608,7 @@
  
              restoreMinigameChrome(hiddenChrome);
  
-@@ -16321,15 +17079,47 @@
+@@ -16321,15 +17088,47 @@
          });
          if (swap) {
              const pIdx = player.tileIdx, sIdx = swap.tileIdx;
@@ -1633,7 +1660,7 @@
          }
      }
      // ─── SKULL — pitchzwarte tegel die je naar Banana Brig verbant
-@@ -16381,33 +17171,9 @@
+@@ -16381,33 +17180,9 @@
              requestAnimationFrame(step);
          });
  
@@ -1670,7 +1697,7 @@
          //    Positie van Banana Brig satelliet is (4, -19), top y ≈ 2.4.
          const bbX = 4, bbZ = -19, bbY = 2.4;
          await new Promise(r => {
-@@ -16427,19 +17193,19 @@
+@@ -16427,19 +17202,19 @@
              requestAnimationFrame(step);
          });
  
@@ -1697,7 +1724,7 @@
          // 6. Camera zwaait terug naar het bord
          await new Promise(r => {
              const camFrom = camera.position.clone();
-@@ -16557,8 +17323,12 @@
+@@ -16557,8 +17332,12 @@
              palette: 'purple', auto: true, duration: 1200,
          });
          // Filter wheel options based on player count: 1v1 games need 2+
@@ -1710,7 +1737,7 @@
              if (!playerOk) return ['roulette','blackjack','hoofdsteden'].includes(o.id);
              return true;
          });
-@@ -16597,6 +17367,7 @@
+@@ -16597,6 +17376,7 @@
          });
      } else {
          advanceTurn();

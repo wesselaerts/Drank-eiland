@@ -15592,7 +15592,14 @@ function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Whe
         // Bouw stall (1× lazy) + pas opties toe
         buildMysteryStallOnce();
         applyMysteryOptionsToWheel(options);
-        if (mysteryWheelSpin) mysteryWheelSpin.rotation.x = 0;
+        // RANDOM start-hoek elke keer dat het rad opent. Voorheen
+        // begon 'ie altijd op rotation.x = 0 → segment 0 stond steeds
+        // bovenaan onder de pointer, en bij dezelfde swipe-snelheid
+        // landde je elke keer in dezelfde buurt. Met random startpunt
+        // (0 → 2π) verspreidt de "comfort-zone" zich over alle wedges
+        // → veel minder vaak dezelfde minigame na een paar spins.
+        const randomStartAngle = Math.random() * Math.PI * 2;
+        if (mysteryWheelSpin) mysteryWheelSpin.rotation.x = randomStartAngle;
         if (mysteryStall)     mysteryStall.visible = true;
 
         console.log('[MysteryWheel] stall built:', !!mysteryStall,
@@ -15666,7 +15673,9 @@ function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Whe
         // angle (rad) = wheelSpin.rotation.x. Positieve waarden roteren
         // het rad CCW vanuit kamera-POV (top schuift naar viewer's LEFT).
         // We berekenen winnaar door angle modulo 2π → segment-index.
-        let angle = 0;
+        // Start bij randomStartAngle (zie hierboven) zodat de state
+        // in sync is met de visuele rotation van het 3D-mesh.
+        let angle = randomStartAngle;
         let angVel = 0;            // rad/sec
         const FRICTION_PER_FRAME = 0.985;
         const STOP_THRESHOLD = 0.15;   // rad/sec
