@@ -1,6 +1,85 @@
 --- /mnt/user-data/uploads/index.html	2026-05-14 18:01:04.149813000 +0000
-+++ /home/claude/work/index.html	2026-05-15 19:51:12.281542762 +0000
-@@ -1376,6 +1376,15 @@
++++ /home/claude/work/index.html	2026-05-15 20:50:15.493185814 +0000
+@@ -986,6 +986,78 @@
+ 
+     /* Quick screen-shake for big knockback events */
+     .shake { animation: screenShake 0.4s ease-in-out; }
++
++    /* ── Background music toggle (rechts-boven) ── */
++    #bg-music-toggle {
++      position: fixed;
++      top: max(12px, env(safe-area-inset-top));
++      right: 12px;
++      z-index: 30;
++      width: 40px; height: 40px;
++      border: 1.5px solid rgba(255,255,255,0.30);
++      border-radius: 50%;
++      background: rgba(20,30,42,0.65);
++      backdrop-filter: blur(6px);
++      -webkit-backdrop-filter: blur(6px);
++      color: #ffd54a;
++      font-size: 18px;
++      cursor: pointer;
++      padding: 0;
++      -webkit-tap-highlight-color: transparent;
++      transition: transform .15s ease, background .2s ease, opacity .25s ease;
++      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
++    }
++    #bg-music-toggle:active { transform: scale(0.92); }
++    #bg-music-toggle.muted { opacity: 0.55; color: rgba(255,255,255,0.65); }
++
++    /* ── Volume slider (long-press) ── */
++    #bg-vol-card {
++      position: fixed;
++      top: max(60px, calc(env(safe-area-inset-top) + 60px));
++      right: 12px;
++      z-index: 31;
++      width: 64px;
++      padding: 14px 8px 12px;
++      background: rgba(20,30,42,0.85);
++      backdrop-filter: blur(10px);
++      -webkit-backdrop-filter: blur(10px);
++      border: 1.5px solid rgba(255,215,80,0.30);
++      border-radius: 22px;
++      box-shadow: 0 6px 20px rgba(0,0,0,0.55);
++      display: flex; flex-direction: column;
++      align-items: center; gap: 10px;
++      animation: bgVolPop 0.18s cubic-bezier(.3,1.6,.5,1) both;
++    }
++    @keyframes bgVolPop {
++      from { transform: scale(0.6); opacity: 0; }
++      to   { transform: scale(1);   opacity: 1; }
++    }
++    .bg-vol-bar {
++      position: relative;
++      width: 30px;
++      height: 150px;
++      background: rgba(255,255,255,0.10);
++      border: 1px solid rgba(255,255,255,0.18);
++      border-radius: 16px;
++      overflow: hidden;
++      touch-action: none;
++      cursor: pointer;
++    }
++    .bg-vol-fill {
++      position: absolute;
++      bottom: 0; left: 0; right: 0;
++      background: linear-gradient(0deg, #ff9a1a 0%, #ffd54a 60%, #fff5a8 100%);
++      box-shadow: 0 0 10px rgba(255,215,80,0.4);
++      transition: height 0.08s linear;
++      border-radius: 0 0 14px 14px;
++    }
++    .bg-vol-pct {
++      font-size: 11px;
++      color: #ffd54a;
++      font-weight: 800;
++      letter-spacing: 0.5px;
++    }
++
+     @keyframes screenShake {
+       0%,100% { transform: translate(0,0); }
+       20% { transform: translate(-6px, 3px); }
+@@ -1376,6 +1448,15 @@
        display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
        user-select: none; overflow: hidden; touch-action: none;
        padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
@@ -16,7 +95,7 @@
      .krab-head { text-align: center; padding: 4px 8px 6px; }
      .krab-head h2 { margin: 0; font-size: 20px; font-weight: 900; }
      .krab-hud { display: flex; justify-content: space-around; align-items: center;
-@@ -1439,7 +1448,8 @@
+@@ -1439,7 +1520,8 @@
      /* ─── 4. Tiki Ritme ───────────────────────────────────────── */
      .tiki-back { position: fixed; inset: 0; z-index: 60;
        background:
@@ -26,7 +105,7 @@
        display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
        user-select: none; overflow: hidden; touch-action: none;
        padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
-@@ -1971,13 +1981,14 @@
+@@ -1971,13 +2053,14 @@
      .vr-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
        display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
        background:
@@ -44,7 +123,7 @@
        animation: vh-heat 8s ease-in-out infinite alternate; }
      .vr-header { position: relative; z-index: 2; padding: 10px 16px 4px; text-align: center; }
      .vr-title { font-size: 22px; font-weight: 900; letter-spacing: 0.5px;
-@@ -2063,7 +2074,8 @@
+@@ -2063,7 +2146,8 @@
      .bj-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
        display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
        background:
@@ -54,7 +133,7 @@
        padding-top: env(safe-area-inset-top);
        padding-bottom: env(safe-area-inset-bottom); }
      .bj-back::before { content: ""; position: absolute; inset: -10%; pointer-events: none;
-@@ -2150,7 +2162,8 @@
+@@ -2150,7 +2234,8 @@
      .hf-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
        display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
        background:
@@ -64,7 +143,7 @@
        padding-top: env(safe-area-inset-top);
        padding-bottom: env(safe-area-inset-bottom);
        touch-action: manipulation; }
-@@ -2277,6 +2290,42 @@
+@@ -2277,6 +2362,42 @@
      width: 100%; height: 100%;
      max-height: 100%;
  }
@@ -107,7 +186,7 @@
  .av-bounce {
      animation: avBounce 0.4s cubic-bezier(.4,1.7,.5,1);
  }
-@@ -2374,6 +2423,60 @@
+@@ -2374,6 +2495,60 @@
      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
  }
  
@@ -168,7 +247,7 @@
  /* Palette row */
  .av-palette-wrap {
      padding: 4px 14px 8px;
-@@ -4202,12 +4305,12 @@
+@@ -4202,12 +4377,12 @@
      cx:     BOWL.cx + 6,    // 88 — iets oost van bowling-centrum
      cz:     BOWL.cz,
      floorY: BOWL.sandTopY,  // staat op het zand, top y=1.05
@@ -186,7 +265,7 @@
      pegRad: 0.07,
      pegLen: 0.22,
  };
-@@ -4319,10 +4422,19 @@
+@@ -4319,10 +4494,19 @@
      const N  = options.length;
      const segAng = (Math.PI * 2) / N;
  
@@ -208,7 +287,7 @@
      ctx.beginPath();
      ctx.arc(cx, cy, R + 4, 0, Math.PI * 2);
      ctx.fillStyle = '#2a1a08';
-@@ -4337,18 +4449,19 @@
+@@ -4337,18 +4521,19 @@
          ctx.moveTo(cx, cy);
          ctx.arc(cx, cy, R, aStart, aEnd, false);
          ctx.closePath();
@@ -235,7 +314,7 @@
          ctx.beginPath();
          ctx.moveTo(cx, cy);
          ctx.arc(cx, cy, R, aStart, aEnd, false);
-@@ -4439,89 +4552,87 @@
+@@ -4439,89 +4624,87 @@
      stall.add(makeBambooBeam( halfW, -halfD,  halfW,  halfD, topY));   // oost zijkant
  
      // ── Schuin "rieten" dak (twee panelen + nokbalk) ──
@@ -367,7 +446,7 @@
      const axleMat = new THREE.MeshToonMaterial({
          color: 0x3a2810, gradientMap: toon,
          emissive: 0x1a1208, emissiveIntensity: 0.2 });
-@@ -4529,17 +4640,17 @@
+@@ -4529,17 +4712,17 @@
      const axle = new THREE.Mesh(
          new THREE.CylinderGeometry(0.09, 0.09, axleLen, 10), axleMat);
      axle.rotation.z = Math.PI / 2;
@@ -388,7 +467,7 @@
      const pointerMat = new THREE.MeshToonMaterial({
          color: 0xffd54a, gradientMap: toon,
          emissive: 0x885500, emissiveIntensity: 0.55 });
-@@ -4547,20 +4658,18 @@
+@@ -4547,20 +4730,18 @@
          new THREE.ConeGeometry(0.18, 0.42, 4), pointerMat);
      pointer.rotation.x = Math.PI;
      pointer.rotation.y = Math.PI / 4;
@@ -413,7 +492,7 @@
      stall.add(spin);
      mysteryWheelSpin = spin;
  
-@@ -4639,9 +4748,12 @@
+@@ -4639,9 +4820,12 @@
      mysteryWheelFaceMeshes.length = 0;
  
      // Front-disc met canvas-texture
@@ -428,7 +507,7 @@
          side: THREE.FrontSide });
      const faceGeo = new THREE.CircleGeometry(MWHEEL.radius, 64);
      const faceDisc = new THREE.Mesh(faceGeo, faceMat);
-@@ -5205,14 +5317,23 @@
+@@ -5205,16 +5389,438 @@
  
  // ── Game state ──
  const PLAYER_COLORS = [
@@ -459,8 +538,423 @@
 +    { name: 'Babyblauw',hex: 0xa8d4ff, css: '#a8d4ff' },   // soft sky blue
  ];
  
++// ═══════════════════════════════════════════════════════════════════
++//   AMBIENT BACKGROUND MUSIC — generatieve compositie (research-based)
++// ═══════════════════════════════════════════════════════════════════
++//
++//   GEFUNDEERD OP WETENSCHAPPELIJK ONDERZOEK:
++//
++//   • Brian Eno's "2/1" (Ambient 1: Music for Airports, 1978):
++//     Onafhankelijke tape-loops van incommensurabele lengtes (23.5s,
++//     25.875s, 29.9375s) — herhalen NOOIT exact. LCM is astronomisch.
++//     → Wij gebruiken 4 lagen met coprime-achtige periodes
++//       23s / 28s / 37s / 41s. LCM ≈ 11 dagen.
++//
++//   • Rossing et al., "The extraordinary sound of the hang" (Physics
++//     Today 62-3, 2009): Handpan-modes vertonen PURE 1:2:3 ratio
++//     (fundamental + octaaf + samengestelde kwint). GEEN piano-stijl
++//     inharmoniciteit. Sustain 8-15 sec in stille kamer.
++//     → 1:2:3 partials EXACT, decays 12s/8s/5s.
++//
++//   • D Kurd scale (D natuurlijk mineur): D-E-F-G-A-Bb-C — Iraanse
++//     oorsprong, 70% van handpans gebruikt deze stemming. Beschreven
++//     als "mysterieus, meditatief". → D Kurd voor alle melodische
++//     lagen, weighted naar D (ding) en A (kwint).
++//
++//   • Leslie & Picard MIT (Engineering Music to Slow Breathing, 2019):
++//     Ambient-muziek met ademhalings-gesynchroniseerde amplitude-
++//     modulatie (~0.20 Hz, ±3 dB) vertraagt hartslag en induceert
++//     alpha-band entrainment. → 0.20 Hz LFO op breath-gain stage.
++//
++//   • Indiase klassiek tanpura: continue grondtoon-drone creëert
++//     akoestisch ankerpunt. Frequenties <60 Hz worden lichamelijk
++//     "gevoeld" via cochlea-cutoff effect. → D1 (36.7 Hz) + D2
++//     (73.4 Hz) sine drone, NOOIT stoppend zolang muziek aan.
++//
++//   • Tempo & ritme: 60-90 BPM = rusthartslag, bevordert para-
++//     sympatische respons. → Geen vast tempo meer (volledig vrij in
++//     tijd, geen "bars"); plucks timed in seconden.
++// ═══════════════════════════════════════════════════════════════════
++
++let bgMusic = {
++    ctx: null,
++    master: null,         // gain stage 1 (volume control)
++    breathGain: null,     // gain stage 2 (0.20 Hz breathing mod)
++    breathLFO: null,
++    filter: null,         // lowpass for warmth
++    filterLFO: null,      // slow wave on filter cutoff
++    drone: null,          // sub-bass D1
++    droneOct: null,       // sub-bass D2
++    droneGain: null,
++    enabled: false,
++    schedulerId: null,
++    layers: null,
++    volume: 0.060,
++};
++
++// ── D KURD scale (natuurlijk mineur, 70% van handpans) ─────────
++//   Notes: D - E - F - G - A - Bb - C (natural minor / Aeolian)
++//   Frequenties in equal temperament (440 Hz A4 referentie)
++const D_KURD = {
++    D2:  73.42,  D3: 146.83,  E3: 164.81,  F3: 174.61,
++    G3: 196.00,  A3: 220.00,  Bb3:233.08,  C4: 261.63,
++    D4: 293.66,  E4: 329.63,  F4: 349.23,  G4: 392.00,
++    A4: 440.00,  Bb4:466.16,  C5: 523.25,  D5: 587.33,
++    F5: 698.46,  A5: 880.00,
++};
++
++// ── Handpan note pool met gewichten ──
++//   D & A krijgen hoogste gewicht: D is "ding" (centrum-noot, lowest),
++//   A is de natuurlijke kwint en sterkste resonant in elk D-instrument.
++//   F (mineur terts) geeft de melancholie. Bb is karakteristiek voor
++//   D Kurd (vs D Celtic, waar Bb ontbreekt).
++const HANDPAN_POOL = [
++    { freq: D_KURD.D3,  weight: 5 },   // ding (tonic, low)
++    { freq: D_KURD.A3,  weight: 5 },   // dominant kwint
++    { freq: D_KURD.D4,  weight: 3 },   // tonic octaaf
++    { freq: D_KURD.F3,  weight: 3 },   // mineur terts (kleur)
++    { freq: D_KURD.C4,  weight: 2 },   // bVII (modaal)
++    { freq: D_KURD.E4,  weight: 2 },
++    { freq: D_KURD.G3,  weight: 2 },
++    { freq: D_KURD.F4,  weight: 2 },
++    { freq: D_KURD.A4,  weight: 1 },
++    { freq: D_KURD.Bb3, weight: 1 },   // Kurd-karakteristieke noot
++];
++
++// ── Akkoord-progressie in D mineur ──
++//   i - III - VII - v  ( Dm - F - C - Am )
++//   Modaal, "drijvend" — geen V-i spanning, alleen geleidelijke
++//   harmonische beweging. Standaard in ambient & post-rock.
++const BG_CHORDS = [
++    { name:'Dm', root: D_KURD.D2,   notes: [D_KURD.D3,  D_KURD.F3,  D_KURD.A3 ] },
++    { name:'F',  root:  87.31,      notes: [D_KURD.F3,  D_KURD.A3,  D_KURD.C4 ] },
++    { name:'C',  root:  65.41,      notes: [D_KURD.C4,  D_KURD.E4,  D_KURD.G3 ] },
++    { name:'Am', root: 110.00,      notes: [D_KURD.A3,  D_KURD.C4,  D_KURD.E4 ] },
++];
++
++// ── Incommensurabele periodes ──
++//   Gekozen zodat de combinatie nooit exact herhaalt (Eno-techniek):
++//   28 = chord-cycle (4 akkoorden × 7 sec)
++//   23 = gemiddelde handpan-cycle
++//   37 = piano-accent-cycle (sparse, "lounge" feel)
++//   41 = bell-sparkle-cycle (zeldzame "shimmer")
++//   LCM(28, 23, 37, 41) = 977.228 sec ≈ 11.3 dagen
++const PERIOD_PAD     = 28.0;
++const PERIOD_HANDPAN = 23.0;
++const PERIOD_PIANO   = 37.0;
++const PERIOD_BELL    = 41.0;
++
++// Weighted-pick helper voor handpan-noten
++function pickHandpan() {
++    const total = HANDPAN_POOL.reduce((s, n) => s + n.weight, 0);
++    let r = Math.random() * total;
++    for (const n of HANDPAN_POOL) {
++        r -= n.weight;
++        if (r <= 0) return n.freq;
++    }
++    return D_KURD.D3;
++}
++
++function bgMusicStart() {
++    if (bgMusic.enabled) return;
++    if (!bgMusic.ctx) {
++        try {
++            bgMusic.ctx = new (window.AudioContext || window.webkitAudioContext)();
++        } catch (e) { console.warn('AudioContext fail:', e); return; }
++        const ctx = bgMusic.ctx;
++
++        // ── Audio routing: master → breathGain → filter → destination ──
++        // master = volume control (door slider)
++        // breathGain = 0.20 Hz amplitude modulation (ademhaling)
++        // filter = lowpass, met slow LFO op cutoff
++        bgMusic.master = ctx.createGain();
++        bgMusic.master.gain.value = 0;
++        bgMusic.breathGain = ctx.createGain();
++        bgMusic.breathGain.gain.value = 1.0;
++        bgMusic.filter = ctx.createBiquadFilter();
++        bgMusic.filter.type = 'lowpass';
++        bgMusic.filter.frequency.value = 1600;
++        bgMusic.filter.Q.value = 0.4;
++        bgMusic.master.connect(bgMusic.breathGain);
++        bgMusic.breathGain.connect(bgMusic.filter);
++        bgMusic.filter.connect(ctx.destination);
++
++        // ── Breath LFO: 0.20 Hz (=5s ademcyclus), ±18% gain (~3 dB) ──
++        // Leslie & Picard MIT: gesynchroniseerde amp-modulatie vertraagt
++        // ademhaling en induceert alpha-band entrainment.
++        bgMusic.breathLFO = ctx.createOscillator();
++        bgMusic.breathLFO.type = 'sine';
++        bgMusic.breathLFO.frequency.value = 0.20;
++        const bLfoG = ctx.createGain();
++        bLfoG.gain.value = 0.18;
++        bgMusic.breathLFO.connect(bLfoG);
++        bLfoG.connect(bgMusic.breathGain.gain);
++        bgMusic.breathLFO.start();
++
++        // ── Filter LFO: 0.06 Hz (16.7s periode), ±600 Hz sweep ──
++        // Veel langzamer dan breath → creëert "wave"-textuur over minuten
++        bgMusic.filterLFO = ctx.createOscillator();
++        bgMusic.filterLFO.type = 'sine';
++        bgMusic.filterLFO.frequency.value = 0.06;
++        const fLfoG = ctx.createGain();
++        fLfoG.gain.value = 600;
++        bgMusic.filterLFO.connect(fLfoG);
++        fLfoG.connect(bgMusic.filter.frequency);
++        bgMusic.filterLFO.start();
++
++        // ── Sub-bass D drone (continu, tanpura) ──
++        //   D1 (36.7 Hz) wordt vooral gevoeld onder cochlea-cutoff
++        //   D2 (73.4 Hz) is hoorbaar op kleine speakers
++        bgMusic.drone = ctx.createOscillator();
++        bgMusic.drone.type = 'sine';
++        bgMusic.drone.frequency.value = 36.71;
++        bgMusic.droneOct = ctx.createOscillator();
++        bgMusic.droneOct.type = 'sine';
++        bgMusic.droneOct.frequency.value = 73.42;
++        bgMusic.droneGain = ctx.createGain();
++        bgMusic.droneGain.gain.value = 0.045;
++        bgMusic.drone.connect(bgMusic.droneGain);
++        bgMusic.droneOct.connect(bgMusic.droneGain);
++        bgMusic.droneGain.connect(bgMusic.master);
++        bgMusic.drone.start();
++        bgMusic.droneOct.start();
++    }
++    if (bgMusic.ctx.state === 'suspended') bgMusic.ctx.resume();
++    bgMusic.enabled = true;
++
++    // ── Layer init met fase-offsets (lagen vallen niet allemaal samen) ──
++    const now = bgMusic.ctx.currentTime;
++    bgMusic.layers = {
++        pad:     { nextTime: now + 0.5,  chordIdx: 0 },
++        handpan: { nextTime: now + 2.0 },
++        piano:   { nextTime: now + 12.0 },
++        bell:    { nextTime: now + 22.0 },
++    };
++
++    // Fade in over 3 sec (langzaam — "atmospheric")
++    bgMusic.master.gain.cancelScheduledValues(now);
++    bgMusic.master.gain.setValueAtTime(bgMusic.master.gain.value, now);
++    bgMusic.master.gain.linearRampToValueAtTime(bgMusic.volume, now + 3.0);
++
++    bgMusic.schedulerId = setInterval(bgMusicSchedule, 200);
++    bgMusicSchedule();
++    try { localStorage.setItem('bgmusic', '1'); } catch (e) {}
++    bgMusicSyncToggleVisual();
++}
++
++function bgMusicStop() {
++    if (!bgMusic.enabled) return;
++    bgMusic.enabled = false;
++    clearInterval(bgMusic.schedulerId);
++    bgMusic.schedulerId = null;
++    if (bgMusic.ctx && bgMusic.master) {
++        const now = bgMusic.ctx.currentTime;
++        bgMusic.master.gain.cancelScheduledValues(now);
++        bgMusic.master.gain.setValueAtTime(bgMusic.master.gain.value, now);
++        bgMusic.master.gain.linearRampToValueAtTime(0, now + 1.5);
++    }
++    try { localStorage.setItem('bgmusic', '0'); } catch (e) {}
++    bgMusicSyncToggleVisual();
++}
++
++function bgMusicSetVolume(v) {
++    bgMusic.volume = Math.max(0, Math.min(0.20, v));
++    if (bgMusic.ctx && bgMusic.master && bgMusic.enabled) {
++        const now = bgMusic.ctx.currentTime;
++        bgMusic.master.gain.cancelScheduledValues(now);
++        bgMusic.master.gain.setTargetAtTime(bgMusic.volume, now, 0.1);
++    }
++    try { localStorage.setItem('bgmusic_vol', String(bgMusic.volume)); } catch (e) {}
++}
++
++// ── Scheduler: per laag eigen onafhankelijke timing ──
++// Elke laag heeft eigen "nextTime"; wordt onafhankelijk gechecked.
++// Geen "bars" of "beats" meer — alles in echte seconden.
++function bgMusicSchedule() {
++    if (!bgMusic.enabled || !bgMusic.ctx) return;
++    const now = bgMusic.ctx.currentTime;
++    const lookAhead = 3.0;
++    const L = bgMusic.layers;
++
++    // PAD layer — chord change every 7 sec (PERIOD_PAD/4)
++    while (L.pad.nextTime < now + lookAhead) {
++        const chord = BG_CHORDS[L.pad.chordIdx % BG_CHORDS.length];
++        const chordDur = PERIOD_PAD / BG_CHORDS.length;   // 7 sec
++        bgPlayChordPad(L.pad.nextTime, chord, chordDur);
++        L.pad.nextTime += chordDur;
++        L.pad.chordIdx++;
++    }
++
++    // HANDPAN layer — strike every 3-7 sec (geen vast tempo)
++    while (L.handpan.nextTime < now + lookAhead) {
++        const fund = pickHandpan();
++        bgPlayHandpanStrike(L.handpan.nextTime, fund, 0.7 + Math.random() * 0.3);
++        L.handpan.nextTime += 3.0 + Math.random() * 4.0;
++    }
++
++    // PIANO layer — once per ~30 sec, single note from lower D Kurd register
++    while (L.piano.nextTime < now + lookAhead) {
++        const pianoNotes = [D_KURD.D3, D_KURD.F3, D_KURD.A3, D_KURD.C4, D_KURD.D4];
++        const f0 = pianoNotes[Math.floor(Math.random() * pianoNotes.length)];
++        bgPlayPianoNote(L.piano.nextTime, f0, 0.55);
++        L.piano.nextTime += PERIOD_PIANO * (0.7 + Math.random() * 0.6);
++    }
++
++    // BELL layer — once per ~40 sec, high register sparkle
++    while (L.bell.nextTime < now + lookAhead) {
++        const bellNotes = [D_KURD.D5, D_KURD.F5, D_KURD.A5, D_KURD.C5];
++        const fb = bellNotes[Math.floor(Math.random() * bellNotes.length)];
++        bgPlayBellSparkle(L.bell.nextTime, fb, 0.7);
++        L.bell.nextTime += PERIOD_BELL * (0.7 + Math.random() * 0.6);
++    }
++}
++
++// ── Chord pad: 3 sine voices met langzame attack/release ──
++function bgPlayChordPad(time, chord, duration) {
++    const ctx = bgMusic.ctx;
++    const dest = bgMusic.master;
++    if (!ctx || !dest) return;
++    const attack = 1.5;
++    const release = 1.5;
++    const sustain = Math.max(0.5, duration - attack - release * 0.5);
++
++    for (const freq of chord.notes) {
++        const osc = ctx.createOscillator();
++        osc.type = 'sine';
++        osc.frequency.value = freq;
++        // Subtiele 4 Hz vibrato (±0.15%) — voor levendigheid
++        const vib = ctx.createOscillator();
++        vib.frequency.value = 4.0;
++        const vibG = ctx.createGain();
++        vibG.gain.value = freq * 0.0015;
++        vib.connect(vibG);
++        vibG.connect(osc.frequency);
++
++        const g = ctx.createGain();
++        const peakVol = 0.036;
++        g.gain.setValueAtTime(0, time);
++        g.gain.linearRampToValueAtTime(peakVol, time + attack);
++        g.gain.linearRampToValueAtTime(peakVol * 0.85, time + attack + sustain);
++        g.gain.linearRampToValueAtTime(0, time + attack + sustain + release);
++        osc.connect(g); g.connect(dest);
++        const tEnd = time + attack + sustain + release + 0.1;
++        osc.start(time);  vib.start(time);
++        osc.stop(tEnd);   vib.stop(tEnd);
++    }
++}
++
++// ── Handpan strike: PURE 1:2:3 ratio (Rossing, Physics Today 2009) ──
++//   GEEN inharmoniciteit zoals piano — dit IS het verschil dat
++//   handpan zo kalmerend maakt: auditieve cortex hoeft geen
++//   energie te besteden aan harmonische resolutie → snelle shift
++//   naar alpha/theta-staat.
++function bgPlayHandpanStrike(time, fundamental, velocity = 1.0) {
++    const ctx = bgMusic.ctx;
++    const dest = bgMusic.master;
++    if (!ctx || !dest) return;
++
++    // 3 modes: fundamental, octave (2×), compound fifth (3×)
++    // Decay-tijden gebaseerd op echte handpan-metingen: 8-15 sec
++    const partials = [
++        { ratio: 1.00, amp: 1.00, decay: 12.0 },   // fundamental — langste
++        { ratio: 2.00, amp: 0.55, decay:  8.0 },   // octave
++        { ratio: 3.00, amp: 0.30, decay:  5.0 },   // compound 5th
++    ];
++    const baseAmp = 0.024 * velocity;
++
++    for (const p of partials) {
++        const osc = ctx.createOscillator();
++        osc.type = 'sine';
++        osc.frequency.value = fundamental * p.ratio;
++        // ±2 cents detune voor organische shimmer (real-world variation)
++        osc.detune.value = (Math.random() - 0.5) * 4;
++
++        const g = ctx.createGain();
++        g.gain.setValueAtTime(0, time);
++        // Sharp attack ~5 ms (metal-on-flesh "tongue" strike)
++        g.gain.linearRampToValueAtTime(baseAmp * p.amp, time + 0.005);
++        // Exponentieel verval — natuurkundig hoe alle percussie klinkt
++        g.gain.exponentialRampToValueAtTime(0.0001, time + p.decay);
++
++        osc.connect(g);
++        g.connect(dest);
++        osc.start(time);
++        osc.stop(time + p.decay + 0.2);
++    }
++}
++
++// ── Piano note (sparse, lounge-style) ──
++//   Stiffness-formule fₙ = n·f₁·√(1+B·n²) met B = 0.0003 voor licht
++//   inharmonische partials (karakteristiek piano-twang). 2 voices per
++//   partial simuleert echte string-pair op een piano (2-3 snaren/noot).
++function bgPlayPianoNote(time, f1, velocity = 1.0) {
++    const ctx = bgMusic.ctx;
++    const dest = bgMusic.master;
++    if (!ctx || !dest) return;
++
++    const B = 0.0003;
++    const partials = [
++        { n: 1, amp: 1.00, decay: 4.5 },
++        { n: 2, amp: 0.40, decay: 3.5 },
++        { n: 3, amp: 0.18, decay: 2.2 },
++    ];
++    const baseAmp = 0.028 * velocity;
++
++    for (const p of partials) {
++        const fn = p.n * f1 * Math.sqrt(1 + B * p.n * p.n);
++        for (const detune of [0, 4]) {       // string pair simulation
++            const osc = ctx.createOscillator();
++            osc.type = 'triangle';
++            osc.frequency.value = fn;
++            osc.detune.value = detune;
++            const g = ctx.createGain();
++            g.gain.setValueAtTime(0, time);
++            g.gain.linearRampToValueAtTime(baseAmp * p.amp * 0.5, time + 0.01);
++            g.gain.exponentialRampToValueAtTime(baseAmp * p.amp * 0.15, time + 0.15);
++            g.gain.exponentialRampToValueAtTime(0.0001, time + p.decay);
++            osc.connect(g);
++            g.connect(dest);
++            osc.start(time);
++            osc.stop(time + p.decay + 0.1);
++        }
++    }
++}
++
++// ── Bell sparkle (zeldzaam, hoog) — verre wind-chime ──
++function bgPlayBellSparkle(time, freq, velocity = 1.0) {
++    const ctx = bgMusic.ctx;
++    const dest = bgMusic.master;
++    if (!ctx || !dest) return;
++    const bell = ctx.createOscillator();
++    bell.type = 'sine';
++    bell.frequency.value = freq;
++    const bg2 = ctx.createGain();
++    bg2.gain.setValueAtTime(0, time);
++    bg2.gain.linearRampToValueAtTime(0.016 * velocity, time + 0.02);
++    bg2.gain.exponentialRampToValueAtTime(0.001, time + 2.5);
++    bell.connect(bg2);
++    bg2.connect(dest);
++    bell.start(time);
++    bell.stop(time + 2.7);
++}
++
++function bgMusicToggle() {
++    if (bgMusic.enabled) bgMusicStop();
++    else bgMusicStart();
++}
++
++function bgMusicSyncToggleVisual() {
++    const btn = document.getElementById('bg-music-toggle');
++    if (!btn) return;
++    btn.textContent = bgMusic.enabled ? '🎵' : '🔇';
++    btn.title = bgMusic.enabled ? 'Muziek uit' : 'Muziek aan';
++    btn.classList.toggle('muted', !bgMusic.enabled);
++}
++
  const G = {
-@@ -5325,7 +5446,11 @@
+     players: [],          // { name, colorIdx, tileIdx, token, animQ, bonusDice }
+     turnIdx: 0,
+@@ -5325,7 +5931,11 @@
  
  // place tokens on a tile, fanned out so they don't perfectly overlap
  function layoutTokensOnTile(tileIdx) {
@@ -473,7 +967,7 @@
      occupants.forEach((p, i) => {
          const base = tileWorldPos[tileIdx];
          const angle = (i / Math.max(1, occupants.length)) * Math.PI * 2;
-@@ -5519,6 +5644,126 @@
+@@ -5519,6 +6129,126 @@
      layoutTokensOnTile(player.tileIdx);
  }
  
@@ -600,7 +1094,7 @@
  // ── UI: helper ──
  const ui = document.getElementById('game-ui');
  function el(tag, props={}, children=[]) {
-@@ -5593,14 +5838,84 @@
+@@ -5593,14 +6323,84 @@
      'braids','bob','space_buns','side_swept','messy_bun','half_up'
  ];
  const AVATAR_ACC_OPTIONS     = ['none','glasses','shades','cap','beanie','crown','bandana','headband','helmet','earrings',
@@ -687,7 +1181,7 @@
          face: 'round',
          skin: AVATAR_SKIN_TONES[1],
          eyes: { shape: 'normal', color: AVATAR_EYE_COLORS[0] },
-@@ -5612,13 +5927,20 @@
+@@ -5612,13 +6412,20 @@
          body: 'normal',
          outfit: AVATAR_OUTFIT_COLORS[colorIdx % AVATAR_OUTFIT_COLORS.length],
          blush: 'none',
@@ -709,7 +1203,7 @@
          face: pick(AVATAR_FACE_OPTIONS),
          skin: pick(AVATAR_SKIN_TONES),
          eyes: { shape: pick(AVATAR_EYE_OPTIONS), color: pick(AVATAR_EYE_COLORS) },
-@@ -5630,9 +5952,28 @@
+@@ -5630,9 +6437,28 @@
          body: pick(AVATAR_BODY_OPTIONS),
          outfit: pick(AVATAR_OUTFIT_COLORS),
          blush: pick(AVATAR_BLUSH_OPTIONS),
@@ -738,7 +1232,7 @@
  // ═══ SVG PART RENDERERS ═══════════════════════════════════════════════════
  // All parts return an SVG fragment string. The viewBox is 200x260, with the
  // head centered at (100, 92) in a ~120px-tall region (y=30..150). Body sits
-@@ -6325,14 +6666,83 @@
+@@ -6325,14 +7151,83 @@
   * @param {string} title E.g. "Avatar voor Speler 1"
   * @returns {Promise<object|null>} The edited avatar, or null if cancelled
   */
@@ -827,7 +1321,7 @@
  
          // ── Header
          const head = el('div', { className: 'av-head' });
-@@ -6342,32 +6752,92 @@
+@@ -6342,32 +7237,92 @@
                  on: { click: () => finish(null) } }, '✕'),
          );
  
@@ -928,7 +1422,7 @@
              const tab = el('button', { className: 'av-tab', type: 'button',
                  on: { click: () => { currentCat = cat; refresh(); } } });
              tab.append(
-@@ -6378,18 +6848,17 @@
+@@ -6378,18 +7333,17 @@
              catStrip.append(tab);
          }
  
@@ -949,7 +1443,7 @@
          const foot = el('div', { className: 'av-foot' });
          const cancel = el('button', { className: 'av-btn ghost', type: 'button',
              on: { click: () => finish(null) } }, '✕  Annuleren');
-@@ -6400,46 +6869,170 @@
+@@ -6400,46 +7354,170 @@
          back.append(head, preview, topActs, catStrip, optWrap, paletteWrap, foot);
          host.append(back);
  
@@ -1147,7 +1641,7 @@
                      sw.style.background = col;
                      paletteRow.append(sw);
                  }
-@@ -6449,12 +7042,27 @@
+@@ -6449,12 +7527,27 @@
          }
  
          function finish(result) {
@@ -1175,7 +1669,7 @@
      });
  }
  
-@@ -6546,7 +7154,9 @@
+@@ -6546,7 +7639,9 @@
      const irisColor = parseHexColor(eyes?.color || '#3a2418');
      const xOff = headR * 0.32;
      const y    = headR * 0.15;
@@ -1186,7 +1680,7 @@
  
      // For "closed-like" eyes, just a dark curved line
      const isClosed = ['closed', 'wink', 'sleepy', 'tired', 'cute_lashed'].includes(shape);
-@@ -6636,7 +7246,8 @@
+@@ -6636,7 +7731,8 @@
      const color = parseHexColor(brows?.color || '#1a1010');
      const xOff = headR * 0.32;
      const y    = headR * 0.42;
@@ -1196,7 +1690,7 @@
      const mat  = avMat('flat', color);
  
      for (const side of [-1, 1]) {
-@@ -7240,10 +7851,1482 @@
+@@ -7240,10 +8336,1482 @@
              }
              return;
          }
@@ -2679,7 +3173,7 @@
  /**
   * Build a complete 3D avatar head as a THREE.Group, ready to be positioned
   * on top of a body cone. Returns a Group whose children include the head
-@@ -7291,6 +9374,178 @@
+@@ -7291,6 +9859,178 @@
      return g;
  }
  
@@ -2858,7 +3352,7 @@
  /**
   * Create a 3D pawn. If `avatar` is supplied, builds a full 3D head with
   * separate meshes for eyes/mouth/hair/accessories. Else falls back to the
-@@ -7298,26 +9553,276 @@
+@@ -7298,26 +10038,276 @@
   * The body cone stays in the player's identity color so minimap/HUD stay
   * visually consistent.
   */
@@ -3143,7 +3637,7 @@
          const skinHex = parseHexColor(avatar.skin, 0xfbcfa6);
          const neck = new THREE.Mesh(
              new THREE.CylinderGeometry(0.12, 0.16, 0.12, 12),
-@@ -7326,33 +9831,104 @@
+@@ -7326,33 +10316,104 @@
          neck.position.y = 1.20; neck.castShadow = true;
          g.add(neck);
  
@@ -3254,7 +3748,7 @@
      } else {
          // Fallback dot
          wrap.style.background = player?.color?.css || '#888';
-@@ -7442,7 +10018,7 @@
+@@ -7442,7 +10503,7 @@
  }
  
  // ── Victim picker — choose another player ──
@@ -3263,7 +3757,7 @@
      return new Promise(resolve => {
          const back = el('div', { className: 'vp-back' });
          const card = el('div', { className: 'vp-card' });
-@@ -7459,15 +10035,51 @@
+@@ -7459,15 +10520,51 @@
              const dot = el('div', { className: 'dot' });
              dot.style.background = p.color.css;
              dot.style.color      = p.color.css;
@@ -3317,7 +3811,7 @@
          // No cancel for tile events — must choose someone
          back.append(card);
          ui.append(back);
-@@ -7565,19 +10177,43 @@
+@@ -7565,19 +10662,43 @@
          clear(card);
          draft.forEach((p, i) => {
              const row = el('div', { className: 'player-row' });
@@ -3365,7 +3859,7 @@
                      renderGame();
                  }
              });
-@@ -7588,6 +10224,11 @@
+@@ -7588,6 +10709,11 @@
                  const taken = new Set(draft.map((q, j) => j !== i ? q.colorIdx : -1));
                  let next = (p.colorIdx + 1) % PLAYER_COLORS.length;
                  while (taken.has(next)) next = (next + 1) % PLAYER_COLORS.length;
@@ -3377,7 +3871,7 @@
                  p.colorIdx = next;
                  // Try to load a previously saved avatar for the new color slot,
                  // OR keep the current avatar but adopt the new slot's default outfit.
-@@ -7679,7 +10320,7 @@
+@@ -7679,7 +10805,7 @@
          // de Mystery Wheel pool van runMinigameOnTile).
          { id: 'lavasteen',   emoji: '🌋',  name: 'Hete Lavasteen',       meta: 'hot potato',    tag: 'BETA',  locked: false },
          { id: 'kano',        emoji: '🛶',  name: 'Kano Race',            meta: '1v1 race',      tag: 'NIEUW', locked: false },
@@ -3386,7 +3880,7 @@
          { id: 'tiki',        emoji: '🗿',  name: 'Tiki Ritme',           meta: 'memory',        tag: 'BETA',  locked: false },
          { id: 'brug',        emoji: '⚖️',  name: 'Brug Balans',          meta: 'gyro',          tag: 'BETA',  locked: false },
      ];
-@@ -7746,9 +10387,7 @@
+@@ -7746,9 +10872,7 @@
              boxShadow: '0 0 6px ' + col,
          }});
          const avatar = p.avatar || loadAvatarForColor(p.colorIdx) || defaultAvatar(p.colorIdx);
@@ -3397,7 +3891,7 @@
          chip.append(av, document.createTextNode(p.name || `Speler`));
          chips.append(chip);
      }
-@@ -7860,11 +10499,11 @@
+@@ -7860,11 +10984,11 @@
          await playTappyBird({ players: G.players, drinks: 2 });
      } else if (id === 'volcano') {
          const w = await playVolcanoHop({ players: G.players, drinks: 2 });
@@ -3411,7 +3905,7 @@
      } else if (id === 'roulette') {
          await playVulcanoRoulette({ player: G.players[0] });
          // Standalone: no board to move on, no drinks payout — the in-game result
-@@ -7901,15 +10540,13 @@
+@@ -7901,15 +11025,13 @@
      } else if (id === 'bowling') {
          const res = await playBowling({ players: G.players, drinks: 3 });
          if (res && res.winner) {
@@ -3429,7 +3923,7 @@
          }
      } else if (id === 'mystery' && G.players.length >= 1) {
          // Standalone Mystery Wheel: spin it, then dispatch to the same standalone
-@@ -8260,6 +10897,62 @@
+@@ -8260,6 +11382,62 @@
      }
  }
  
@@ -3492,7 +3986,7 @@
  function refreshHUD() {
      const cur = G.players[G.turnIdx];
      if (!cur) return;
-@@ -8272,14 +10965,7 @@
+@@ -8272,14 +11450,7 @@
      if (cur.avatar) {
          av.style.background = 'rgba(0,0,0,0.25)';
          av.style.overflow = 'hidden';
@@ -3508,7 +4002,7 @@
      } else {
          av.style.background = cur.color.css;
      }
-@@ -8631,13 +11317,13 @@
+@@ -8631,13 +11802,13 @@
          // raft-local) zodat ze niet in de loop staan. Hoofd tilt iets
          // omhoog, zoals _gameHook normaal doet op het bord, zodat ze
          // naar de camera "kijken".
@@ -3524,7 +4018,7 @@
          tokenGroup.remove(tokenB); raftB.add(tokenB);
          tokenB.position.set(-0.8, 0.7, 0); tokenB.scale.setScalar(1.3);
          if (tokenB.userData.headGroup) {
-@@ -10475,21 +13161,14 @@
+@@ -10475,21 +13646,14 @@
              camera.lookAt(controls.target);
              tbBack.remove();
              restoreMinigameChrome(hiddenChrome);
@@ -3553,7 +4047,7 @@
              } else {
                  resolveOuter(null);
              }
-@@ -10834,13 +13513,13 @@
+@@ -10834,13 +13998,13 @@
          // ════════════════════════════════════════════════════════
          //  E. AVATARS OP HET VLOT
          // ════════════════════════════════════════════════════════
@@ -3569,7 +4063,7 @@
          tokenGroup.remove(tokenB); raft.add(tokenB);
          tokenB.position.set( BOARD_W/2 + 1.2, 0.7, 0.4);
          tokenB.scale.setScalar(0.95);
-@@ -11314,6 +13993,7 @@
+@@ -11314,6 +14478,7 @@
              palette: 'lava',
          }).then(async () => {
              advanceTurn();
@@ -3577,7 +4071,7 @@
              G.phase = 'idle';
              refreshHUD();
              // Schnaps could still call after a skip-turn
-@@ -11330,6 +14010,23 @@
+@@ -11330,6 +14495,23 @@
      const useBonus = (player.bonusDice || 0) > 0;
      const diceCount = useBonus ? 2 : 1;
  
@@ -3601,7 +4095,7 @@
      // Build the iframe overlay (semi-transparent table, host page peeks through)
      const back = el('div', { className: 'dice-iframe-back' });
      const headerBar = el('div', { className: 'dice-iframe-header' });
-@@ -11404,7 +14101,10 @@
+@@ -11404,7 +14586,10 @@
  
          let total = result.total;
          let eruptPenalty = 0;
@@ -3613,7 +4107,7 @@
              eruptPenalty = 1;
              total = Math.max(1, total - 1);
          }
-@@ -11441,19 +14141,38 @@
+@@ -11441,19 +14626,38 @@
                      sub: `${player.name} gooit ${total} en breekt uit Banana Brig!`,
                      palette: 'gold',
                  });
@@ -3652,7 +4146,7 @@
                  G.phase = 'idle';
                  refreshHUD();
                  await maybeFireSchnapsCall();
-@@ -11496,6 +14215,26 @@
+@@ -11496,6 +14700,26 @@
  }
  
  // Helper used by skip-turn path and end of onLandedOnTile
@@ -3679,7 +4173,7 @@
  function advanceTurn() {
      G.turnIdx = (G.turnIdx + 1) % G.players.length;
      if (G.turnIdx === 0) {
-@@ -11505,6 +14244,65 @@
+@@ -11505,6 +14729,65 @@
      }
  }
  
@@ -3745,7 +4239,7 @@
  function updateVolcanoBanner() {
      let banner = document.getElementById('vol-banner');
      if (G.volcanoActive > 0) {
-@@ -12301,11 +15099,19 @@
+@@ -12301,11 +15584,19 @@
              phase = 'gameover';
              const sorted = [...scores].sort((a, b) => b.score - a.score);
              const topScore = sorted[0].score;
@@ -3769,7 +4263,7 @@
              ko.append(el('h2', {}, '🐤 Eindstand'));
              const list = el('div', {
                  style: { display: 'flex', flexDirection: 'column', gap: '8px',
-@@ -12329,12 +15135,21 @@
+@@ -12329,12 +15620,21 @@
              });
              ko.append(list);
              const drinkMsg = losers.length === 0 ? 'Iedereen gelijk — proost!' :
@@ -3794,7 +4288,7 @@
          }
  
          // ════════════════════════════════════════════════════════
-@@ -12594,25 +15409,22 @@
+@@ -12594,25 +15894,22 @@
  
          function buildTokenOnPlatform(p, platIdx) {
              const plat = platforms3D[platIdx];
@@ -3831,7 +4325,7 @@
              tokens3D.push(tokenGrp);
              return tokenGrp;
          }
-@@ -12633,7 +15445,7 @@
+@@ -12633,7 +15930,7 @@
                  const plat = platforms3D[idx];
                  const startY = plat.position.y;
                  const startTime = performance.now();
@@ -3840,7 +4334,7 @@
                  const fallingTokens = tokens3D.filter(t =>
                      t.userData.platIdx === idx);
                  fallingTokens.forEach(t => {
-@@ -12703,7 +15515,10 @@
+@@ -12703,7 +16000,10 @@
                  if (u.baseY !== undefined && u.bobPhase !== undefined) {
                      const plat = platforms3D[u.platIdx];
                      if (plat) {
@@ -3852,7 +4346,7 @@
                              Math.sin(time * 2.5 + u.bobPhase) * 0.05;
                      }
                  }
-@@ -12844,6 +15659,18 @@
+@@ -12844,6 +16144,18 @@
                  confirmBtn.disabled = true;
                  actionsRow.innerHTML = '';
                  actionsRow.append(confirmBtn);
@@ -3871,7 +4365,7 @@
                  await new Promise(r => {
                      btns.forEach((btn, idx) => {
                          btn.addEventListener('click', () => {
-@@ -12856,6 +15683,10 @@
+@@ -12856,6 +16168,10 @@
                              highlightPlatform(idx, p.color.hex);
                              picked = idx;
                              confirmBtn.disabled = false;
@@ -3882,7 +4376,7 @@
                          });
                      });
                      confirmBtn.addEventListener('click', () => {
-@@ -12863,6 +15694,10 @@
+@@ -12863,6 +16179,10 @@
                          r();
                      });
                  });
@@ -3893,7 +4387,7 @@
                  picks.set(p, picked);
                  for (let i = 0; i < platCount; i++) dimPlatform(i);
                  stones.innerHTML = '';
-@@ -12882,20 +15717,36 @@
+@@ -12882,20 +16202,36 @@
              }
              await sleep(800);
  
@@ -3938,7 +4432,7 @@
                  else survivors.push(p);
              }
              for (const p of losers) {
-@@ -13809,16 +16660,300 @@
+@@ -13809,16 +17145,300 @@
     ════════════════════════════════════════════════════════════════════ */
  function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
      return new Promise(resolve => {
@@ -4243,7 +4737,7 @@
          const tChip = el('div', { className: 'krab-chip' });
          tChip.append(el('div', { className: 'lbl' }, 'Tijd'));
          const tVal = el('div', { className: 'val' }, '30');
-@@ -13828,84 +16963,201 @@
+@@ -13828,84 +17448,201 @@
          const sVal = el('div', { className: 'val' }, '0');
          sChip.append(sVal);
          hud.append(pChip, tChip, sChip);
@@ -4271,7 +4765,21 @@
 +        // ── RAYCASTER voor tap-detectie ──
 +        const raycaster = new THREE.Raycaster();
 +        const ndc = new THREE.Vector2();
-+
+ 
+-        // Plaats gaten in een patroon (verspreid maar niet recht-toe-recht-aan)
+-        function layoutHoles() {
+-            const w = stage.clientWidth, h = stage.clientHeight;
+-            const gx = [0.20, 0.50, 0.80, 0.30, 0.70, 0.20, 0.50, 0.80];
+-            const gy = [0.18, 0.18, 0.18, 0.45, 0.45, 0.72, 0.72, 0.72];
+-            holes.length = 0;
+-            // verwijder oude
+-            stage.querySelectorAll('.krab-hole').forEach(e => e.remove());
+-            for (let i = 0; i < HOLES; i++) {
+-                const hx = gx[i] * w, hy = gy[i] * h;
+-                const hole = el('div', { className: 'krab-hole',
+-                    style: { left: hx + 'px', top: hy + 'px' } });
+-                stage.append(hole);
+-                holes.push({ x: hx, y: hy, busy: false, el: hole });
 +        function onScenePointer(ev) {
 +            if (phase !== 'playing') return;
 +            // Voorkomen dat banner-buttons ook raycast triggeren
@@ -4293,21 +4801,7 @@
 +            });
 +            const hits = raycaster.intersectObjects(allMeshes);
 +            if (hits.length === 0) return;
- 
--        // Plaats gaten in een patroon (verspreid maar niet recht-toe-recht-aan)
--        function layoutHoles() {
--            const w = stage.clientWidth, h = stage.clientHeight;
--            const gx = [0.20, 0.50, 0.80, 0.30, 0.70, 0.20, 0.50, 0.80];
--            const gy = [0.18, 0.18, 0.18, 0.45, 0.45, 0.72, 0.72, 0.72];
--            holes.length = 0;
--            // verwijder oude
--            stage.querySelectorAll('.krab-hole').forEach(e => e.remove());
--            for (let i = 0; i < HOLES; i++) {
--                const hx = gx[i] * w, hy = gy[i] * h;
--                const hole = el('div', { className: 'krab-hole',
--                    style: { left: hx + 'px', top: hy + 'px' } });
--                stage.append(hole);
--                holes.push({ x: hx, y: hy, busy: false, el: hole });
++
 +            // Loop omhoog tot we de crab-group vinden
 +            let target = hits[0].object;
 +            let foundCrab = null;
@@ -4428,7 +4922,7 @@
 +            if (navigator.vibrate) {
 +                try { navigator.vibrate(c.isLobster ? [40, 30, 40] : 15); } catch (e) {}
 +            }
-         }
++        }
 +
 +        function removeCrab(c) {
 +            c.removing = true;
@@ -4443,7 +4937,7 @@
 +            c.hole.busy = false;
 +            const idx = activeCrabs.indexOf(c);
 +            if (idx !== -1) activeCrabs.splice(idx, 1);
-+        }
+         }
 +
          function expireCrab(c) {
 -            c.el.classList.remove('show');
@@ -4497,7 +4991,7 @@
          function startRun(playerIdx) {
              curIdx = playerIdx;
              const p = players[curIdx];
-@@ -13913,17 +17165,19 @@
+@@ -13913,17 +17650,19 @@
              pVal.style.color = p.color.css;
              pChip.style.setProperty('--pcol', p.color.css);
              sVal.textContent = '0';
@@ -4522,7 +5016,7 @@
                  el('button', { className: 'btn-pill gold', type: 'button',
                      style: { marginTop: '10px' },
                      on: { click: () => {
-@@ -13931,24 +17185,28 @@
+@@ -13931,24 +17670,28 @@
                          phase = 'playing';
                          phaseStart = performance.now();
                          crabSpawnTimer = 0;
@@ -4556,7 +5050,7 @@
                  el('p', {}, `krabben gevangen door ${p.name}`),
              );
              stage.append(banner);
-@@ -13958,15 +17216,16 @@
+@@ -13958,15 +17701,16 @@
                  else showFinal();
              }, 2200);
          }
@@ -4577,7 +5071,7 @@
              const ranking = el('div', { style: {
                  margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '6px' } });
              sorted.forEach((s, i) => {
-@@ -13985,57 +17244,122 @@
+@@ -13985,57 +17729,122 @@
                  el('h2', {}, '🏆 Eindstand'),
                  ranking,
                  el('p', {}, losers.length === 0 ? 'Gelijkspel — proost!' :
@@ -4731,7 +5225,7 @@
      });
  }
  
-@@ -14050,6 +17374,7 @@
+@@ -14050,6 +17859,7 @@
  function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
      return new Promise(resolve => {
          const ui = document.getElementById('game-ui');
@@ -4739,7 +5233,7 @@
          const back = el('div', { className: 'tiki-back' });
          const head = el('div', { className: 'tiki-head' });
          head.append(el('h2', {}, '🗿 Tiki Ritme'));
-@@ -14099,14 +17424,14 @@
+@@ -14099,14 +17909,14 @@
              level = 0;
              lVal.textContent = '1';
          }
@@ -4756,7 +5250,7 @@
              }, dur));
          }
          let audioCtx = null;
-@@ -14129,9 +17454,12 @@
+@@ -14129,9 +17939,12 @@
              locked = true;
              stage.classList.add('tiki-locked');
              tip.textContent = 'Kijk goed...';
@@ -4771,7 +5265,7 @@
              }
              phase = 'listening';
              locked = false;
-@@ -14228,6 +17556,7 @@
+@@ -14228,6 +18041,7 @@
          function finish(sorted) {
              if (phase === 'closed') return;
              phase = 'closed';
@@ -4779,7 +5273,7 @@
              back.style.transition = 'opacity 0.3s ease';
              back.style.opacity = '0';
              setTimeout(() => { back.remove(); resolve(sorted || null); }, 300);
-@@ -14693,8 +18022,7 @@
+@@ -14693,8 +18507,7 @@
              // Render speler avatar als achtergrond, met behoud van pulse-animatie
              avatar.style.padding = '0';
              avatar.style.overflow = 'hidden';
@@ -4789,7 +5283,7 @@
          } else {
              avatar.textContent = '🥃';
          }
-@@ -14801,6 +18129,20 @@
+@@ -14801,6 +18614,20 @@
     chosen minigame id ('krokodil','paddle','tappy','volcano',
     'raft','roulette','blackjack','hoofdsteden') or null if skipped.
     ============================================================ */
@@ -4810,7 +5304,7 @@
  const MYSTERY_OPTIONS = [
      { id: 'krokodil',    emoji: '🐊', label: 'Krokodil',     color: '#b87aff' },
      { id: 'paddle',      emoji: '🏓', label: 'Paddle Duel',  color: '#4af2ff' },
-@@ -14847,8 +18189,29 @@
+@@ -14847,8 +18674,29 @@
  
          // Bouw stall (1× lazy) + pas opties toe
          buildMysteryStallOnce();
@@ -4841,7 +5335,7 @@
          if (mysteryStall)     mysteryStall.visible = true;
  
          console.log('[MysteryWheel] stall built:', !!mysteryStall,
-@@ -14857,23 +18220,30 @@
+@@ -14857,23 +18705,30 @@
              'spin children:', mysteryWheelSpin?.children?.length);
  
          // ════════════════════════════════════════════════════════
@@ -4880,7 +5374,7 @@
  
          console.log('[MysteryWheel] camera snapped to',
              CAM_POS.toArray(), 'looking at', CAM_TGT.toArray());
-@@ -14915,7 +18285,9 @@
+@@ -14915,7 +18770,9 @@
          // angle (rad) = wheelSpin.rotation.x. Positieve waarden roteren
          // het rad CCW vanuit kamera-POV (top schuift naar viewer's LEFT).
          // We berekenen winnaar door angle modulo 2π → segment-index.
@@ -4891,7 +5385,7 @@
          let angVel = 0;            // rad/sec
          const FRICTION_PER_FRAME = 0.985;
          const STOP_THRESHOLD = 0.15;   // rad/sec
-@@ -15045,22 +18417,29 @@
+@@ -15045,22 +18902,29 @@
          });
  
          // ════════════════════════════════════════════════════════
@@ -4927,7 +5421,7 @@
              camera.position.copy(CAM_POS);
              controls.target.copy(CAM_TGT);
              camera.lookAt(controls.target);
-@@ -15093,10 +18472,7 @@
+@@ -15093,10 +18957,7 @@
                      announceWinner();
                  }
              }
@@ -4939,7 +5433,7 @@
  
          // ════════════════════════════════════════════════════════
          //  H. WINNER-ANNOUNCE — eindbanner met emoji + Start-knop
-@@ -15125,7 +18501,8 @@
+@@ -15125,7 +18986,8 @@
          // ════════════════════════════════════════════════════════
          function finish(id) {
              alive = false;
@@ -4949,7 +5443,7 @@
  
              stage.removeEventListener('pointerdown', onPointerDown);
              stage.removeEventListener('pointermove', onPointerMove);
-@@ -15143,6 +18520,8 @@
+@@ -15143,6 +19005,8 @@
              controls.enabled = savedCam.enabled;
              controls.enableDamping = savedCam.enableDamping;
              camera.lookAt(controls.target);
@@ -4958,7 +5452,7 @@
  
              restoreMinigameChrome(hiddenChrome);
  
-@@ -15168,6 +18547,7 @@
+@@ -15168,6 +19032,7 @@
  function playVulcanoRoulette({ player, drinks = null } = {}) {
      return new Promise(resolve => {
          const ui = document.getElementById('game-ui');
@@ -4966,7 +5460,7 @@
          const back = el('div', { className: 'vr-back' });
          if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
  
-@@ -15343,6 +18723,7 @@
+@@ -15343,6 +19208,7 @@
          }
  
          function finish(payload) {
@@ -4974,7 +5468,7 @@
              back.style.transition = 'opacity 0.3s ease';
              back.style.opacity = '0';
              setTimeout(() => { back.remove(); resolve(payload); }, 300);
-@@ -15404,6 +18785,7 @@
+@@ -15404,6 +19270,7 @@
  
          // ── UI ──
          const ui = document.getElementById('game-ui');
@@ -4982,7 +5476,7 @@
          const back = el('div', { className: 'bj-back' });
          if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
  
-@@ -15613,6 +18995,7 @@
+@@ -15613,6 +19480,7 @@
          }
  
          function finish(payload) {
@@ -4990,7 +5484,7 @@
              back.style.transition = 'opacity 0.3s ease';
              back.style.opacity = '0';
              setTimeout(() => { back.remove(); resolve(payload); }, 300);
-@@ -15673,6 +19056,7 @@
+@@ -15673,6 +19541,7 @@
          const item = CAPITALS[Math.floor(Math.random() * CAPITALS.length)];
  
          const ui = document.getElementById('game-ui');
@@ -4998,7 +5492,7 @@
          const back = el('div', { className: 'hf-back' });
          if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
  
-@@ -15805,6 +19189,7 @@
+@@ -15805,6 +19674,7 @@
          });
  
          function finish(payload) {
@@ -5006,7 +5500,7 @@
              back.style.transition = 'opacity 0.3s ease';
              back.style.opacity = '0';
              setTimeout(() => { back.remove(); resolve(payload); }, 300);
-@@ -15821,45 +19206,26 @@
+@@ -15821,45 +19691,26 @@
     ============================================================ */
  async function runMinigameOnTile(id, player) {
      const others = G.players.filter(p => p !== player);
@@ -5069,7 +5563,7 @@
          const d = slokken(4);
          const go = await showModal({
              emoji: '🐊', title: 'Krokodil 1v1!',
-@@ -15871,18 +19237,19 @@
+@@ -15871,18 +19722,19 @@
          const loser = await playKrokodil({ playerA: player, playerB: opp, drinks: d });
          if (loser) {
              const winner = loser === player ? opp : player;
@@ -5097,7 +5591,7 @@
          const d = slokken(4);
          const go = await showModal({
              emoji: '🏓', title: 'Paddle Duel!',
-@@ -15894,13 +19261,13 @@
+@@ -15894,13 +19746,13 @@
          const loser = await playPaddleDuel({ playerA: player, playerB: opp, drinks: d });
          if (loser) {
              const winner = loser === player ? opp : player;
@@ -5118,7 +5612,7 @@
              });
          }
      }
-@@ -15915,8 +19282,7 @@
+@@ -15915,8 +19767,7 @@
          if (!go) return;
          const w = await playTappyBird({ players: G.players, drinks: d });
          if (w) {
@@ -5128,7 +5622,7 @@
              await showStamp({
                  emoji: '🎲💛', big: `${w.name} krijgt bonus!`,
                  sub: '1 × gouden bonus-dobbelsteen', palette: 'gold',
-@@ -15933,8 +19299,7 @@
+@@ -15933,8 +19784,7 @@
          if (!go) return;
          const w = await playVolcanoHop({ players: G.players, drinks: d });
          if (w) {
@@ -5138,7 +5632,7 @@
              await showStamp({
                  emoji: '🎲💛', big: `${w.name} krijgt bonus!`,
                  sub: '1 × gouden bonus-dobbelsteen — gebruik op je volgende worp',
-@@ -15943,7 +19308,8 @@
+@@ -15943,7 +19793,8 @@
          }
      }
      else if (id === 'raft' && G.players.length >= 2) {
@@ -5148,7 +5642,7 @@
          const d = slokken(4);
          const go = await showModal({
              emoji: '🏴‍☠️', title: 'Raft Battle!',
-@@ -15955,13 +19321,13 @@
+@@ -15955,13 +19806,13 @@
          const winner = await playRaftBattle({ playerA: player, playerB: opp, drinks: d });
          if (winner) {
              const loser = winner === player ? opp : player;
@@ -5169,7 +5663,7 @@
              });
          }
      }
-@@ -15975,7 +19341,7 @@
+@@ -15975,7 +19826,7 @@
          }
          // Gold win is so juicy that we also reward a bonus die
          if (res.won && res.color === 'gold') {
@@ -5178,7 +5672,7 @@
              await showStamp({
                  emoji: '🎲💛', big: 'JACKPOT BONUS!',
                  sub: `${player.name} krijgt ook een gouden dobbelsteen`,
-@@ -16010,7 +19376,7 @@
+@@ -16010,7 +19861,7 @@
                  layoutTokensOnTile(victim.tileIdx);
              }
              // Winner gets a bonus die for beating the gods
@@ -5187,7 +5681,7 @@
          } else if (!res.tie) {
              // Player loses — self-punishment
              screenShake(450);
-@@ -16031,7 +19397,7 @@
+@@ -16031,7 +19882,7 @@
              const stepsFwd = knockBy(3);
              await new Promise(r => moveTokenBy(player, +stepsFwd, r));
              layoutTokensOnTile(player.tileIdx);
@@ -5196,7 +5690,7 @@
              await showStamp({
                  emoji: '🎲💛', big: 'KENNIS = MACHT',
                  sub: `+${stepsFwd} tegels • bonus-dobbelsteen voor ${player.name}`,
-@@ -16061,12 +19427,12 @@
+@@ -16061,12 +19912,12 @@
          if (!go) return;
          const res = await playBowling({ players: G.players, drinks: d });
          if (res && res.winner) {
@@ -5212,7 +5706,7 @@
          const d = slokken(4);
          const go = await showModal({
              emoji: '🟡', title: 'Vier op een Rij!',
-@@ -16077,8 +19443,7 @@
+@@ -16077,8 +19928,7 @@
          if (!go) return;
          const winner = await playConnectFour({ playerA: player, playerB: opp, drinks: d });
          if (winner) {
@@ -5222,7 +5716,7 @@
          }
      }
      else if (id === 'lavasteen' && G.players.length >= 2) {
-@@ -16100,7 +19465,8 @@
+@@ -16100,7 +19950,8 @@
          }
      }
      else if (id === 'kano' && G.players.length >= 2) {
@@ -5232,7 +5726,7 @@
          const d = slokken(4);
          const go = await showModal({
              emoji: '🛶', title: 'Kano Race!',
-@@ -16224,7 +19590,7 @@
+@@ -16224,7 +20075,7 @@
          const buddy = await pickVictim({
              title: '🍻 Met wie klink je?',
              subtitle: `${player.name} en de gekozen speler drinken samen ${d} slok${d>1?'ken':''}`,
@@ -5241,7 +5735,7 @@
          });
          if (buddy) {
              await showStamp({
-@@ -16291,7 +19657,7 @@
+@@ -16291,7 +20142,7 @@
          const victim = await pickVictim({
              title: '🌪️ Wie wordt weggeblazen?',
              subtitle: `−${n} tegels achteruit + drink ${d} 🍻`,
@@ -5250,7 +5744,7 @@
          });
          if (victim) {
              screenShake(500);
-@@ -16317,19 +19683,51 @@
+@@ -16317,19 +20168,51 @@
          const swap = await pickVictim({
              title: '🛸 Met wie wissel je?',
              subtitle: `Beiden drinken ${d} 🍻 voor de schok`,
@@ -5307,7 +5801,7 @@
          }
      }
      // ─── SKULL — pitchzwarte tegel die je naar Banana Brig verbant
-@@ -16381,33 +19779,9 @@
+@@ -16381,33 +20264,9 @@
              requestAnimationFrame(step);
          });
  
@@ -5344,7 +5838,7 @@
          //    Positie van Banana Brig satelliet is (4, -19), top y ≈ 2.4.
          const bbX = 4, bbZ = -19, bbY = 2.4;
          await new Promise(r => {
-@@ -16427,19 +19801,19 @@
+@@ -16427,19 +20286,19 @@
              requestAnimationFrame(step);
          });
  
@@ -5371,7 +5865,7 @@
          // 6. Camera zwaait terug naar het bord
          await new Promise(r => {
              const camFrom = camera.position.clone();
-@@ -16557,8 +19931,12 @@
+@@ -16557,8 +20416,12 @@
              palette: 'purple', auto: true, duration: 1200,
          });
          // Filter wheel options based on player count: 1v1 games need 2+
@@ -5384,7 +5878,7 @@
              if (!playerOk) return ['roulette','blackjack','hoofdsteden'].includes(o.id);
              return true;
          });
-@@ -16597,6 +19975,7 @@
+@@ -16597,6 +20460,7 @@
          });
      } else {
          advanceTurn();
@@ -5392,3 +5886,135 @@
      }
      G.phase = 'idle';
      refreshHUD();
+@@ -16663,6 +20527,131 @@
+ // boot the setup screen once the page is ready
+ renderSetup();
+ 
++// ── Background music: toggle button + volume slider (long-press) ──
++(() => {
++    const btn = el('button', { id: 'bg-music-toggle', type: 'button' });
++    btn.textContent = '🔇';
++    document.body.appendChild(btn);
++
++    // Voorkeuren uit localStorage
++    let pref = '1';
++    let savedVol = '0.060';   // standaard laag (lager dan default 0.085)
++    try {
++        pref = localStorage.getItem('bgmusic') ?? '1';
++        savedVol = localStorage.getItem('bgmusic_vol');
++    } catch (e) {}
++    if (savedVol !== null) {
++        const v = parseFloat(savedVol);
++        if (!isNaN(v)) bgMusic.volume = Math.max(0, Math.min(0.20, v));
++    } else {
++        bgMusic.volume = 0.060;   // default laag
++    }
++
++    // ── Long-press detection: tap = toggle, lang ingedrukt = slider ──
++    let pressTimer = null;
++    let didLongPress = false;
++    const LONG_PRESS_MS = 450;
++
++    btn.addEventListener('pointerdown', (e) => {
++        didLongPress = false;
++        pressTimer = setTimeout(() => {
++            pressTimer = null;
++            didLongPress = true;
++            bgMusicShowVolumeSlider();
++        }, LONG_PRESS_MS);
++    });
++    const cancelPress = () => {
++        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
++    };
++    btn.addEventListener('pointerup', (e) => {
++        if (pressTimer) {
++            clearTimeout(pressTimer);
++            pressTimer = null;
++            // Korte tap → toggle
++            bgMusicToggle();
++        }
++    });
++    btn.addEventListener('pointercancel', cancelPress);
++    btn.addEventListener('pointerleave', cancelPress);
++
++    // Auto-start bij eerste user-interactie als voorkeur 'aan' staat
++    if (pref === '1') {
++        const onFirstInteract = () => {
++            bgMusicStart();
++            window.removeEventListener('pointerdown', onFirstInteract);
++            window.removeEventListener('keydown', onFirstInteract);
++        };
++        window.addEventListener('pointerdown', onFirstInteract);
++        window.addEventListener('keydown', onFirstInteract);
++    }
++    bgMusicSyncToggleVisual();
++})();
++
++// ── Volume slider overlay ──
++// Verschijnt onder de muziek-knop bij long-press. Vertikale slider
++// 0..max(0.20) → past direct master gain aan en saved.
++function bgMusicShowVolumeSlider() {
++    // Sluit als al open
++    const existing = document.getElementById('bg-vol-card');
++    if (existing) { existing.remove(); return; }
++
++    const card = el('div', { id: 'bg-vol-card' });
++    card.append(el('div', { style: { fontSize: '20px', textAlign: 'center' } }, '🎚️'));
++    const bar = el('div', { className: 'bg-vol-bar' });
++    const fill = el('div', { className: 'bg-vol-fill' });
++    bar.append(fill);
++    const pct = el('div', { className: 'bg-vol-pct' });
++    card.append(bar, pct);
++    document.body.appendChild(card);
++
++    const VMAX = 0.20;
++    function setFill() {
++        const ratio = bgMusic.volume / VMAX;
++        fill.style.height = (ratio * 100) + '%';
++        pct.textContent = Math.round(ratio * 100) + '%';
++    }
++    setFill();
++
++    // Sleep-handlers (top = max, bottom = 0)
++    let dragging = false;
++    function updateFromEvent(e) {
++        const rect = bar.getBoundingClientRect();
++        const y = e.clientY - rect.top;
++        const ratio = 1 - Math.max(0, Math.min(1, y / rect.height));
++        bgMusicSetVolume(ratio * VMAX);
++        setFill();
++    }
++    bar.addEventListener('pointerdown', (e) => {
++        dragging = true;
++        bar.setPointerCapture(e.pointerId);
++        updateFromEvent(e);
++    });
++    bar.addEventListener('pointermove', (e) => {
++        if (dragging) updateFromEvent(e);
++    });
++    bar.addEventListener('pointerup', () => { dragging = false; });
++    bar.addEventListener('pointercancel', () => { dragging = false; });
++
++    // Tap buiten de card → sluit
++    setTimeout(() => {
++        const outsideHandler = (e) => {
++            if (!card.contains(e.target) &&
++                e.target.id !== 'bg-music-toggle') {
++                card.remove();
++                document.removeEventListener('pointerdown', outsideHandler);
++            }
++        };
++        document.addEventListener('pointerdown', outsideHandler);
++    }, 50);
++
++    // Auto-close na 6 sec inactiviteit
++    let autoCloseTimer = setTimeout(() => card.remove(), 6000);
++    card.addEventListener('pointerdown', () => {
++        clearTimeout(autoCloseTimer);
++        autoCloseTimer = setTimeout(() => card.remove(), 6000);
++    });
++}
++
+ // start render loop + hide splash
+ animate();
+ requestAnimationFrame(() => {

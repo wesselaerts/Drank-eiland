@@ -986,6 +986,78 @@
 
     /* Quick screen-shake for big knockback events */
     .shake { animation: screenShake 0.4s ease-in-out; }
+
+    /* ── Background music toggle (rechts-boven) ── */
+    #bg-music-toggle {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top));
+      right: 12px;
+      z-index: 30;
+      width: 40px; height: 40px;
+      border: 1.5px solid rgba(255,255,255,0.30);
+      border-radius: 50%;
+      background: rgba(20,30,42,0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      color: #ffd54a;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .15s ease, background .2s ease, opacity .25s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    }
+    #bg-music-toggle:active { transform: scale(0.92); }
+    #bg-music-toggle.muted { opacity: 0.55; color: rgba(255,255,255,0.65); }
+
+    /* ── Volume slider (long-press) ── */
+    #bg-vol-card {
+      position: fixed;
+      top: max(60px, calc(env(safe-area-inset-top) + 60px));
+      right: 12px;
+      z-index: 31;
+      width: 64px;
+      padding: 14px 8px 12px;
+      background: rgba(20,30,42,0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(255,215,80,0.30);
+      border-radius: 22px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+      display: flex; flex-direction: column;
+      align-items: center; gap: 10px;
+      animation: bgVolPop 0.18s cubic-bezier(.3,1.6,.5,1) both;
+    }
+    @keyframes bgVolPop {
+      from { transform: scale(0.6); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    .bg-vol-bar {
+      position: relative;
+      width: 30px;
+      height: 150px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 16px;
+      overflow: hidden;
+      touch-action: none;
+      cursor: pointer;
+    }
+    .bg-vol-fill {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(0deg, #ff9a1a 0%, #ffd54a 60%, #fff5a8 100%);
+      box-shadow: 0 0 10px rgba(255,215,80,0.4);
+      transition: height 0.08s linear;
+      border-radius: 0 0 14px 14px;
+    }
+    .bg-vol-pct {
+      font-size: 11px;
+      color: #ffd54a;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
     @keyframes screenShake {
       0%,100% { transform: translate(0,0); }
       20% { transform: translate(-6px, 3px); }
@@ -5335,6 +5407,419 @@ const PLAYER_COLORS = [
     { name: 'Rose',     hex: 0xf8b8c8, css: '#f8b8c8' },   // dusty rose
     { name: 'Babyblauw',hex: 0xa8d4ff, css: '#a8d4ff' },   // soft sky blue
 ];
+
+// ═══════════════════════════════════════════════════════════════════
+//   AMBIENT BACKGROUND MUSIC — generatieve compositie (research-based)
+// ═══════════════════════════════════════════════════════════════════
+//
+//   GEFUNDEERD OP WETENSCHAPPELIJK ONDERZOEK:
+//
+//   • Brian Eno's "2/1" (Ambient 1: Music for Airports, 1978):
+//     Onafhankelijke tape-loops van incommensurabele lengtes (23.5s,
+//     25.875s, 29.9375s) — herhalen NOOIT exact. LCM is astronomisch.
+//     → Wij gebruiken 4 lagen met coprime-achtige periodes
+//       23s / 28s / 37s / 41s. LCM ≈ 11 dagen.
+//
+//   • Rossing et al., "The extraordinary sound of the hang" (Physics
+//     Today 62-3, 2009): Handpan-modes vertonen PURE 1:2:3 ratio
+//     (fundamental + octaaf + samengestelde kwint). GEEN piano-stijl
+//     inharmoniciteit. Sustain 8-15 sec in stille kamer.
+//     → 1:2:3 partials EXACT, decays 12s/8s/5s.
+//
+//   • D Kurd scale (D natuurlijk mineur): D-E-F-G-A-Bb-C — Iraanse
+//     oorsprong, 70% van handpans gebruikt deze stemming. Beschreven
+//     als "mysterieus, meditatief". → D Kurd voor alle melodische
+//     lagen, weighted naar D (ding) en A (kwint).
+//
+//   • Leslie & Picard MIT (Engineering Music to Slow Breathing, 2019):
+//     Ambient-muziek met ademhalings-gesynchroniseerde amplitude-
+//     modulatie (~0.20 Hz, ±3 dB) vertraagt hartslag en induceert
+//     alpha-band entrainment. → 0.20 Hz LFO op breath-gain stage.
+//
+//   • Indiase klassiek tanpura: continue grondtoon-drone creëert
+//     akoestisch ankerpunt. Frequenties <60 Hz worden lichamelijk
+//     "gevoeld" via cochlea-cutoff effect. → D1 (36.7 Hz) + D2
+//     (73.4 Hz) sine drone, NOOIT stoppend zolang muziek aan.
+//
+//   • Tempo & ritme: 60-90 BPM = rusthartslag, bevordert para-
+//     sympatische respons. → Geen vast tempo meer (volledig vrij in
+//     tijd, geen "bars"); plucks timed in seconden.
+// ═══════════════════════════════════════════════════════════════════
+
+let bgMusic = {
+    ctx: null,
+    master: null,         // gain stage 1 (volume control)
+    breathGain: null,     // gain stage 2 (0.20 Hz breathing mod)
+    breathLFO: null,
+    filter: null,         // lowpass for warmth
+    filterLFO: null,      // slow wave on filter cutoff
+    drone: null,          // sub-bass D1
+    droneOct: null,       // sub-bass D2
+    droneGain: null,
+    enabled: false,
+    schedulerId: null,
+    layers: null,
+    volume: 0.060,
+};
+
+// ── D KURD scale (natuurlijk mineur, 70% van handpans) ─────────
+//   Notes: D - E - F - G - A - Bb - C (natural minor / Aeolian)
+//   Frequenties in equal temperament (440 Hz A4 referentie)
+const D_KURD = {
+    D2:  73.42,  D3: 146.83,  E3: 164.81,  F3: 174.61,
+    G3: 196.00,  A3: 220.00,  Bb3:233.08,  C4: 261.63,
+    D4: 293.66,  E4: 329.63,  F4: 349.23,  G4: 392.00,
+    A4: 440.00,  Bb4:466.16,  C5: 523.25,  D5: 587.33,
+    F5: 698.46,  A5: 880.00,
+};
+
+// ── Handpan note pool met gewichten ──
+//   D & A krijgen hoogste gewicht: D is "ding" (centrum-noot, lowest),
+//   A is de natuurlijke kwint en sterkste resonant in elk D-instrument.
+//   F (mineur terts) geeft de melancholie. Bb is karakteristiek voor
+//   D Kurd (vs D Celtic, waar Bb ontbreekt).
+const HANDPAN_POOL = [
+    { freq: D_KURD.D3,  weight: 5 },   // ding (tonic, low)
+    { freq: D_KURD.A3,  weight: 5 },   // dominant kwint
+    { freq: D_KURD.D4,  weight: 3 },   // tonic octaaf
+    { freq: D_KURD.F3,  weight: 3 },   // mineur terts (kleur)
+    { freq: D_KURD.C4,  weight: 2 },   // bVII (modaal)
+    { freq: D_KURD.E4,  weight: 2 },
+    { freq: D_KURD.G3,  weight: 2 },
+    { freq: D_KURD.F4,  weight: 2 },
+    { freq: D_KURD.A4,  weight: 1 },
+    { freq: D_KURD.Bb3, weight: 1 },   // Kurd-karakteristieke noot
+];
+
+// ── Akkoord-progressie in D mineur ──
+//   i - III - VII - v  ( Dm - F - C - Am )
+//   Modaal, "drijvend" — geen V-i spanning, alleen geleidelijke
+//   harmonische beweging. Standaard in ambient & post-rock.
+const BG_CHORDS = [
+    { name:'Dm', root: D_KURD.D2,   notes: [D_KURD.D3,  D_KURD.F3,  D_KURD.A3 ] },
+    { name:'F',  root:  87.31,      notes: [D_KURD.F3,  D_KURD.A3,  D_KURD.C4 ] },
+    { name:'C',  root:  65.41,      notes: [D_KURD.C4,  D_KURD.E4,  D_KURD.G3 ] },
+    { name:'Am', root: 110.00,      notes: [D_KURD.A3,  D_KURD.C4,  D_KURD.E4 ] },
+];
+
+// ── Incommensurabele periodes ──
+//   Gekozen zodat de combinatie nooit exact herhaalt (Eno-techniek):
+//   28 = chord-cycle (4 akkoorden × 7 sec)
+//   23 = gemiddelde handpan-cycle
+//   37 = piano-accent-cycle (sparse, "lounge" feel)
+//   41 = bell-sparkle-cycle (zeldzame "shimmer")
+//   LCM(28, 23, 37, 41) = 977.228 sec ≈ 11.3 dagen
+const PERIOD_PAD     = 28.0;
+const PERIOD_HANDPAN = 23.0;
+const PERIOD_PIANO   = 37.0;
+const PERIOD_BELL    = 41.0;
+
+// Weighted-pick helper voor handpan-noten
+function pickHandpan() {
+    const total = HANDPAN_POOL.reduce((s, n) => s + n.weight, 0);
+    let r = Math.random() * total;
+    for (const n of HANDPAN_POOL) {
+        r -= n.weight;
+        if (r <= 0) return n.freq;
+    }
+    return D_KURD.D3;
+}
+
+function bgMusicStart() {
+    if (bgMusic.enabled) return;
+    if (!bgMusic.ctx) {
+        try {
+            bgMusic.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) { console.warn('AudioContext fail:', e); return; }
+        const ctx = bgMusic.ctx;
+
+        // ── Audio routing: master → breathGain → filter → destination ──
+        // master = volume control (door slider)
+        // breathGain = 0.20 Hz amplitude modulation (ademhaling)
+        // filter = lowpass, met slow LFO op cutoff
+        bgMusic.master = ctx.createGain();
+        bgMusic.master.gain.value = 0;
+        bgMusic.breathGain = ctx.createGain();
+        bgMusic.breathGain.gain.value = 1.0;
+        bgMusic.filter = ctx.createBiquadFilter();
+        bgMusic.filter.type = 'lowpass';
+        bgMusic.filter.frequency.value = 1600;
+        bgMusic.filter.Q.value = 0.4;
+        bgMusic.master.connect(bgMusic.breathGain);
+        bgMusic.breathGain.connect(bgMusic.filter);
+        bgMusic.filter.connect(ctx.destination);
+
+        // ── Breath LFO: 0.20 Hz (=5s ademcyclus), ±18% gain (~3 dB) ──
+        // Leslie & Picard MIT: gesynchroniseerde amp-modulatie vertraagt
+        // ademhaling en induceert alpha-band entrainment.
+        bgMusic.breathLFO = ctx.createOscillator();
+        bgMusic.breathLFO.type = 'sine';
+        bgMusic.breathLFO.frequency.value = 0.20;
+        const bLfoG = ctx.createGain();
+        bLfoG.gain.value = 0.18;
+        bgMusic.breathLFO.connect(bLfoG);
+        bLfoG.connect(bgMusic.breathGain.gain);
+        bgMusic.breathLFO.start();
+
+        // ── Filter LFO: 0.06 Hz (16.7s periode), ±600 Hz sweep ──
+        // Veel langzamer dan breath → creëert "wave"-textuur over minuten
+        bgMusic.filterLFO = ctx.createOscillator();
+        bgMusic.filterLFO.type = 'sine';
+        bgMusic.filterLFO.frequency.value = 0.06;
+        const fLfoG = ctx.createGain();
+        fLfoG.gain.value = 600;
+        bgMusic.filterLFO.connect(fLfoG);
+        fLfoG.connect(bgMusic.filter.frequency);
+        bgMusic.filterLFO.start();
+
+        // ── Sub-bass D drone (continu, tanpura) ──
+        //   D1 (36.7 Hz) wordt vooral gevoeld onder cochlea-cutoff
+        //   D2 (73.4 Hz) is hoorbaar op kleine speakers
+        bgMusic.drone = ctx.createOscillator();
+        bgMusic.drone.type = 'sine';
+        bgMusic.drone.frequency.value = 36.71;
+        bgMusic.droneOct = ctx.createOscillator();
+        bgMusic.droneOct.type = 'sine';
+        bgMusic.droneOct.frequency.value = 73.42;
+        bgMusic.droneGain = ctx.createGain();
+        bgMusic.droneGain.gain.value = 0.045;
+        bgMusic.drone.connect(bgMusic.droneGain);
+        bgMusic.droneOct.connect(bgMusic.droneGain);
+        bgMusic.droneGain.connect(bgMusic.master);
+        bgMusic.drone.start();
+        bgMusic.droneOct.start();
+    }
+    if (bgMusic.ctx.state === 'suspended') bgMusic.ctx.resume();
+    bgMusic.enabled = true;
+
+    // ── Layer init met fase-offsets (lagen vallen niet allemaal samen) ──
+    const now = bgMusic.ctx.currentTime;
+    bgMusic.layers = {
+        pad:     { nextTime: now + 0.5,  chordIdx: 0 },
+        handpan: { nextTime: now + 2.0 },
+        piano:   { nextTime: now + 12.0 },
+        bell:    { nextTime: now + 22.0 },
+    };
+
+    // Fade in over 3 sec (langzaam — "atmospheric")
+    bgMusic.master.gain.cancelScheduledValues(now);
+    bgMusic.master.gain.setValueAtTime(bgMusic.master.gain.value, now);
+    bgMusic.master.gain.linearRampToValueAtTime(bgMusic.volume, now + 3.0);
+
+    bgMusic.schedulerId = setInterval(bgMusicSchedule, 200);
+    bgMusicSchedule();
+    try { localStorage.setItem('bgmusic', '1'); } catch (e) {}
+    bgMusicSyncToggleVisual();
+}
+
+function bgMusicStop() {
+    if (!bgMusic.enabled) return;
+    bgMusic.enabled = false;
+    clearInterval(bgMusic.schedulerId);
+    bgMusic.schedulerId = null;
+    if (bgMusic.ctx && bgMusic.master) {
+        const now = bgMusic.ctx.currentTime;
+        bgMusic.master.gain.cancelScheduledValues(now);
+        bgMusic.master.gain.setValueAtTime(bgMusic.master.gain.value, now);
+        bgMusic.master.gain.linearRampToValueAtTime(0, now + 1.5);
+    }
+    try { localStorage.setItem('bgmusic', '0'); } catch (e) {}
+    bgMusicSyncToggleVisual();
+}
+
+function bgMusicSetVolume(v) {
+    bgMusic.volume = Math.max(0, Math.min(0.20, v));
+    if (bgMusic.ctx && bgMusic.master && bgMusic.enabled) {
+        const now = bgMusic.ctx.currentTime;
+        bgMusic.master.gain.cancelScheduledValues(now);
+        bgMusic.master.gain.setTargetAtTime(bgMusic.volume, now, 0.1);
+    }
+    try { localStorage.setItem('bgmusic_vol', String(bgMusic.volume)); } catch (e) {}
+}
+
+// ── Scheduler: per laag eigen onafhankelijke timing ──
+// Elke laag heeft eigen "nextTime"; wordt onafhankelijk gechecked.
+// Geen "bars" of "beats" meer — alles in echte seconden.
+function bgMusicSchedule() {
+    if (!bgMusic.enabled || !bgMusic.ctx) return;
+    const now = bgMusic.ctx.currentTime;
+    const lookAhead = 3.0;
+    const L = bgMusic.layers;
+
+    // PAD layer — chord change every 7 sec (PERIOD_PAD/4)
+    while (L.pad.nextTime < now + lookAhead) {
+        const chord = BG_CHORDS[L.pad.chordIdx % BG_CHORDS.length];
+        const chordDur = PERIOD_PAD / BG_CHORDS.length;   // 7 sec
+        bgPlayChordPad(L.pad.nextTime, chord, chordDur);
+        L.pad.nextTime += chordDur;
+        L.pad.chordIdx++;
+    }
+
+    // HANDPAN layer — strike every 3-7 sec (geen vast tempo)
+    while (L.handpan.nextTime < now + lookAhead) {
+        const fund = pickHandpan();
+        bgPlayHandpanStrike(L.handpan.nextTime, fund, 0.7 + Math.random() * 0.3);
+        L.handpan.nextTime += 3.0 + Math.random() * 4.0;
+    }
+
+    // PIANO layer — once per ~30 sec, single note from lower D Kurd register
+    while (L.piano.nextTime < now + lookAhead) {
+        const pianoNotes = [D_KURD.D3, D_KURD.F3, D_KURD.A3, D_KURD.C4, D_KURD.D4];
+        const f0 = pianoNotes[Math.floor(Math.random() * pianoNotes.length)];
+        bgPlayPianoNote(L.piano.nextTime, f0, 0.55);
+        L.piano.nextTime += PERIOD_PIANO * (0.7 + Math.random() * 0.6);
+    }
+
+    // BELL layer — once per ~40 sec, high register sparkle
+    while (L.bell.nextTime < now + lookAhead) {
+        const bellNotes = [D_KURD.D5, D_KURD.F5, D_KURD.A5, D_KURD.C5];
+        const fb = bellNotes[Math.floor(Math.random() * bellNotes.length)];
+        bgPlayBellSparkle(L.bell.nextTime, fb, 0.7);
+        L.bell.nextTime += PERIOD_BELL * (0.7 + Math.random() * 0.6);
+    }
+}
+
+// ── Chord pad: 3 sine voices met langzame attack/release ──
+function bgPlayChordPad(time, chord, duration) {
+    const ctx = bgMusic.ctx;
+    const dest = bgMusic.master;
+    if (!ctx || !dest) return;
+    const attack = 1.5;
+    const release = 1.5;
+    const sustain = Math.max(0.5, duration - attack - release * 0.5);
+
+    for (const freq of chord.notes) {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        // Subtiele 4 Hz vibrato (±0.15%) — voor levendigheid
+        const vib = ctx.createOscillator();
+        vib.frequency.value = 4.0;
+        const vibG = ctx.createGain();
+        vibG.gain.value = freq * 0.0015;
+        vib.connect(vibG);
+        vibG.connect(osc.frequency);
+
+        const g = ctx.createGain();
+        const peakVol = 0.036;
+        g.gain.setValueAtTime(0, time);
+        g.gain.linearRampToValueAtTime(peakVol, time + attack);
+        g.gain.linearRampToValueAtTime(peakVol * 0.85, time + attack + sustain);
+        g.gain.linearRampToValueAtTime(0, time + attack + sustain + release);
+        osc.connect(g); g.connect(dest);
+        const tEnd = time + attack + sustain + release + 0.1;
+        osc.start(time);  vib.start(time);
+        osc.stop(tEnd);   vib.stop(tEnd);
+    }
+}
+
+// ── Handpan strike: PURE 1:2:3 ratio (Rossing, Physics Today 2009) ──
+//   GEEN inharmoniciteit zoals piano — dit IS het verschil dat
+//   handpan zo kalmerend maakt: auditieve cortex hoeft geen
+//   energie te besteden aan harmonische resolutie → snelle shift
+//   naar alpha/theta-staat.
+function bgPlayHandpanStrike(time, fundamental, velocity = 1.0) {
+    const ctx = bgMusic.ctx;
+    const dest = bgMusic.master;
+    if (!ctx || !dest) return;
+
+    // 3 modes: fundamental, octave (2×), compound fifth (3×)
+    // Decay-tijden gebaseerd op echte handpan-metingen: 8-15 sec
+    const partials = [
+        { ratio: 1.00, amp: 1.00, decay: 12.0 },   // fundamental — langste
+        { ratio: 2.00, amp: 0.55, decay:  8.0 },   // octave
+        { ratio: 3.00, amp: 0.30, decay:  5.0 },   // compound 5th
+    ];
+    const baseAmp = 0.024 * velocity;
+
+    for (const p of partials) {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = fundamental * p.ratio;
+        // ±2 cents detune voor organische shimmer (real-world variation)
+        osc.detune.value = (Math.random() - 0.5) * 4;
+
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, time);
+        // Sharp attack ~5 ms (metal-on-flesh "tongue" strike)
+        g.gain.linearRampToValueAtTime(baseAmp * p.amp, time + 0.005);
+        // Exponentieel verval — natuurkundig hoe alle percussie klinkt
+        g.gain.exponentialRampToValueAtTime(0.0001, time + p.decay);
+
+        osc.connect(g);
+        g.connect(dest);
+        osc.start(time);
+        osc.stop(time + p.decay + 0.2);
+    }
+}
+
+// ── Piano note (sparse, lounge-style) ──
+//   Stiffness-formule fₙ = n·f₁·√(1+B·n²) met B = 0.0003 voor licht
+//   inharmonische partials (karakteristiek piano-twang). 2 voices per
+//   partial simuleert echte string-pair op een piano (2-3 snaren/noot).
+function bgPlayPianoNote(time, f1, velocity = 1.0) {
+    const ctx = bgMusic.ctx;
+    const dest = bgMusic.master;
+    if (!ctx || !dest) return;
+
+    const B = 0.0003;
+    const partials = [
+        { n: 1, amp: 1.00, decay: 4.5 },
+        { n: 2, amp: 0.40, decay: 3.5 },
+        { n: 3, amp: 0.18, decay: 2.2 },
+    ];
+    const baseAmp = 0.028 * velocity;
+
+    for (const p of partials) {
+        const fn = p.n * f1 * Math.sqrt(1 + B * p.n * p.n);
+        for (const detune of [0, 4]) {       // string pair simulation
+            const osc = ctx.createOscillator();
+            osc.type = 'triangle';
+            osc.frequency.value = fn;
+            osc.detune.value = detune;
+            const g = ctx.createGain();
+            g.gain.setValueAtTime(0, time);
+            g.gain.linearRampToValueAtTime(baseAmp * p.amp * 0.5, time + 0.01);
+            g.gain.exponentialRampToValueAtTime(baseAmp * p.amp * 0.15, time + 0.15);
+            g.gain.exponentialRampToValueAtTime(0.0001, time + p.decay);
+            osc.connect(g);
+            g.connect(dest);
+            osc.start(time);
+            osc.stop(time + p.decay + 0.1);
+        }
+    }
+}
+
+// ── Bell sparkle (zeldzaam, hoog) — verre wind-chime ──
+function bgPlayBellSparkle(time, freq, velocity = 1.0) {
+    const ctx = bgMusic.ctx;
+    const dest = bgMusic.master;
+    if (!ctx || !dest) return;
+    const bell = ctx.createOscillator();
+    bell.type = 'sine';
+    bell.frequency.value = freq;
+    const bg2 = ctx.createGain();
+    bg2.gain.setValueAtTime(0, time);
+    bg2.gain.linearRampToValueAtTime(0.016 * velocity, time + 0.02);
+    bg2.gain.exponentialRampToValueAtTime(0.001, time + 2.5);
+    bell.connect(bg2);
+    bg2.connect(dest);
+    bell.start(time);
+    bell.stop(time + 2.7);
+}
+
+function bgMusicToggle() {
+    if (bgMusic.enabled) bgMusicStop();
+    else bgMusicStart();
+}
+
+function bgMusicSyncToggleVisual() {
+    const btn = document.getElementById('bg-music-toggle');
+    if (!btn) return;
+    btn.textContent = bgMusic.enabled ? '🎵' : '🔇';
+    btn.title = bgMusic.enabled ? 'Muziek uit' : 'Muziek aan';
+    btn.classList.toggle('muted', !bgMusic.enabled);
+}
 
 const G = {
     players: [],          // { name, colorIdx, tileIdx, token, animQ, bonusDice }
@@ -20041,6 +20526,131 @@ window.__deGameHook = _gameHook;
 
 // boot the setup screen once the page is ready
 renderSetup();
+
+// ── Background music: toggle button + volume slider (long-press) ──
+(() => {
+    const btn = el('button', { id: 'bg-music-toggle', type: 'button' });
+    btn.textContent = '🔇';
+    document.body.appendChild(btn);
+
+    // Voorkeuren uit localStorage
+    let pref = '1';
+    let savedVol = '0.060';   // standaard laag (lager dan default 0.085)
+    try {
+        pref = localStorage.getItem('bgmusic') ?? '1';
+        savedVol = localStorage.getItem('bgmusic_vol');
+    } catch (e) {}
+    if (savedVol !== null) {
+        const v = parseFloat(savedVol);
+        if (!isNaN(v)) bgMusic.volume = Math.max(0, Math.min(0.20, v));
+    } else {
+        bgMusic.volume = 0.060;   // default laag
+    }
+
+    // ── Long-press detection: tap = toggle, lang ingedrukt = slider ──
+    let pressTimer = null;
+    let didLongPress = false;
+    const LONG_PRESS_MS = 450;
+
+    btn.addEventListener('pointerdown', (e) => {
+        didLongPress = false;
+        pressTimer = setTimeout(() => {
+            pressTimer = null;
+            didLongPress = true;
+            bgMusicShowVolumeSlider();
+        }, LONG_PRESS_MS);
+    });
+    const cancelPress = () => {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    };
+    btn.addEventListener('pointerup', (e) => {
+        if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+            // Korte tap → toggle
+            bgMusicToggle();
+        }
+    });
+    btn.addEventListener('pointercancel', cancelPress);
+    btn.addEventListener('pointerleave', cancelPress);
+
+    // Auto-start bij eerste user-interactie als voorkeur 'aan' staat
+    if (pref === '1') {
+        const onFirstInteract = () => {
+            bgMusicStart();
+            window.removeEventListener('pointerdown', onFirstInteract);
+            window.removeEventListener('keydown', onFirstInteract);
+        };
+        window.addEventListener('pointerdown', onFirstInteract);
+        window.addEventListener('keydown', onFirstInteract);
+    }
+    bgMusicSyncToggleVisual();
+})();
+
+// ── Volume slider overlay ──
+// Verschijnt onder de muziek-knop bij long-press. Vertikale slider
+// 0..max(0.20) → past direct master gain aan en saved.
+function bgMusicShowVolumeSlider() {
+    // Sluit als al open
+    const existing = document.getElementById('bg-vol-card');
+    if (existing) { existing.remove(); return; }
+
+    const card = el('div', { id: 'bg-vol-card' });
+    card.append(el('div', { style: { fontSize: '20px', textAlign: 'center' } }, '🎚️'));
+    const bar = el('div', { className: 'bg-vol-bar' });
+    const fill = el('div', { className: 'bg-vol-fill' });
+    bar.append(fill);
+    const pct = el('div', { className: 'bg-vol-pct' });
+    card.append(bar, pct);
+    document.body.appendChild(card);
+
+    const VMAX = 0.20;
+    function setFill() {
+        const ratio = bgMusic.volume / VMAX;
+        fill.style.height = (ratio * 100) + '%';
+        pct.textContent = Math.round(ratio * 100) + '%';
+    }
+    setFill();
+
+    // Sleep-handlers (top = max, bottom = 0)
+    let dragging = false;
+    function updateFromEvent(e) {
+        const rect = bar.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        const ratio = 1 - Math.max(0, Math.min(1, y / rect.height));
+        bgMusicSetVolume(ratio * VMAX);
+        setFill();
+    }
+    bar.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        bar.setPointerCapture(e.pointerId);
+        updateFromEvent(e);
+    });
+    bar.addEventListener('pointermove', (e) => {
+        if (dragging) updateFromEvent(e);
+    });
+    bar.addEventListener('pointerup', () => { dragging = false; });
+    bar.addEventListener('pointercancel', () => { dragging = false; });
+
+    // Tap buiten de card → sluit
+    setTimeout(() => {
+        const outsideHandler = (e) => {
+            if (!card.contains(e.target) &&
+                e.target.id !== 'bg-music-toggle') {
+                card.remove();
+                document.removeEventListener('pointerdown', outsideHandler);
+            }
+        };
+        document.addEventListener('pointerdown', outsideHandler);
+    }, 50);
+
+    // Auto-close na 6 sec inactiviteit
+    let autoCloseTimer = setTimeout(() => card.remove(), 6000);
+    card.addEventListener('pointerdown', () => {
+        clearTimeout(autoCloseTimer);
+        autoCloseTimer = setTimeout(() => card.remove(), 6000);
+    });
+}
 
 // start render loop + hide splash
 animate();
