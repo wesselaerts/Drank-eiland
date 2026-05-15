@@ -9549,8 +9549,69 @@ function makePuppy3D(type = 'shiba') {
  * The body cone stays in the player's identity color so minimap/HUD stay
  * visually consistent.
  */
-function makePlayerAvatarToken(colorHex, avatar = null) {
-    const g = buildPawnGroup(colorHex, avatar);
+// ── Ball-and-chain voor gevangen spelers ──
+// Gehangen aan de pion-basis. Visueel duidelijk: deze speler zit vast.
+// Wordt toegevoegd in buildPawnGroup wanneer opts.jailed = true.
+function makeBallAndChain() {
+    const g = new THREE.Group();
+    const ironMat = new THREE.MeshToonMaterial({
+        color: 0x2a2a30, gradientMap: toon,
+        emissive: 0x101015, emissiveIntensity: 0.3,
+    });
+    const cuffMat = new THREE.MeshToonMaterial({
+        color: 0x808088, gradientMap: toon,
+        emissive: 0x404048, emissiveIntensity: 0.5,
+    });
+
+    // 1. Boei rond enkel — torus aan voet van de pion
+    const cuff = new THREE.Mesh(
+        new THREE.TorusGeometry(0.16, 0.045, 8, 18),
+        cuffMat);
+    cuff.position.set(0, 0.20, 0);
+    cuff.rotation.x = Math.PI / 2;
+    g.add(cuff);
+
+    // 2. Ketting — 5 torus-schakeltjes hangen zijwaarts
+    const linkCount = 5;
+    const dropX = 0.50;          // hoe ver opzij de bal valt
+    const dropZ = 0.20;
+    const startX = 0.12;
+    const startY = 0.20;
+    for (let i = 0; i < linkCount; i++) {
+        const t = (i + 1) / (linkCount + 1);
+        // Catenary-achtige curve naar beneden + opzij
+        const x = startX + (dropX - startX) * t;
+        const y = startY - Math.sin(t * Math.PI) * 0.08 - 0.02 * t;
+        const z = dropZ * t;
+        const link = new THREE.Mesh(
+            new THREE.TorusGeometry(0.035, 0.012, 6, 10),
+            ironMat);
+        link.position.set(x, y, z);
+        // Afwisselend horizontaal/verticaal voor klassiek ketting-effect
+        if (i % 2 === 0) link.rotation.x = Math.PI / 2;
+        else link.rotation.y = Math.PI / 2;
+        g.add(link);
+    }
+
+    // 3. Zware ijzeren bal op de grond aan einde van de ketting
+    const ball = new THREE.Mesh(
+        new THREE.SphereGeometry(0.18, 16, 12),
+        ironMat);
+    ball.position.set(dropX + 0.08, 0.18, dropZ + 0.04);
+    g.add(ball);
+
+    // 4. Klein highlight-vlekje voor 3D-feel
+    const highlight = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 10, 8),
+        new THREE.MeshBasicMaterial({ color: 0xeaeaea, transparent: true, opacity: 0.4 }));
+    highlight.position.set(dropX + 0.02, 0.27, dropZ - 0.02);
+    g.add(highlight);
+
+    return g;
+}
+
+function makePlayerAvatarToken(colorHex, avatar = null, jailed = false) {
+    const g = buildPawnGroup(colorHex, avatar, { jailed });
     tokenGroup.add(g);
     return g;
 }
@@ -9727,7 +9788,7 @@ function renderAttributeOnlyThumb(catId, optValue, avatar) {
 
 // Bouwt de pion-mesh zónder hem aan tokenGroup te hangen. Door deze
 // splitsing kan de avatar-creator 'm in z'n eigen mini-scene tonen.
-function buildPawnGroup(colorHex, avatar = null) {
+function buildPawnGroup(colorHex, avatar = null, opts = {}) {
     if (avatar) ensurePawnFields(avatar);
     // Body-kleur is ALTIJD de identity-color van de speler (de swatch
     // op de home page). Geen avatar-override meer — anders zou de
@@ -9824,6 +9885,15 @@ function buildPawnGroup(colorHex, avatar = null) {
             pup.rotation.y = 0.30;
             g.add(pup);
         }
+    }
+
+    // ── Ball-and-chain voor gevangen spelers ──
+    // Visueel duidelijke "gevangenis-ketting" aan de zijkant van de pion.
+    // Hangt aan de rechterkant en valt op de grond — herinnert iedereen
+    // tijdens minigames dat deze speler eigenlijk vast zit.
+    if (opts.jailed) {
+        const chain = makeBallAndChain();
+        g.add(chain);
     }
 
     return g;
@@ -9944,7 +10014,7 @@ function showStamp({ emoji='✨', big='', sub='', palette='gold', auto=false, du
 }
 
 // ── Victim picker — choose another player ──
-function pickVictim({ title='Kies een speler', subtitle='', exclude=[] } = {}) {
+function pickVictim({ title='Kies een speler', subtitle='', exclude=[], allowRandom=false } = {}) {
     return new Promise(resolve => {
         const back = el('div', { className: 'vp-back' });
         const card = el('div', { className: 'vp-card' });
@@ -9961,15 +10031,51 @@ function pickVictim({ title='Kies een speler', subtitle='', exclude=[] } = {}) {
             const dot = el('div', { className: 'dot' });
             dot.style.background = p.color.css;
             dot.style.color      = p.color.css;
+            // Naam + (indien gevangen) chain-badge zodat keuze-info compleet is
+            const nameWrap = el('div', { className: 'nm',
+                style: { display: 'flex', alignItems: 'center', gap: '6px' } });
+            nameWrap.append(document.createTextNode(p.name));
+            if (p.inPrison) {
+                const badge = el('span', {
+                    style: {
+                        display: 'inline-flex', alignItems: 'center', gap: '3px',
+                        fontSize: '10.5px', padding: '2px 8px', borderRadius: '999px',
+                        background: 'rgba(255,180,80,0.20)',
+                        border: '1px solid rgba(255,180,80,0.5)',
+                        color: '#ffd54a', fontWeight: '700',
+                    } }, '⛓️ Gevangen');
+                nameWrap.append(badge);
+            }
             row.append(
                 dot,
-                el('div', { className: 'nm' }, p.name),
-                el('div', { className: 'pos' }, `Tegel ${p.tileIdx}`)
+                nameWrap,
+                el('div', { className: 'pos' },
+                    p.inPrison ? '🍌 Banana Brig' : `Tegel ${p.tileIdx}`)
             );
             row.addEventListener('click', () => { back.remove(); resolve(p); });
             list.append(row);
         }
         card.append(list);
+        // ── Random-knop onderaan (alleen bij ≥2 kandidaten) ──
+        // Kiest een willekeurige speler uit de zichtbare lijst. Zelfde
+        // exclude-regels als bij hand-pick (geen self, soms geen jailed).
+        if (allowRandom && candidates.length > 1) {
+            const randBtn = el('button', { className: 'btn-pill gold', type: 'button',
+                style: {
+                    marginTop: '14px', minHeight: '46px', alignSelf: 'center',
+                    minWidth: '200px', padding: '0 22px',
+                    background: 'linear-gradient(180deg,#ffd54a,#ff9a1a)',
+                    color: '#2a1a00', fontWeight: '800', fontSize: '15px',
+                    border: '1px solid rgba(255,215,80,0.6)',
+                    boxShadow: '0 4px 0 #b56a00', cursor: 'pointer',
+                },
+                on: { click: () => {
+                    const picked = candidates[Math.floor(Math.random() * candidates.length)];
+                    back.remove();
+                    resolve(picked);
+                } } }, '🎲 Verras me!');
+            card.append(randBtn);
+        }
         // No cancel for tile events — must choose someone
         back.append(card);
         ui.append(back);
@@ -10389,11 +10495,11 @@ async function launchStandaloneMinigame(id) {
         await playTappyBird({ players: G.players, drinks: 2 });
     } else if (id === 'volcano') {
         const w = await playVolcanoHop({ players: G.players, drinks: 2 });
-        if (w) { w.bonusDice = (w.bonusDice || 0) + 1; refreshHUD(); }
+        if (w) { giveBonusDie(w); }
     } else if (id === 'raft' && G.players.length >= 2) {
         const a = G.players[0], b = G.players[1];
         const winner = await playRaftBattle({ playerA: a, playerB: b, drinks: 4 });
-        if (winner) { winner.bonusDice = (winner.bonusDice || 0) + 1; refreshHUD(); }
+        if (winner) { giveBonusDie(winner); }
     } else if (id === 'roulette') {
         await playVulcanoRoulette({ player: G.players[0] });
         // Standalone: no board to move on, no drinks payout — the in-game result
@@ -10430,15 +10536,13 @@ async function launchStandaloneMinigame(id) {
     } else if (id === 'bowling') {
         const res = await playBowling({ players: G.players, drinks: 3 });
         if (res && res.winner) {
-            res.winner.bonusDice = (res.winner.bonusDice || 0) + 1;
-            refreshHUD();
+            giveBonusDie(res.winner);
         }
     } else if (id === 'connect4' && G.players.length >= 2) {
         const a = G.players[0], b = G.players[1];
         const winner = await playConnectFour({ playerA: a, playerB: b, drinks: 4 });
         if (winner) {
-            winner.bonusDice = (winner.bonusDice || 0) + 1;
-            refreshHUD();
+            giveBonusDie(winner);
         }
     } else if (id === 'mystery' && G.players.length >= 1) {
         // Standalone Mystery Wheel: spin it, then dispatch to the same standalone
@@ -11209,13 +11313,13 @@ function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
         // raft-local) zodat ze niet in de loop staan. Hoofd tilt iets
         // omhoog, zoals _gameHook normaal doet op het bord, zodat ze
         // naar de camera "kijken".
-        const tokenA = makePlayerAvatarToken(playerA.color.hex, playerA.avatar || null);
+        const tokenA = makePlayerAvatarToken(playerA.color.hex, playerA.avatar || null, !!playerA.inPrison);
         tokenGroup.remove(tokenA); raftA.add(tokenA);
         tokenA.position.set(-0.8, 0.7, 0); tokenA.scale.setScalar(1.3);
         if (tokenA.userData.headGroup) {
             tokenA.userData.headGroup.rotation.x = -0.30;
         }
-        const tokenB = makePlayerAvatarToken(playerB.color.hex, playerB.avatar || null);
+        const tokenB = makePlayerAvatarToken(playerB.color.hex, playerB.avatar || null, !!playerB.inPrison);
         tokenGroup.remove(tokenB); raftB.add(tokenB);
         tokenB.position.set(-0.8, 0.7, 0); tokenB.scale.setScalar(1.3);
         if (tokenB.userData.headGroup) {
@@ -13053,21 +13157,14 @@ function playBowling({ players, drinks = 4 } = {}) {
             camera.lookAt(controls.target);
             tbBack.remove();
             restoreMinigameChrome(hiddenChrome);
-            // Resultaat-modal (consistent met andere minigames)
+            // Resultaat — geen duplicate modal meer; de banner in de
+            // game-scene heeft alles al getoond. Resolve met de
+            // willekeurig-gekozen bonus-ontvanger (bij gelijkspel).
             if (sorted && sorted.length > 0) {
-                const winner = sorted[0].player;
-                const losers = sorted.slice(1).filter(s => s.score < sorted[0].score);
-                const loserNames = losers.map(l => l.player.name).join(', ');
-                await showModal({ emoji: '🎳',
-                    title: `${winner.name} wint Bowlspel!`,
-                    body: [
-                        `Score: ${sorted[0].score} pinnen`,
-                        loserNames ?
-                            `${loserNames} drink${losers.length === 1 ? 't' : 'en'} ${drinks} 🍻` : '',
-                        `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`,
-                    ].filter(Boolean),
-                    actions: [{ label: 'Klaar', value: true }] });
-                resolveOuter({ winner, score: sorted[0].score, ranking: sorted });
+                const topS = sorted[0].score;
+                const winners = sorted.filter(s => s.score === topS).map(s => s.player);
+                const bonusReceiver = pickBonusReceiver(winners);
+                resolveOuter({ winner: bonusReceiver, score: topS, ranking: sorted });
             } else {
                 resolveOuter(null);
             }
@@ -13412,13 +13509,13 @@ function playConnectFour({ playerA, playerB, drinks = 4 } = {}) {
         // ════════════════════════════════════════════════════════
         //  E. AVATARS OP HET VLOT
         // ════════════════════════════════════════════════════════
-        const tokenA = makePlayerAvatarToken(playerA.color.hex, playerA.avatar || null);
+        const tokenA = makePlayerAvatarToken(playerA.color.hex, playerA.avatar || null, !!playerA.inPrison);
         tokenGroup.remove(tokenA); raft.add(tokenA);
         tokenA.position.set(-BOARD_W/2 - 1.2, 0.7, 0.4);
         tokenA.scale.setScalar(0.95);
         tokenA.rotation.y = Math.PI / 2;
         if (tokenA.userData.headGroup) tokenA.userData.headGroup.rotation.x = -0.22;
-        const tokenB = makePlayerAvatarToken(playerB.color.hex, playerB.avatar || null);
+        const tokenB = makePlayerAvatarToken(playerB.color.hex, playerB.avatar || null, !!playerB.inPrison);
         tokenGroup.remove(tokenB); raft.add(tokenB);
         tokenB.position.set( BOARD_W/2 + 1.2, 0.7, 0.4);
         tokenB.scale.setScalar(0.95);
@@ -14000,7 +14097,10 @@ function onRollDice() {
 
         let total = result.total;
         let eruptPenalty = 0;
-        if (G.volcanoActive > 0) {
+        // Vulkaan-uitbarsting straft alle worpen met -1, MAAR niet voor
+        // gevangenen — die hebben al een 4+ nodig om vrij te komen,
+        // en met -1 wordt dat bijna onmogelijk.
+        if (G.volcanoActive > 0 && !player.inPrison) {
             eruptPenalty = 1;
             total = Math.max(1, total - 1);
         }
@@ -14051,6 +14151,10 @@ function onRollDice() {
                 moveTokenAlong(player, total, () => onLandedOnTile(player));
             } else {
                 // Te laag → blijft vast, drinkt een beetje, beurt voorbij
+                // BUGFIX: reset extraRoll flag — anders zou een speler die
+                // dubbel gooide maar te laag een "gratis" extra worp krijgen
+                // bij hun volgende beurt.
+                player.extraRoll = false;
                 const d = slokken(2);
                 await showStamp({
                     emoji: '🐒🚫', big: 'BEWAKERS!',
@@ -14107,6 +14211,26 @@ async function maybeFireSchnapsCall() {
 }
 
 // Helper used by skip-turn path and end of onLandedOnTile
+// Helper: deelt een gouden bonus-dobbelsteen uit, maar nooit meer dan
+// MAX_BONUS_DICE tegelijk in bezit. Voorkomt dat één speler na het
+// winnen van 5 minigames een onspeelbare voorsprong heeft.
+const MAX_BONUS_DICE = 3;
+function giveBonusDie(player) {
+    if (!player) return false;
+    const cur = player.bonusDice || 0;
+    if (cur >= MAX_BONUS_DICE) return false;
+    player.bonusDice = cur + 1;
+    refreshHUD();
+    return true;
+}
+
+// Bij meerdere winnaars (gelijkspel) krijgt slechts ÉÉN willekeurige
+// speler de bonus-dobbelsteen. Returns die speler (of null).
+function pickBonusReceiver(winners) {
+    if (!winners || !winners.length) return null;
+    return winners[Math.floor(Math.random() * winners.length)];
+}
+
 function advanceTurn() {
     G.turnIdx = (G.turnIdx + 1) % G.players.length;
     if (G.turnIdx === 0) {
@@ -14971,11 +15095,19 @@ function playTappyBird({ players = G.players, drinks = 2 } = {}) {
             phase = 'gameover';
             const sorted = [...scores].sort((a, b) => b.score - a.score);
             const topScore = sorted[0].score;
-            const losers = sorted.filter(s => s.score < topScore);
-            const winnerName = sorted[0].player.name;
-            setBanner(`🏆 ${winnerName} wint!`, sorted[0].player.color.css);
+            // Winnaars = alle spelers met topscore. Bij gelijkspel krijgt
+            // er één willekeurig de bonus-dobbelsteen (eerlijke loting).
+            const winners = sorted.filter(s => s.score === topScore).map(s => s.player);
+            const losers  = sorted.filter(s => s.score < topScore).map(s => s.player);
+            const bonusReceiver = pickBonusReceiver(winners);
+
+            const winnerNames = winners.map(p => p.name).join(' & ');
+            const titleTxt = winners.length > 1
+                ? `🏆 ${winnerNames} winnen samen!`
+                : `🏆 ${winnerNames} wint!`;
+            setBanner(titleTxt, winners[0].color.css);
             const ko = el('div', { className: 'rb3-ko',
-                style: { '--pcol': sorted[0].player.color.css } });
+                style: { '--pcol': winners[0].color.css } });
             ko.append(el('h2', {}, '🐤 Eindstand'));
             const list = el('div', {
                 style: { display: 'flex', flexDirection: 'column', gap: '8px',
@@ -14999,12 +15131,21 @@ function playTappyBird({ players = G.players, drinks = 2 } = {}) {
             });
             ko.append(list);
             const drinkMsg = losers.length === 0 ? 'Iedereen gelijk — proost!' :
-                `${losers.map(l => l.player.name).join(', ')} drinkt elk ${drinks} 🍻`;
+                `${losers.map(p => p.name).join(', ')} drinkt elk ${drinks} 🍻`;
             ko.append(el('p', {}, drinkMsg));
+            // Bonus-dobbelsteen mededeling
+            if (bonusReceiver) {
+                const bonusTxt = winners.length > 1
+                    ? `🎲💛 ${bonusReceiver.name} krijgt de bonus-dobbelsteen (loting)`
+                    : `🎲💛 ${bonusReceiver.name} krijgt 1 bonus-dobbelsteen`;
+                ko.append(el('p', {
+                    style: { color: '#ffd54a', fontWeight: '800', marginTop: '4px' }
+                }, bonusTxt));
+            }
             ko.append(el('button', { className: 'btn-pill', type: 'button',
-                on: { click: () => finish(sorted) } }, 'Verder'));
+                on: { click: () => finish(bonusReceiver) } }, 'Verder'));
             tbBack.append(ko);
-            setTimeout(() => finish(sorted), 8000);
+            setTimeout(() => finish(bonusReceiver), 8000);
         }
 
         // ════════════════════════════════════════════════════════
@@ -15269,7 +15410,7 @@ function playVolcanoHop({ players = G.players, drinks = 2 } = {}) {
             // poppetje van welke speler op welke steen staat.
             //   makePlayerAvatarToken voegt 'm standaard aan het globale
             //   tokenGroup toe; we hangen 'm hier om naar platformsGroup.
-            const tokenGrp = makePlayerAvatarToken(p.color.hex, p.avatar);
+            const tokenGrp = makePlayerAvatarToken(p.color.hex, p.avatar, !!p.inPrison);
             if (tokenGrp.parent) tokenGrp.parent.remove(tokenGrp);
             platformsGroup.add(tokenGrp);
             tokenGrp.scale.setScalar(0.85);   // iets compacter voor de platforms
@@ -17076,10 +17217,11 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
             phase = 'done';
             const sorted = [...scores].sort((a, b) => b.score - a.score);
             const topS = sorted[0].score;
-            const winners = sorted.filter(s => s.score === topS);
-            const losers  = sorted.filter(s => s.score < topS);
+            const winners = sorted.filter(s => s.score === topS).map(s => s.player);
+            const losers  = sorted.filter(s => s.score < topS).map(s => s.player);
+            const bonusReceiver = pickBonusReceiver(winners);
             const banner = el('div', { className: 'krab-banner',
-                style: { '--pcol': winners[0].player.color.css } });
+                style: { '--pcol': winners[0].color.css } });
             const ranking = el('div', { style: {
                 margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '6px' } });
             sorted.forEach((s, i) => {
@@ -17098,13 +17240,21 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
                 el('h2', {}, '🏆 Eindstand'),
                 ranking,
                 el('p', {}, losers.length === 0 ? 'Gelijkspel — proost!' :
-                    `${losers.map(l => l.player.name).join(', ')} drinkt elk ${drinks} 🍻`),
-                el('button', { className: 'btn-pill gold', type: 'button',
-                    style: { marginTop: '10px' },
-                    on: { click: () => finish(sorted) } }, 'Klaar'),
+                    `${losers.map(p => p.name).join(', ')} drinkt elk ${drinks} 🍻`),
             );
+            if (bonusReceiver) {
+                const bonusTxt = winners.length > 1
+                    ? `🎲💛 ${bonusReceiver.name} krijgt de bonus-dobbelsteen (loting)`
+                    : `🎲💛 ${bonusReceiver.name} krijgt 1 bonus-dobbelsteen`;
+                banner.append(el('p', {
+                    style: { color: '#ffd54a', fontWeight: '800', marginTop: '2px' }
+                }, bonusTxt));
+            }
+            banner.append(el('button', { className: 'btn-pill gold', type: 'button',
+                style: { marginTop: '10px' },
+                on: { click: () => finish(bonusReceiver) } }, 'Klaar'));
             stage.append(banner);
-            setTimeout(() => finish(sorted), 8000);
+            setTimeout(() => finish(bonusReceiver), 8000);
         }
 
         function finish(sorted) {
@@ -19038,45 +19188,26 @@ function playHoofdsteden({ player, drinks = null, timeMs = 12000 } = {}) {
    ============================================================ */
 async function runMinigameOnTile(id, player) {
     const others = G.players.filter(p => p !== player);
-    // ── Opponent picker met anti-repeat shuffle ────────────────
-    // Math.random voelt voor mensen vaak "patroon-achtig" omdat
-    // dezelfde tegenstander meerdere keren achter elkaar gekozen
-    // kan worden. We houden per speler een geshuffelde POOL bij
-    // die we afwerken voor we herschudden. Dat garandeert dat
-    // iedere mogelijke tegenstander aan bod komt voor een herhaling,
-    // en we swappen de eerste twee als de vorige opp opnieuw vooraan
-    // staat — dat voorkomt back-to-back zelfde tegenstander.
-    if (!G._oppPool) G._oppPool = {};
-    if (!G._lastOpp) G._lastOpp = {};
-    const pickOpp = () => {
-        const pid = player.id || player.name;
-        let pool = G._oppPool[pid];
-        // Refill: pool leeg, of de pool bestaat uit andere spelers
-        // dan others (kan gebeuren als speler-lijst is veranderd)
-        const needsRefill = !pool || pool.length === 0 ||
-            !pool.every(p => others.includes(p));
-        if (needsRefill) {
-            pool = others.slice();
-            // Fisher-Yates shuffle
-            for (let i = pool.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [pool[i], pool[j]] = [pool[j], pool[i]];
-            }
-            // Anti-repeat: als pool[0] == lastOpp en we hebben ≥2 opties,
-            // swap met pool[1]
-            if (pool.length > 1 && G._lastOpp[pid] &&
-                pool[0] === G._lastOpp[pid]) {
-                [pool[0], pool[1]] = [pool[1], pool[0]];
-            }
-            G._oppPool[pid] = pool;
-        }
-        const opp = pool.shift();
-        G._lastOpp[pid] = opp;
-        return opp;
+    // ── Tegenstander-kiezer ────────────────────────────────────
+    // Speler aan zet KIEST zelf z'n tegenstander uit ALLE mede-
+    // spelers (inclusief gevangenen — handig bij 2-speler game).
+    // Bij precies één andere speler wordt die automatisch gekozen.
+    // Extra "🎲 Verras me!"-knop voor random keuze.
+    const chooseOpponent = async (gameLabel = '1v1') => {
+        const available = others;                  // alle anderen, ook gevangen
+        if (available.length === 0) return null;
+        if (available.length === 1) return available[0];
+        return await pickVictim({
+            title: '⚔️ Kies je tegenstander',
+            subtitle: `${player.name} — wie daag je uit voor ${gameLabel}?`,
+            exclude: [player],                     // alleen jezelf uitsluiten
+            allowRandom: true,                     // Verras-me-knop tonen
+        });
     };
 
     if (id === 'krokodil' && G.players.length >= 2) {
-        const opp = pickOpp();
+        const opp = await chooseOpponent('🐊 Krokodil');
+        if (!opp) return;   // geen vrije tegenstander
         const d = slokken(4);
         const go = await showModal({
             emoji: '🐊', title: 'Krokodil 1v1!',
@@ -19088,18 +19219,19 @@ async function runMinigameOnTile(id, player) {
         const loser = await playKrokodil({ playerA: player, playerB: opp, drinks: d });
         if (loser) {
             const winner = loser === player ? opp : player;
-            winner.bonusDice = (winner.bonusDice || 0) + 1;
-            refreshHUD();
-            await showModal({
-                emoji: '🍻', title: `${loser.name} drinkt!`,
-                body: [`Neem ${d} flinke slokken. Proost! 🥂`,
-                       `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
-                actions: [{ label: 'OK', value: true }],
+            giveBonusDie(winner);
+            // Minigame heeft het drink-bericht al getoond — alleen nog
+            // een korte stamp voor de bonus-dobbelsteen.
+            await showStamp({
+                emoji: '🎲💛', big: `${winner.name} krijgt bonus!`,
+                sub: '1 × gouden bonus-dobbelsteen — gebruik op je volgende worp',
+                palette: 'gold',
             });
         }
     }
     else if (id === 'paddle' && G.players.length >= 2) {
-        const opp = pickOpp();
+        const opp = await chooseOpponent('🏓 Paddle Duel');
+        if (!opp) return;   // geen vrije tegenstander
         const d = slokken(4);
         const go = await showModal({
             emoji: '🏓', title: 'Paddle Duel!',
@@ -19111,13 +19243,13 @@ async function runMinigameOnTile(id, player) {
         const loser = await playPaddleDuel({ playerA: player, playerB: opp, drinks: d });
         if (loser) {
             const winner = loser === player ? opp : player;
-            winner.bonusDice = (winner.bonusDice || 0) + 1;
-            refreshHUD();
-            await showModal({
-                emoji: '🍻', title: `${loser.name} drinkt!`,
-                body: [`Neem ${d} flinke slokken. Proost! 🥂`,
-                       `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
-                actions: [{ label: 'OK', value: true }],
+            giveBonusDie(winner);
+            // Minigame heeft het drink-bericht al getoond — alleen nog
+            // een korte stamp voor de bonus-dobbelsteen.
+            await showStamp({
+                emoji: '🎲💛', big: `${winner.name} krijgt bonus!`,
+                sub: '1 × gouden bonus-dobbelsteen — gebruik op je volgende worp',
+                palette: 'gold',
             });
         }
     }
@@ -19132,8 +19264,7 @@ async function runMinigameOnTile(id, player) {
         if (!go) return;
         const w = await playTappyBird({ players: G.players, drinks: d });
         if (w) {
-            w.bonusDice = (w.bonusDice || 0) + 1;
-            refreshHUD();
+            giveBonusDie(w);
             await showStamp({
                 emoji: '🎲💛', big: `${w.name} krijgt bonus!`,
                 sub: '1 × gouden bonus-dobbelsteen', palette: 'gold',
@@ -19150,8 +19281,7 @@ async function runMinigameOnTile(id, player) {
         if (!go) return;
         const w = await playVolcanoHop({ players: G.players, drinks: d });
         if (w) {
-            w.bonusDice = (w.bonusDice || 0) + 1;
-            refreshHUD();
+            giveBonusDie(w);
             await showStamp({
                 emoji: '🎲💛', big: `${w.name} krijgt bonus!`,
                 sub: '1 × gouden bonus-dobbelsteen — gebruik op je volgende worp',
@@ -19160,7 +19290,8 @@ async function runMinigameOnTile(id, player) {
         }
     }
     else if (id === 'raft' && G.players.length >= 2) {
-        const opp = pickOpp();
+        const opp = await chooseOpponent('🏴‍☠️ Raft Battle');
+        if (!opp) return;   // geen vrije tegenstander
         const d = slokken(4);
         const go = await showModal({
             emoji: '🏴‍☠️', title: 'Raft Battle!',
@@ -19172,13 +19303,13 @@ async function runMinigameOnTile(id, player) {
         const winner = await playRaftBattle({ playerA: player, playerB: opp, drinks: d });
         if (winner) {
             const loser = winner === player ? opp : player;
-            winner.bonusDice = (winner.bonusDice || 0) + 1;
-            refreshHUD();
-            await showModal({
-                emoji: '🍻', title: `${loser.name} drinkt!`,
-                body: [`Neem ${d} flinke slokken. Proost! 🥂`,
-                       `${winner.name} krijgt 1 × gouden bonus-dobbelsteen 🎲💛`],
-                actions: [{ label: 'OK', value: true }],
+            giveBonusDie(winner);
+            // Minigame heeft het drink-bericht al getoond — alleen nog
+            // een korte stamp voor de bonus-dobbelsteen.
+            await showStamp({
+                emoji: '🎲💛', big: `${winner.name} krijgt bonus!`,
+                sub: '1 × gouden bonus-dobbelsteen — gebruik op je volgende worp',
+                palette: 'gold',
             });
         }
     }
@@ -19192,7 +19323,7 @@ async function runMinigameOnTile(id, player) {
         }
         // Gold win is so juicy that we also reward a bonus die
         if (res.won && res.color === 'gold') {
-            player.bonusDice = (player.bonusDice || 0) + 1;
+            giveBonusDie(player);
             await showStamp({
                 emoji: '🎲💛', big: 'JACKPOT BONUS!',
                 sub: `${player.name} krijgt ook een gouden dobbelsteen`,
@@ -19227,7 +19358,7 @@ async function runMinigameOnTile(id, player) {
                 layoutTokensOnTile(victim.tileIdx);
             }
             // Winner gets a bonus die for beating the gods
-            player.bonusDice = (player.bonusDice || 0) + 1;
+            giveBonusDie(player);
         } else if (!res.tie) {
             // Player loses — self-punishment
             screenShake(450);
@@ -19248,7 +19379,7 @@ async function runMinigameOnTile(id, player) {
             const stepsFwd = knockBy(3);
             await new Promise(r => moveTokenBy(player, +stepsFwd, r));
             layoutTokensOnTile(player.tileIdx);
-            player.bonusDice = (player.bonusDice || 0) + 1;
+            giveBonusDie(player);
             await showStamp({
                 emoji: '🎲💛', big: 'KENNIS = MACHT',
                 sub: `+${stepsFwd} tegels • bonus-dobbelsteen voor ${player.name}`,
@@ -19278,12 +19409,12 @@ async function runMinigameOnTile(id, player) {
         if (!go) return;
         const res = await playBowling({ players: G.players, drinks: d });
         if (res && res.winner) {
-            res.winner.bonusDice = (res.winner.bonusDice || 0) + 1;
-            refreshHUD();
+            giveBonusDie(res.winner);
         }
     }
     else if (id === 'connect4' && G.players.length >= 2) {
-        const opp = pickOpp();
+        const opp = await chooseOpponent('🟡 4 op een Rij');
+        if (!opp) return;   // geen vrije tegenstander
         const d = slokken(4);
         const go = await showModal({
             emoji: '🟡', title: 'Vier op een Rij!',
@@ -19294,8 +19425,7 @@ async function runMinigameOnTile(id, player) {
         if (!go) return;
         const winner = await playConnectFour({ playerA: player, playerB: opp, drinks: d });
         if (winner) {
-            winner.bonusDice = (winner.bonusDice || 0) + 1;
-            refreshHUD();
+            giveBonusDie(winner);
         }
     }
     else if (id === 'lavasteen' && G.players.length >= 2) {
@@ -19317,7 +19447,8 @@ async function runMinigameOnTile(id, player) {
         }
     }
     else if (id === 'kano' && G.players.length >= 2) {
-        const opp = pickOpp();
+        const opp = await chooseOpponent('🛶 Kano Race');
+        if (!opp) return;   // geen vrije tegenstander
         const d = slokken(4);
         const go = await showModal({
             emoji: '🛶', title: 'Kano Race!',
@@ -19441,7 +19572,7 @@ async function onLandedOnTile(player) {
         const buddy = await pickVictim({
             title: '🍻 Met wie klink je?',
             subtitle: `${player.name} en de gekozen speler drinken samen ${d} slok${d>1?'ken':''}`,
-            exclude: [player],
+            exclude: [player, ...G.players.filter(p => p.inPrison)],
         });
         if (buddy) {
             await showStamp({
@@ -19508,7 +19639,7 @@ async function onLandedOnTile(player) {
         const victim = await pickVictim({
             title: '🌪️ Wie wordt weggeblazen?',
             subtitle: `−${n} tegels achteruit + drink ${d} 🍻`,
-            exclude: [player],
+            exclude: [player, ...G.players.filter(p => p.inPrison)],
         });
         if (victim) {
             screenShake(500);
@@ -19534,7 +19665,7 @@ async function onLandedOnTile(player) {
         const swap = await pickVictim({
             title: '🛸 Met wie wissel je?',
             subtitle: `Beiden drinken ${d} 🍻 voor de schok`,
-            exclude: [player],
+            exclude: [player, ...G.players.filter(p => p.inPrison)],
         });
         if (swap) {
             const pIdx = player.tileIdx, sIdx = swap.tileIdx;
