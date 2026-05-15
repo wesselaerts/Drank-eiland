@@ -1,5 +1,5 @@
 --- /mnt/user-data/uploads/index.html	2026-05-14 18:01:04.149813000 +0000
-+++ /home/claude/work/index.html	2026-05-15 10:04:07.813359547 +0000
++++ /home/claude/work/index.html	2026-05-15 10:33:05.947766834 +0000
 @@ -1376,6 +1376,15 @@
        display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
        user-select: none; overflow: hidden; touch-action: none;
@@ -685,7 +685,7 @@
                  else survivors.push(p);
              }
              for (const p of losers) {
-@@ -13809,16 +14075,202 @@
+@@ -13809,16 +14075,204 @@
     ════════════════════════════════════════════════════════════════════ */
  function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
      return new Promise(resolve => {
@@ -713,16 +713,17 @@
 +        controls.autoRotate = false;
 +        controls.enabled = false;
 +        controls.enableDamping = false;
-+        camera.fov = 58;
++        camera.fov = 65;
 +        camera.updateProjectionMatrix();
 +
-+        // ── KRABBEN PIT locatie op bowl-eiland ────────────────────────
-+        //   Noord van de bowling alley (alley loopt z=-1.2…+1.2 langs X).
-+        //   Hier is een vrij stuk zand waar de 8 gaten in passen.
++        // ── KRABBEN PIT locatie: MIDDEN op bowl-eiland strand ─────────
++        //   Vroeger z=+5 (noord van alley) — maar dan stond pit links
++        //   in beeld. Nu op bowl-centrum (z=0) zodat 'ie visueel
++        //   gecentreerd is op het strand.
 +        const KRAB = {
-+            cx: BOWL.cx,                // 82
-+            cy: BOWL.sandTopY,          // 1.05
-+            cz: BOWL.cz + 5,            // 5 noord van alley-centrum
++            cx: BOWL.cx,                // 82 — bowl-eiland centrum X
++            cy: BOWL.sandTopY,          // 1.05 — strand top
++            cz: BOWL.cz,                // 0   — bowl-eiland centrum Z
 +        };
 +
 +        // ── 3D scene: zand-platform + 8 gaten + bord ──────────────────
@@ -733,7 +734,7 @@
 +        // omringende beach — geeft de speel-arena visuele identiteit)
 +        const sandMound = new THREE.Mesh(
 +            deformCylinder(
-+                new THREE.CylinderGeometry(3.0, 3.4, 0.18, 22), 0.10),
++                new THREE.CylinderGeometry(6.0, 6.5, 0.22, 28), 0.10),
 +            new THREE.MeshToonMaterial({
 +                color: 0xe8b878, gradientMap: toon,
 +                emissive: 0x402810, emissiveIntensity: 0.04 }));
@@ -742,29 +743,30 @@
 +        krabbenGroup.add(sandMound);
 +        addOutline(sandMound, 1.005);
 +
-+        // 8 gat-posities — 3-2-3 patroon (zoals 2D versie), maar nu
-+        // GEROTEERD: diepte langs X (richting volcano in -X), breedte
-+        // langs Z (loodrecht op camera-view). Speler kijkt vanaf oost
-+        // door pit heen richting hoofdeiland + vulkaan.
++        // 15 gat-posities in 5×3 grid — uniforme spacing zonder overlap.
++        // Hole-ring outer 1.05 → step Z=2.4 geeft 0.30 marge; step X=2.5
++        // geeft 0.40 marge. Genoeg afstand tussen randen.
 +        const HOLE_OFFSETS = [
-+            { x: -1.6, z: -1.4 }, { x: -1.6, z:  0   }, { x: -1.6, z: +1.4 },  // verste rij (richting vulkaan)
-+            { x:  0,   z: -1.0 },                       { x:  0,   z: +1.0 },  // midden rij
-+            { x: +1.6, z: -1.4 }, { x: +1.6, z:  0   }, { x: +1.6, z: +1.4 },  // dichtsbij camera
++            { x: -5.0, z: -2.4 }, { x: -5.0, z:  0 }, { x: -5.0, z: +2.4 },  // verste rij
++            { x: -2.5, z: -2.4 }, { x: -2.5, z:  0 }, { x: -2.5, z: +2.4 },
++            { x:  0,   z: -2.4 }, { x:  0,   z:  0 }, { x:  0,   z: +2.4 },
++            { x: +2.5, z: -2.4 }, { x: +2.5, z:  0 }, { x: +2.5, z: +2.4 },
++            { x: +5.0, z: -2.4 }, { x: +5.0, z:  0 }, { x: +5.0, z: +2.4 },  // dichtsbij
 +        ];
 +
 +        const holes3D = [];
 +        for (let i = 0; i < HOLE_OFFSETS.length; i++) {
 +            const ofs = HOLE_OFFSETS[i];
 +            const wx = KRAB.cx + ofs.x;
-+            const wy = KRAB.cy + 0.18;     // top van zand-mound
++            const wy = KRAB.cy + 0.22;     // top van zand-mound (dikker nu)
 +            const wz = KRAB.cz + ofs.z;
 +
 +            const holeGrp = new THREE.Group();
 +            holeGrp.position.set(wx, wy, wz);
 +
-+            // Lichte zand-ring rondom het gat
++            // Lichte zand-ring rondom het gat (groter dan voorheen)
 +            const ring = new THREE.Mesh(
-+                new THREE.RingGeometry(0.52, 0.72, 22),
++                new THREE.RingGeometry(0.78, 1.05, 24),
 +                new THREE.MeshToonMaterial({
 +                    color: 0xc89856, gradientMap: toon,
 +                    side: THREE.DoubleSide }));
@@ -772,9 +774,9 @@
 +            ring.position.y = 0.012;
 +            holeGrp.add(ring);
 +
-+            // Donker binnen-gat (de "diepe schaduw")
++            // Donker binnen-gat (de "diepe schaduw") — groter
 +            const inner = new THREE.Mesh(
-+                new THREE.CircleGeometry(0.55, 22),
++                new THREE.CircleGeometry(0.85, 24),
 +                new THREE.MeshBasicMaterial({ color: 0x0a0608 }));
 +            inner.rotation.x = -Math.PI / 2;
 +            inner.position.y = 0.005;
@@ -892,7 +894,7 @@
          const tChip = el('div', { className: 'krab-chip' });
          tChip.append(el('div', { className: 'lbl' }, 'Tijd'));
          const tVal = el('div', { className: 'val' }, '30');
-@@ -13828,84 +14280,193 @@
+@@ -13828,84 +14282,192 @@
          const sVal = el('div', { className: 'val' }, '0');
          sChip.append(sVal);
          hud.append(pChip, tChip, sChip);
@@ -916,23 +918,7 @@
          let crabSpawnInterval = 0.55;
 -        const activeCrabs = [];    // {hole, el, expireAt}
 +        const activeCrabs = [];
- 
--        // Plaats gaten in een patroon (verspreid maar niet recht-toe-recht-aan)
--        function layoutHoles() {
--            const w = stage.clientWidth, h = stage.clientHeight;
--            const gx = [0.20, 0.50, 0.80, 0.30, 0.70, 0.20, 0.50, 0.80];
--            const gy = [0.18, 0.18, 0.18, 0.45, 0.45, 0.72, 0.72, 0.72];
--            holes.length = 0;
--            // verwijder oude
--            stage.querySelectorAll('.krab-hole').forEach(e => e.remove());
--            for (let i = 0; i < HOLES; i++) {
--                const hx = gx[i] * w, hy = gy[i] * h;
--                const hole = el('div', { className: 'krab-hole',
--                    style: { left: hx + 'px', top: hy + 'px' } });
--                stage.append(hole);
--                holes.push({ x: hx, y: hy, busy: false, el: hole });
--            }
--        }
++
 +        // ── RAYCASTER voor tap-detectie ──
 +        const raycaster = new THREE.Raycaster();
 +        const ndc = new THREE.Vector2();
@@ -948,7 +934,21 @@
 +            ndc.x = (x / window.innerWidth) * 2 - 1;
 +            ndc.y = -(y / window.innerHeight) * 2 + 1;
 +            raycaster.setFromCamera(ndc, camera);
-+
+ 
+-        // Plaats gaten in een patroon (verspreid maar niet recht-toe-recht-aan)
+-        function layoutHoles() {
+-            const w = stage.clientWidth, h = stage.clientHeight;
+-            const gx = [0.20, 0.50, 0.80, 0.30, 0.70, 0.20, 0.50, 0.80];
+-            const gy = [0.18, 0.18, 0.18, 0.45, 0.45, 0.72, 0.72, 0.72];
+-            holes.length = 0;
+-            // verwijder oude
+-            stage.querySelectorAll('.krab-hole').forEach(e => e.remove());
+-            for (let i = 0; i < HOLES; i++) {
+-                const hx = gx[i] * w, hy = gy[i] * h;
+-                const hole = el('div', { className: 'krab-hole',
+-                    style: { left: hx + 'px', top: hy + 'px' } });
+-                stage.append(hole);
+-                holes.push({ x: hx, y: hy, busy: false, el: hole });
 +            const allMeshes = [];
 +            activeCrabs.forEach(c => {
 +                if (c.hit || c.removing) return;
@@ -967,27 +967,25 @@
 +                    if (c.group === target) { foundCrab = c; break; }
 +                }
 +                target = target.parent;
-+            }
+             }
 +            if (foundCrab) onHit(foundCrab);
-+        }
+         }
 +        stage.addEventListener('pointerdown', onScenePointer);
 +
 +        // ── CAMERA LERP setup ──
-+        //   Beach-POV: oost van de krabben-pit op ongeveer ooghoogte
-+        //   (3.45 boven zand). Look-direction: westwaarts dwars over
-+        //   de pit richting hoofdeiland — de vulkaan blijft net in de
-+        //   bovenrand zichtbaar.
++        //   ZEER zoomed in: bijna top-down recht boven de pit.
++        //   Krabben-arena (10 lang × 4.8 breed) vult ~80% van scherm.
 +        //
-+        //   Geometrie-check (FOV=58, half-vert=29°):
-+        //   • cam (90, 4.5, 5) → tgt (82, 1.4, 5): pitch 21.2° down
-+        //   • vulkaan-piek wereld (~0, 12.4, 0): 26.3° vanaf look-dir
-+        //     → 91% van halve FOV richting top-edge = nét zichtbaar
-+        //   • verste hole (80.4, 1.23, ±6.4): 12.3° horizontal
-+        //     → binnen horizontale half-FOV (14.3° in portrait 0.46)
++        //   Geometrie (FOV=65, half-vert=32.5°, half-horiz=16.3° portrait):
++        //   • cam (84, 11.0, 0) → tgt (82, 1.0, 0): pitch 78.7° down
++        //   • dichtsbij-zij hole (87, 1.27, ±2.4): horizontaal ±15.0° ✓
++        //   • verste-zij hole (77, 1.27, ±2.4): horizontaal ±11.7° ✓
++        //   • pit vertical extent ~53° → ~81% van scherm gevuld
++        //   • alle 15 gaten passen (verkenningsmarge ~1.3° aan FOV-edges)
 +        const CAM_TGT = new THREE.Vector3(
-+            KRAB.cx, KRAB.cy + 0.35, KRAB.cz);
++            KRAB.cx, KRAB.cy - 0.05, KRAB.cz);
 +        const CAM_POS = new THREE.Vector3(
-+            KRAB.cx + 8, KRAB.cy + 3.45, KRAB.cz);
++            KRAB.cx + 2, KRAB.cy + 9.95, KRAB.cz);
 +        const camFrom = {
 +            pos: camera.position.clone(),
 +            tgt: controls.target.clone(),
@@ -1016,6 +1014,7 @@
 -            crab.addEventListener('mousedown', e => onHit(obj));
 +
 +            const crabGrp = makeCrab();
++            crabGrp.scale.setScalar(1.25);    // proportioneler in grotere hole
 +            const startY = hole.worldY - 0.5;     // verstopt onder zand
 +            const peakY  = hole.worldY + 0.05;    // net boven zand
 +            crabGrp.position.set(hole.worldX, startY, hole.worldZ);
@@ -1139,7 +1138,7 @@
          function startRun(playerIdx) {
              curIdx = playerIdx;
              const p = players[curIdx];
-@@ -13913,11 +14474,13 @@
+@@ -13913,11 +14475,13 @@
              pVal.style.color = p.color.css;
              pChip.style.setProperty('--pcol', p.color.css);
              sVal.textContent = '0';
@@ -1157,7 +1156,7 @@
              // Banner
              const banner = el('div', { className: 'krab-banner',
                  style: { '--pcol': p.color.css } });
-@@ -13931,24 +14494,28 @@
+@@ -13931,24 +14495,28 @@
                          phase = 'playing';
                          phaseStart = performance.now();
                          crabSpawnTimer = 0;
@@ -1191,7 +1190,7 @@
                  el('p', {}, `krabben gevangen door ${p.name}`),
              );
              stage.append(banner);
-@@ -13958,13 +14525,13 @@
+@@ -13958,13 +14526,13 @@
                  else showFinal();
              }, 2200);
          }
@@ -1207,7 +1206,7 @@
              const banner = el('div', { className: 'krab-banner',
                  style: { '--pcol': winners[0].player.color.css } });
              const ranking = el('div', { style: {
-@@ -13993,49 +14560,106 @@
+@@ -13993,49 +14561,106 @@
              stage.append(banner);
              setTimeout(() => finish(sorted), 8000);
          }
@@ -1340,7 +1339,7 @@
      });
  }
  
-@@ -14801,6 +15425,20 @@
+@@ -14801,6 +15426,20 @@
     chosen minigame id ('krokodil','paddle','tappy','volcano',
     'raft','roulette','blackjack','hoofdsteden') or null if skipped.
     ============================================================ */
@@ -1361,7 +1360,7 @@
  const MYSTERY_OPTIONS = [
      { id: 'krokodil',    emoji: '🐊', label: 'Krokodil',     color: '#b87aff' },
      { id: 'paddle',      emoji: '🏓', label: 'Paddle Duel',  color: '#4af2ff' },
-@@ -14857,23 +15495,30 @@
+@@ -14857,23 +15496,30 @@
              'spin children:', mysteryWheelSpin?.children?.length);
  
          // ════════════════════════════════════════════════════════
@@ -1400,7 +1399,7 @@
  
          console.log('[MysteryWheel] camera snapped to',
              CAM_POS.toArray(), 'looking at', CAM_TGT.toArray());
-@@ -15045,22 +15690,29 @@
+@@ -15045,22 +15691,29 @@
          });
  
          // ════════════════════════════════════════════════════════
@@ -1436,7 +1435,7 @@
              camera.position.copy(CAM_POS);
              controls.target.copy(CAM_TGT);
              camera.lookAt(controls.target);
-@@ -15093,10 +15745,7 @@
+@@ -15093,10 +15746,7 @@
                      announceWinner();
                  }
              }
@@ -1448,7 +1447,7 @@
  
          // ════════════════════════════════════════════════════════
          //  H. WINNER-ANNOUNCE — eindbanner met emoji + Start-knop
-@@ -15125,7 +15774,8 @@
+@@ -15125,7 +15775,8 @@
          // ════════════════════════════════════════════════════════
          function finish(id) {
              alive = false;
@@ -1458,7 +1457,7 @@
  
              stage.removeEventListener('pointerdown', onPointerDown);
              stage.removeEventListener('pointermove', onPointerMove);
-@@ -15143,6 +15793,8 @@
+@@ -15143,6 +15794,8 @@
              controls.enabled = savedCam.enabled;
              controls.enableDamping = savedCam.enableDamping;
              camera.lookAt(controls.target);
@@ -1467,7 +1466,7 @@
  
              restoreMinigameChrome(hiddenChrome);
  
-@@ -16321,15 +16973,47 @@
+@@ -16321,15 +16974,47 @@
          });
          if (swap) {
              const pIdx = player.tileIdx, sIdx = swap.tileIdx;
@@ -1519,7 +1518,7 @@
          }
      }
      // ─── SKULL — pitchzwarte tegel die je naar Banana Brig verbant
-@@ -16381,33 +17065,9 @@
+@@ -16381,33 +17066,9 @@
              requestAnimationFrame(step);
          });
  
@@ -1556,7 +1555,7 @@
          //    Positie van Banana Brig satelliet is (4, -19), top y ≈ 2.4.
          const bbX = 4, bbZ = -19, bbY = 2.4;
          await new Promise(r => {
-@@ -16427,19 +17087,19 @@
+@@ -16427,19 +17088,19 @@
              requestAnimationFrame(step);
          });
  
@@ -1583,7 +1582,7 @@
          // 6. Camera zwaait terug naar het bord
          await new Promise(r => {
              const camFrom = camera.position.clone();
-@@ -16557,8 +17217,12 @@
+@@ -16557,8 +17218,12 @@
              palette: 'purple', auto: true, duration: 1200,
          });
          // Filter wheel options based on player count: 1v1 games need 2+
@@ -1596,7 +1595,7 @@
              if (!playerOk) return ['roulette','blackjack','hoofdsteden'].includes(o.id);
              return true;
          });
-@@ -16597,6 +17261,7 @@
+@@ -16597,6 +17262,7 @@
          });
      } else {
          advanceTurn();
