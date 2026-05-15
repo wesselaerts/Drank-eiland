@@ -14120,7 +14120,7 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
         // omringende beach — geeft de speel-arena visuele identiteit)
         const sandMound = new THREE.Mesh(
             deformCylinder(
-                new THREE.CylinderGeometry(6.0, 6.5, 0.22, 28), 0.10),
+                new THREE.CylinderGeometry(12.0, 13.0, 0.44, 32), 0.10),
             new THREE.MeshToonMaterial({
                 color: 0xe8b878, gradientMap: toon,
                 emissive: 0x402810, emissiveIntensity: 0.04 }));
@@ -14129,43 +14129,43 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
         krabbenGroup.add(sandMound);
         addOutline(sandMound, 1.005);
 
-        // 15 gat-posities in 5×3 grid — uniforme spacing zonder overlap.
-        // Hole-ring outer 1.05 → step Z=2.4 geeft 0.30 marge; step X=2.5
-        // geeft 0.40 marge. Genoeg afstand tussen randen.
+        // 15 gat-posities in 5×3 grid — 2× groter op het eiland.
+        // Hole-ring outer 2.10 → step Z=4.8 geeft 0.60 marge; step
+        // X=5.0 geeft 0.80 marge. Geen overlap.
         const HOLE_OFFSETS = [
-            { x: -5.0, z: -2.4 }, { x: -5.0, z:  0 }, { x: -5.0, z: +2.4 },  // verste rij
-            { x: -2.5, z: -2.4 }, { x: -2.5, z:  0 }, { x: -2.5, z: +2.4 },
-            { x:  0,   z: -2.4 }, { x:  0,   z:  0 }, { x:  0,   z: +2.4 },
-            { x: +2.5, z: -2.4 }, { x: +2.5, z:  0 }, { x: +2.5, z: +2.4 },
-            { x: +5.0, z: -2.4 }, { x: +5.0, z:  0 }, { x: +5.0, z: +2.4 },  // dichtsbij
+            { x: -10.0, z: -4.8 }, { x: -10.0, z:  0 }, { x: -10.0, z: +4.8 },  // verste rij
+            { x:  -5.0, z: -4.8 }, { x:  -5.0, z:  0 }, { x:  -5.0, z: +4.8 },
+            { x:   0,   z: -4.8 }, { x:   0,   z:  0 }, { x:   0,   z: +4.8 },
+            { x:  +5.0, z: -4.8 }, { x:  +5.0, z:  0 }, { x:  +5.0, z: +4.8 },
+            { x: +10.0, z: -4.8 }, { x: +10.0, z:  0 }, { x: +10.0, z: +4.8 },  // dichtsbij
         ];
 
         const holes3D = [];
         for (let i = 0; i < HOLE_OFFSETS.length; i++) {
             const ofs = HOLE_OFFSETS[i];
             const wx = KRAB.cx + ofs.x;
-            const wy = KRAB.cy + 0.22;     // top van zand-mound (dikker nu)
+            const wy = KRAB.cy + 0.44;     // top van zand-mound (dikker, 2×)
             const wz = KRAB.cz + ofs.z;
 
             const holeGrp = new THREE.Group();
             holeGrp.position.set(wx, wy, wz);
 
-            // Lichte zand-ring rondom het gat (groter dan voorheen)
+            // Lichte zand-ring rondom het gat (2× groter)
             const ring = new THREE.Mesh(
-                new THREE.RingGeometry(0.78, 1.05, 24),
+                new THREE.RingGeometry(1.56, 2.10, 28),
                 new THREE.MeshToonMaterial({
                     color: 0xc89856, gradientMap: toon,
                     side: THREE.DoubleSide }));
             ring.rotation.x = -Math.PI / 2;
-            ring.position.y = 0.012;
+            ring.position.y = 0.024;
             holeGrp.add(ring);
 
-            // Donker binnen-gat (de "diepe schaduw") — groter
+            // Donker binnen-gat (2× groter)
             const inner = new THREE.Mesh(
-                new THREE.CircleGeometry(0.85, 24),
+                new THREE.CircleGeometry(1.70, 28),
                 new THREE.MeshBasicMaterial({ color: 0x0a0608 }));
             inner.rotation.x = -Math.PI / 2;
-            inner.position.y = 0.005;
+            inner.position.y = 0.010;
             holeGrp.add(inner);
 
             krabbenGroup.add(holeGrp);
@@ -14337,19 +14337,18 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
         stage.addEventListener('pointerdown', onScenePointer);
 
         // ── CAMERA LERP setup ──
-        //   ZEER zoomed in: bijna top-down recht boven de pit.
-        //   Krabben-arena (10 lang × 4.8 breed) vult ~80% van scherm.
+        //   Pit is 2× groter op het eiland → camera 2× verder zodat
+        //   schermvulling hetzelfde blijft als voorheen (~80-90%).
         //
         //   Geometrie (FOV=65, half-vert=32.5°, half-horiz=16.3° portrait):
-        //   • cam (84, 11.0, 0) → tgt (82, 1.0, 0): pitch 78.7° down
-        //   • dichtsbij-zij hole (87, 1.27, ±2.4): horizontaal ±15.0° ✓
-        //   • verste-zij hole (77, 1.27, ±2.4): horizontaal ±11.7° ✓
+        //   • cam (86, 20.95, 0) → tgt (82, 1.0, 0): pitch 78.7° down
+        //   • dichtsbij-zij hole (92, 1.49, ±4.8): horizontaal ±15.0° ✓
+        //   • verste-zij hole (72, 1.49, ±4.8): horizontaal ±11.7° ✓
         //   • pit vertical extent ~53° → ~81% van scherm gevuld
-        //   • alle 15 gaten passen (verkenningsmarge ~1.3° aan FOV-edges)
         const CAM_TGT = new THREE.Vector3(
             KRAB.cx, KRAB.cy - 0.05, KRAB.cz);
         const CAM_POS = new THREE.Vector3(
-            KRAB.cx + 2, KRAB.cy + 9.95, KRAB.cz);
+            KRAB.cx + 4, KRAB.cy + 19.90, KRAB.cz);
         const camFrom = {
             pos: camera.position.clone(),
             tgt: controls.target.clone(),
@@ -14365,9 +14364,9 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
             hole.busy = true;
 
             const crabGrp = makeCrab();
-            crabGrp.scale.setScalar(1.25);    // proportioneler in grotere hole
-            const startY = hole.worldY - 0.5;     // verstopt onder zand
-            const peakY  = hole.worldY + 0.05;    // net boven zand
+            crabGrp.scale.setScalar(2.5);    // 2× groter dan voorheen (1.25)
+            const startY = hole.worldY - 1.0;     // verstopt onder zand (2× dieper)
+            const peakY  = hole.worldY + 0.10;    // net boven zand (2×)
             crabGrp.position.set(hole.worldX, startY, hole.worldZ);
             crabGrp.rotation.y = Math.random() * Math.PI * 2;
             krabbenGroup.add(crabGrp);
