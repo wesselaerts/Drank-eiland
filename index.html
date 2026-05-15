@@ -5446,7 +5446,11 @@ function makePlayerToken(colorHex) {
 
 // place tokens on a tile, fanned out so they don't perfectly overlap
 function layoutTokensOnTile(tileIdx) {
-    const occupants = G.players.filter(p => p.tileIdx === tileIdx);
+    // BELANGRIJK: gevangenen niet meenemen in tile-layout — anders
+    // wordt hun token teruggetrokken naar de tegel zodra iemand
+    // anders die tegel bezoekt. Ze blijven in Banana Brig staan
+    // tot ze vrij gegooid worden.
+    const occupants = G.players.filter(p => p.tileIdx === tileIdx && !p.inPrison);
     occupants.forEach((p, i) => {
         const base = tileWorldPos[tileIdx];
         const angle = (i / Math.max(1, occupants.length)) * Math.PI * 2;
@@ -18185,6 +18189,20 @@ function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Whe
 
         // Bouw stall (1× lazy) + pas opties toe
         buildMysteryStallOnce();
+        // ── SHUFFLE de opties zelf vóór render ──
+        // Voorheen stond de optie-volgorde altijd hetzelfde (krokodil,
+        // paddle, tappy, ... roulette, blackjack, ...) waardoor roulette
+        // en blackjack vrijwel altijd bij elkaar bovenaan stonden. Door
+        // de array bij ELKE spin te shuffelen verandert élk segment van
+        // positie — combineren met de random startAngle hieronder geeft
+        // truly random landings.
+        const shuffledOptions = options.slice();
+        for (let i = shuffledOptions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+        }
+        // Sla shuffled volgorde op voor segment→option lookup tijdens spin-resolutie
+        options = shuffledOptions;
         applyMysteryOptionsToWheel(options);
         // RANDOM start-hoek elke keer dat het rad opent. Voorheen
         // begon 'ie altijd op rotation.x = 0 → segment 0 stond steeds
