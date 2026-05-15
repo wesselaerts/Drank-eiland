@@ -5409,52 +5409,40 @@ const PLAYER_COLORS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-//   AMBIENT BACKGROUND MUSIC — generatieve compositie (research-based)
+//   AMBIENT BACKGROUND MUSIC — tropical lounge editie
 // ═══════════════════════════════════════════════════════════════════
 //
-//   GEFUNDEERD OP WETENSCHAPPELIJK ONDERZOEK:
+//   FUNDAMENT (Eno's "2/1" 1978 + Rossing 2009 + MIT 2019):
+//   • 4 onafhankelijke lagen met incommensurabele periodes — herhalen
+//     nooit exact. LCM(28, 20, 37, 41) ≈ 851.480 sec ≈ 9.8 dagen.
+//   • Handpan-partials zijn PURE 1:2:3 ratio (Physics Today, Rossing
+//     holografisch interferometrie op de Hang). Sustain 12-5 sec.
+//   • 0.18 Hz breath LFO ±18% gain — vertraagt ademhaling (Leslie &
+//     Picard MIT). Iets langzamer dan rust-cyclus voor "diep ademen".
+//   • Continue D-drone (D1 + D2) — tanpura-stijl tonic-anker, lage
+//     frequenties worden gevoeld i.p.v. gehoord.
 //
-//   • Brian Eno's "2/1" (Ambient 1: Music for Airports, 1978):
-//     Onafhankelijke tape-loops van incommensurabele lengtes (23.5s,
-//     25.875s, 29.9375s) — herhalen NOOIT exact. LCM is astronomisch.
-//     → Wij gebruiken 4 lagen met coprime-achtige periodes
-//       23s / 28s / 37s / 41s. LCM ≈ 11 dagen.
-//
-//   • Rossing et al., "The extraordinary sound of the hang" (Physics
-//     Today 62-3, 2009): Handpan-modes vertonen PURE 1:2:3 ratio
-//     (fundamental + octaaf + samengestelde kwint). GEEN piano-stijl
-//     inharmoniciteit. Sustain 8-15 sec in stille kamer.
-//     → 1:2:3 partials EXACT, decays 12s/8s/5s.
-//
-//   • D Kurd scale (D natuurlijk mineur): D-E-F-G-A-Bb-C — Iraanse
-//     oorsprong, 70% van handpans gebruikt deze stemming. Beschreven
-//     als "mysterieus, meditatief". → D Kurd voor alle melodische
-//     lagen, weighted naar D (ding) en A (kwint).
-//
-//   • Leslie & Picard MIT (Engineering Music to Slow Breathing, 2019):
-//     Ambient-muziek met ademhalings-gesynchroniseerde amplitude-
-//     modulatie (~0.20 Hz, ±3 dB) vertraagt hartslag en induceert
-//     alpha-band entrainment. → 0.20 Hz LFO op breath-gain stage.
-//
-//   • Indiase klassiek tanpura: continue grondtoon-drone creëert
-//     akoestisch ankerpunt. Frequenties <60 Hz worden lichamelijk
-//     "gevoeld" via cochlea-cutoff effect. → D1 (36.7 Hz) + D2
-//     (73.4 Hz) sine drone, NOOIT stoppend zolang muziek aan.
-//
-//   • Tempo & ritme: 60-90 BPM = rusthartslag, bevordert para-
-//     sympatische respons. → Geen vast tempo meer (volledig vrij in
-//     tijd, geen "bars"); plucks timed in seconden.
+//   TROPICAL ADJUSTMENTS:
+//   • D Major tuning (Sabye/Pakmoon-style handpan) — grote terts F#
+//     in plaats van mineur F. Wiskundig: 5/4 ratio vs 6/5 → vrolijker.
+//   • Marimba (houten balken) i.p.v. piano (stalen snaren). Partial-
+//     ratio's 1:4:10 voor stiff-bar modes (vs piano 1:2:3).
+//   • Akkoord-progressie D-A-Bm-G (i-V-vi-IV, de "feel-good"
+//     progressie van millions of pop songs). Geeft uplifting beweging.
+//   • Filter cutoff 2000 Hz (was 1600) — helderder, minder dempend,
+//     "open lucht" gevoel.
+//   • Handpan-interval 2.5-5 sec — iets levendiger dan ambient.
 // ═══════════════════════════════════════════════════════════════════
 
 let bgMusic = {
     ctx: null,
-    master: null,         // gain stage 1 (volume control)
-    breathGain: null,     // gain stage 2 (0.20 Hz breathing mod)
+    master: null,
+    breathGain: null,
     breathLFO: null,
-    filter: null,         // lowpass for warmth
-    filterLFO: null,      // slow wave on filter cutoff
-    drone: null,          // sub-bass D1
-    droneOct: null,       // sub-bass D2
+    filter: null,
+    filterLFO: null,
+    drone: null,
+    droneOct: null,
     droneGain: null,
     enabled: false,
     schedulerId: null,
@@ -5462,59 +5450,58 @@ let bgMusic = {
     volume: 0.060,
 };
 
-// ── D KURD scale (natuurlijk mineur, 70% van handpans) ─────────
-//   Notes: D - E - F - G - A - Bb - C (natural minor / Aeolian)
-//   Frequenties in equal temperament (440 Hz A4 referentie)
-const D_KURD = {
-    D2:  73.42,  D3: 146.83,  E3: 164.81,  F3: 174.61,
-    G3: 196.00,  A3: 220.00,  Bb3:233.08,  C4: 261.63,
-    D4: 293.66,  E4: 329.63,  F4: 349.23,  G4: 392.00,
-    A4: 440.00,  Bb4:466.16,  C5: 523.25,  D5: 587.33,
-    F5: 698.46,  A5: 880.00,
+// ── D MAJOR scale (Sabye-handpan-stijl, vrolijke variant) ──────
+//   Notes: D - E - F# - G - A - B - C# (Ionian)
+//   F#3 = grote terts (5/4 ratio met D = vrolijk)
+//   C#4 = grote septime (15/8 ratio, "leading tone")
+const D_MAJOR = {
+    D2:  73.42,  D3: 146.83,  E3: 164.81,  Fs3:185.00,
+    G3: 196.00,  A3: 220.00,  B3: 246.94,  Cs4:277.18,
+    D4: 293.66,  E4: 329.63,  Fs4:369.99,  G4: 392.00,
+    A4: 440.00,  B4: 493.88,  Cs5:554.37,  D5: 587.33,
+    Fs5:739.99,  A5: 880.00,
 };
 
-// ── Handpan note pool met gewichten ──
-//   D & A krijgen hoogste gewicht: D is "ding" (centrum-noot, lowest),
-//   A is de natuurlijke kwint en sterkste resonant in elk D-instrument.
-//   F (mineur terts) geeft de melancholie. Bb is karakteristiek voor
-//   D Kurd (vs D Celtic, waar Bb ontbreekt).
+// ── Handpan note pool (D Sabye-stijl) ──
+//   D & A: hoogste gewicht (root + perfect kwint)
+//   F#: vrolijke grote terts (kenmerkend voor major handpan)
+//   C#: leading tone, sparkle-noot
 const HANDPAN_POOL = [
-    { freq: D_KURD.D3,  weight: 5 },   // ding (tonic, low)
-    { freq: D_KURD.A3,  weight: 5 },   // dominant kwint
-    { freq: D_KURD.D4,  weight: 3 },   // tonic octaaf
-    { freq: D_KURD.F3,  weight: 3 },   // mineur terts (kleur)
-    { freq: D_KURD.C4,  weight: 2 },   // bVII (modaal)
-    { freq: D_KURD.E4,  weight: 2 },
-    { freq: D_KURD.G3,  weight: 2 },
-    { freq: D_KURD.F4,  weight: 2 },
-    { freq: D_KURD.A4,  weight: 1 },
-    { freq: D_KURD.Bb3, weight: 1 },   // Kurd-karakteristieke noot
+    { freq: D_MAJOR.D3,  weight: 5 },   // ding (tonic)
+    { freq: D_MAJOR.A3,  weight: 5 },   // dominant kwint
+    { freq: D_MAJOR.Fs3, weight: 4 },   // grote terts (vrolijk)
+    { freq: D_MAJOR.D4,  weight: 3 },   // tonic octaaf
+    { freq: D_MAJOR.Fs4, weight: 3 },   // hoge terts (helder)
+    { freq: D_MAJOR.E4,  weight: 2 },
+    { freq: D_MAJOR.B3,  weight: 2 },   // grote sext
+    { freq: D_MAJOR.A4,  weight: 2 },
+    { freq: D_MAJOR.G3,  weight: 1 },   // kwart (modaal kleur)
+    { freq: D_MAJOR.Cs4, weight: 1 },   // leading tone (sparkle)
 ];
 
-// ── Akkoord-progressie in D mineur ──
-//   i - III - VII - v  ( Dm - F - C - Am )
-//   Modaal, "drijvend" — geen V-i spanning, alleen geleidelijke
-//   harmonische beweging. Standaard in ambient & post-rock.
+// ── Akkoord-progressie: D - A - Bm - G ──
+//   I - V - vi - IV: de "feel-good" progressie. Wordt gebruikt in
+//   "Let It Be", "Don't Stop Believin'", talloze pop-hits. Eindigt
+//   op IV (subdominant) wat een open, niet-resoluut gevoel geeft.
 const BG_CHORDS = [
-    { name:'Dm', root: D_KURD.D2,   notes: [D_KURD.D3,  D_KURD.F3,  D_KURD.A3 ] },
-    { name:'F',  root:  87.31,      notes: [D_KURD.F3,  D_KURD.A3,  D_KURD.C4 ] },
-    { name:'C',  root:  65.41,      notes: [D_KURD.C4,  D_KURD.E4,  D_KURD.G3 ] },
-    { name:'Am', root: 110.00,      notes: [D_KURD.A3,  D_KURD.C4,  D_KURD.E4 ] },
+    { name:'D',  root: D_MAJOR.D2,   notes: [D_MAJOR.D3,  D_MAJOR.Fs3, D_MAJOR.A3 ] },
+    { name:'A',  root: 110.00,       notes: [D_MAJOR.A3,  D_MAJOR.Cs4, D_MAJOR.E4 ] },
+    { name:'Bm', root: 123.47,       notes: [D_MAJOR.B3,  D_MAJOR.D4,  D_MAJOR.Fs4] },
+    { name:'G',  root:  98.00,       notes: [D_MAJOR.G3,  D_MAJOR.B3,  D_MAJOR.D4 ] },
 ];
 
-// ── Incommensurabele periodes ──
-//   Gekozen zodat de combinatie nooit exact herhaalt (Eno-techniek):
-//   28 = chord-cycle (4 akkoorden × 7 sec)
-//   23 = gemiddelde handpan-cycle
-//   37 = piano-accent-cycle (sparse, "lounge" feel)
-//   41 = bell-sparkle-cycle (zeldzame "shimmer")
-//   LCM(28, 23, 37, 41) = 977.228 sec ≈ 11.3 dagen
+// ── Incommensurabele periodes (Eno-techniek) ──
+//   28 = chord-cycle (4 × 7 sec)
+//   20 = gemiddelde handpan-cycle (was 23 — iets levendiger)
+//   37 = marimba-accent-cycle
+//   41 = bell-sparkle-cycle
+//   LCM(28, 20, 37, 41) = ongeveer 851.480 sec ≈ 9.8 dagen
 const PERIOD_PAD     = 28.0;
-const PERIOD_HANDPAN = 23.0;
-const PERIOD_PIANO   = 37.0;
+const PERIOD_HANDPAN = 20.0;
+const PERIOD_MARIMBA = 37.0;
 const PERIOD_BELL    = 41.0;
 
-// Weighted-pick helper voor handpan-noten
+// Weighted-pick helper
 function pickHandpan() {
     const total = HANDPAN_POOL.reduce((s, n) => s + n.weight, 0);
     let r = Math.random() * total;
@@ -5522,7 +5509,7 @@ function pickHandpan() {
         r -= n.weight;
         if (r <= 0) return n.freq;
     }
-    return D_KURD.D3;
+    return D_MAJOR.D3;
 }
 
 function bgMusicStart() {
@@ -5533,48 +5520,41 @@ function bgMusicStart() {
         } catch (e) { console.warn('AudioContext fail:', e); return; }
         const ctx = bgMusic.ctx;
 
-        // ── Audio routing: master → breathGain → filter → destination ──
-        // master = volume control (door slider)
-        // breathGain = 0.20 Hz amplitude modulation (ademhaling)
-        // filter = lowpass, met slow LFO op cutoff
+        // Audio routing: master → breathGain → filter → destination
         bgMusic.master = ctx.createGain();
         bgMusic.master.gain.value = 0;
         bgMusic.breathGain = ctx.createGain();
         bgMusic.breathGain.gain.value = 1.0;
         bgMusic.filter = ctx.createBiquadFilter();
         bgMusic.filter.type = 'lowpass';
-        bgMusic.filter.frequency.value = 1600;
+        bgMusic.filter.frequency.value = 2000;       // helderder (was 1600)
         bgMusic.filter.Q.value = 0.4;
         bgMusic.master.connect(bgMusic.breathGain);
         bgMusic.breathGain.connect(bgMusic.filter);
         bgMusic.filter.connect(ctx.destination);
 
-        // ── Breath LFO: 0.20 Hz (=5s ademcyclus), ±18% gain (~3 dB) ──
-        // Leslie & Picard MIT: gesynchroniseerde amp-modulatie vertraagt
-        // ademhaling en induceert alpha-band entrainment.
+        // ── Breath LFO: 0.18 Hz (5.5s adem-cyclus), ±18% gain ──
+        // Iets langzamer dan 0.20 voor "diepe rust" gevoel.
         bgMusic.breathLFO = ctx.createOscillator();
         bgMusic.breathLFO.type = 'sine';
-        bgMusic.breathLFO.frequency.value = 0.20;
+        bgMusic.breathLFO.frequency.value = 0.18;
         const bLfoG = ctx.createGain();
         bLfoG.gain.value = 0.18;
         bgMusic.breathLFO.connect(bLfoG);
         bLfoG.connect(bgMusic.breathGain.gain);
         bgMusic.breathLFO.start();
 
-        // ── Filter LFO: 0.06 Hz (16.7s periode), ±600 Hz sweep ──
-        // Veel langzamer dan breath → creëert "wave"-textuur over minuten
+        // ── Filter LFO: 0.06 Hz langzame wave ──
         bgMusic.filterLFO = ctx.createOscillator();
         bgMusic.filterLFO.type = 'sine';
         bgMusic.filterLFO.frequency.value = 0.06;
         const fLfoG = ctx.createGain();
-        fLfoG.gain.value = 600;
+        fLfoG.gain.value = 700;
         bgMusic.filterLFO.connect(fLfoG);
         fLfoG.connect(bgMusic.filter.frequency);
         bgMusic.filterLFO.start();
 
-        // ── Sub-bass D drone (continu, tanpura) ──
-        //   D1 (36.7 Hz) wordt vooral gevoeld onder cochlea-cutoff
-        //   D2 (73.4 Hz) is hoorbaar op kleine speakers
+        // ── Sub-bass D drone (continu) ──
         bgMusic.drone = ctx.createOscillator();
         bgMusic.drone.type = 'sine';
         bgMusic.drone.frequency.value = 36.71;
@@ -5592,16 +5572,14 @@ function bgMusicStart() {
     if (bgMusic.ctx.state === 'suspended') bgMusic.ctx.resume();
     bgMusic.enabled = true;
 
-    // ── Layer init met fase-offsets (lagen vallen niet allemaal samen) ──
     const now = bgMusic.ctx.currentTime;
     bgMusic.layers = {
         pad:     { nextTime: now + 0.5,  chordIdx: 0 },
         handpan: { nextTime: now + 2.0 },
-        piano:   { nextTime: now + 12.0 },
+        marimba: { nextTime: now + 12.0 },
         bell:    { nextTime: now + 22.0 },
     };
 
-    // Fade in over 3 sec (langzaam — "atmospheric")
     bgMusic.master.gain.cancelScheduledValues(now);
     bgMusic.master.gain.setValueAtTime(bgMusic.master.gain.value, now);
     bgMusic.master.gain.linearRampToValueAtTime(bgMusic.volume, now + 3.0);
@@ -5637,49 +5615,47 @@ function bgMusicSetVolume(v) {
     try { localStorage.setItem('bgmusic_vol', String(bgMusic.volume)); } catch (e) {}
 }
 
-// ── Scheduler: per laag eigen onafhankelijke timing ──
-// Elke laag heeft eigen "nextTime"; wordt onafhankelijk gechecked.
-// Geen "bars" of "beats" meer — alles in echte seconden.
+// ── Scheduler: 4 onafhankelijke lagen ──
 function bgMusicSchedule() {
     if (!bgMusic.enabled || !bgMusic.ctx) return;
     const now = bgMusic.ctx.currentTime;
     const lookAhead = 3.0;
     const L = bgMusic.layers;
 
-    // PAD layer — chord change every 7 sec (PERIOD_PAD/4)
+    // PAD — chord change every 7 sec
     while (L.pad.nextTime < now + lookAhead) {
         const chord = BG_CHORDS[L.pad.chordIdx % BG_CHORDS.length];
-        const chordDur = PERIOD_PAD / BG_CHORDS.length;   // 7 sec
+        const chordDur = PERIOD_PAD / BG_CHORDS.length;
         bgPlayChordPad(L.pad.nextTime, chord, chordDur);
         L.pad.nextTime += chordDur;
         L.pad.chordIdx++;
     }
 
-    // HANDPAN layer — strike every 3-7 sec (geen vast tempo)
+    // HANDPAN — strike every 2.5-5 sec (iets levendiger dan ambient)
     while (L.handpan.nextTime < now + lookAhead) {
         const fund = pickHandpan();
         bgPlayHandpanStrike(L.handpan.nextTime, fund, 0.7 + Math.random() * 0.3);
-        L.handpan.nextTime += 3.0 + Math.random() * 4.0;
+        L.handpan.nextTime += 2.5 + Math.random() * 2.5;
     }
 
-    // PIANO layer — once per ~30 sec, single note from lower D Kurd register
-    while (L.piano.nextTime < now + lookAhead) {
-        const pianoNotes = [D_KURD.D3, D_KURD.F3, D_KURD.A3, D_KURD.C4, D_KURD.D4];
-        const f0 = pianoNotes[Math.floor(Math.random() * pianoNotes.length)];
-        bgPlayPianoNote(L.piano.nextTime, f0, 0.55);
-        L.piano.nextTime += PERIOD_PIANO * (0.7 + Math.random() * 0.6);
+    // MARIMBA — once per ~30 sec, single note from D major
+    while (L.marimba.nextTime < now + lookAhead) {
+        const marimbaNotes = [D_MAJOR.D3, D_MAJOR.Fs3, D_MAJOR.A3, D_MAJOR.D4, D_MAJOR.Fs4];
+        const f0 = marimbaNotes[Math.floor(Math.random() * marimbaNotes.length)];
+        bgPlayMarimba(L.marimba.nextTime, f0, 0.6);
+        L.marimba.nextTime += PERIOD_MARIMBA * (0.7 + Math.random() * 0.6);
     }
 
-    // BELL layer — once per ~40 sec, high register sparkle
+    // BELL — high register sparkle, very rare
     while (L.bell.nextTime < now + lookAhead) {
-        const bellNotes = [D_KURD.D5, D_KURD.F5, D_KURD.A5, D_KURD.C5];
+        const bellNotes = [D_MAJOR.D5, D_MAJOR.Fs5, D_MAJOR.A5, D_MAJOR.Cs5];
         const fb = bellNotes[Math.floor(Math.random() * bellNotes.length)];
         bgPlayBellSparkle(L.bell.nextTime, fb, 0.7);
         L.bell.nextTime += PERIOD_BELL * (0.7 + Math.random() * 0.6);
     }
 }
 
-// ── Chord pad: 3 sine voices met langzame attack/release ──
+// ── Chord pad: 3 sine voices, smooth crossfade ──
 function bgPlayChordPad(time, chord, duration) {
     const ctx = bgMusic.ctx;
     const dest = bgMusic.master;
@@ -5692,7 +5668,6 @@ function bgPlayChordPad(time, chord, duration) {
         const osc = ctx.createOscillator();
         osc.type = 'sine';
         osc.frequency.value = freq;
-        // Subtiele 4 Hz vibrato (±0.15%) — voor levendigheid
         const vib = ctx.createOscillator();
         vib.frequency.value = 4.0;
         const vibG = ctx.createGain();
@@ -5714,21 +5689,15 @@ function bgPlayChordPad(time, chord, duration) {
 }
 
 // ── Handpan strike: PURE 1:2:3 ratio (Rossing, Physics Today 2009) ──
-//   GEEN inharmoniciteit zoals piano — dit IS het verschil dat
-//   handpan zo kalmerend maakt: auditieve cortex hoeft geen
-//   energie te besteden aan harmonische resolutie → snelle shift
-//   naar alpha/theta-staat.
 function bgPlayHandpanStrike(time, fundamental, velocity = 1.0) {
     const ctx = bgMusic.ctx;
     const dest = bgMusic.master;
     if (!ctx || !dest) return;
 
-    // 3 modes: fundamental, octave (2×), compound fifth (3×)
-    // Decay-tijden gebaseerd op echte handpan-metingen: 8-15 sec
     const partials = [
-        { ratio: 1.00, amp: 1.00, decay: 12.0 },   // fundamental — langste
-        { ratio: 2.00, amp: 0.55, decay:  8.0 },   // octave
-        { ratio: 3.00, amp: 0.30, decay:  5.0 },   // compound 5th
+        { ratio: 1.00, amp: 1.00, decay: 12.0 },
+        { ratio: 2.00, amp: 0.55, decay:  8.0 },
+        { ratio: 3.00, amp: 0.30, decay:  5.0 },
     ];
     const baseAmp = 0.024 * velocity;
 
@@ -5736,14 +5705,11 @@ function bgPlayHandpanStrike(time, fundamental, velocity = 1.0) {
         const osc = ctx.createOscillator();
         osc.type = 'sine';
         osc.frequency.value = fundamental * p.ratio;
-        // ±2 cents detune voor organische shimmer (real-world variation)
         osc.detune.value = (Math.random() - 0.5) * 4;
 
         const g = ctx.createGain();
         g.gain.setValueAtTime(0, time);
-        // Sharp attack ~5 ms (metal-on-flesh "tongue" strike)
         g.gain.linearRampToValueAtTime(baseAmp * p.amp, time + 0.005);
-        // Exponentieel verval — natuurkundig hoe alle percussie klinkt
         g.gain.exponentialRampToValueAtTime(0.0001, time + p.decay);
 
         osc.connect(g);
@@ -5753,44 +5719,44 @@ function bgPlayHandpanStrike(time, fundamental, velocity = 1.0) {
     }
 }
 
-// ── Piano note (sparse, lounge-style) ──
-//   Stiffness-formule fₙ = n·f₁·√(1+B·n²) met B = 0.0003 voor licht
-//   inharmonische partials (karakteristiek piano-twang). 2 voices per
-//   partial simuleert echte string-pair op een piano (2-3 snaren/noot).
-function bgPlayPianoNote(time, f1, velocity = 1.0) {
+// ── MARIMBA (wooden bars, tropical accent) ──
+//   Vrije-vrije balk-trillingsmodes: f_n ∝ (n+0.5)² door buigstijfheid.
+//   In de praktijk worden marimba's getuned op 1:4:10 verhoudingen
+//   (klassieke "marimba-tuning"). Kort decay door demping van hout.
+//   Triangle-wave geeft warmere klank dan pure sine.
+function bgPlayMarimba(time, f1, velocity = 1.0) {
     const ctx = bgMusic.ctx;
     const dest = bgMusic.master;
     if (!ctx || !dest) return;
 
-    const B = 0.0003;
     const partials = [
-        { n: 1, amp: 1.00, decay: 4.5 },
-        { n: 2, amp: 0.40, decay: 3.5 },
-        { n: 3, amp: 0.18, decay: 2.2 },
+        { ratio:  1.00, amp: 1.00, decay: 1.4 },   // fundamental — kort!
+        { ratio:  4.00, amp: 0.35, decay: 0.7 },   // bar mode 2 (stiff)
+        { ratio: 10.00, amp: 0.12, decay: 0.3 },   // bar mode 3 (knock)
     ];
-    const baseAmp = 0.028 * velocity;
+    const baseAmp = 0.032 * velocity;
 
     for (const p of partials) {
-        const fn = p.n * f1 * Math.sqrt(1 + B * p.n * p.n);
-        for (const detune of [0, 4]) {       // string pair simulation
-            const osc = ctx.createOscillator();
-            osc.type = 'triangle';
-            osc.frequency.value = fn;
-            osc.detune.value = detune;
-            const g = ctx.createGain();
-            g.gain.setValueAtTime(0, time);
-            g.gain.linearRampToValueAtTime(baseAmp * p.amp * 0.5, time + 0.01);
-            g.gain.exponentialRampToValueAtTime(baseAmp * p.amp * 0.15, time + 0.15);
-            g.gain.exponentialRampToValueAtTime(0.0001, time + p.decay);
-            osc.connect(g);
-            g.connect(dest);
-            osc.start(time);
-            osc.stop(time + p.decay + 0.1);
-        }
+        const osc = ctx.createOscillator();
+        // Eerste partial triangle (warm), hogere modes sine (helder)
+        osc.type = p.ratio === 1.00 ? 'triangle' : 'sine';
+        osc.frequency.value = f1 * p.ratio;
+        osc.detune.value = (Math.random() - 0.5) * 6;
+
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, time);
+        // Heel sharp attack (3ms) — mallet-on-wood
+        g.gain.linearRampToValueAtTime(baseAmp * p.amp, time + 0.003);
+        g.gain.exponentialRampToValueAtTime(0.0001, time + p.decay);
+
+        osc.connect(g);
+        g.connect(dest);
+        osc.start(time);
+        osc.stop(time + p.decay + 0.1);
     }
 }
 
-// ── Bell sparkle (zeldzaam, hoog) — verre wind-chime ──
+// ── Bell sparkle (zeldzaam, hoog) — wind-chime ──
 function bgPlayBellSparkle(time, freq, velocity = 1.0) {
     const ctx = bgMusic.ctx;
     const dest = bgMusic.master;
