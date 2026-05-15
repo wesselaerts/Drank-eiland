@@ -1448,7 +1448,8 @@
     /* ─── 4. Tiki Ritme ───────────────────────────────────────── */
     .tiki-back { position: fixed; inset: 0; z-index: 60;
       background:
-        radial-gradient(ellipse at 50% 30%, #2a1a0a 0%, #1a0a05 60%, #050000 100%);
+        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 90%, rgba(0,0,0,0.65) 100%),
+        linear-gradient(180deg, rgba(5,10,25,0.30) 0%, rgba(5,10,25,0.05) 20%, rgba(5,10,25,0.05) 80%, rgba(5,10,25,0.30) 100%);
       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
       user-select: none; overflow: hidden; touch-action: none;
       padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
@@ -1980,13 +1981,14 @@
     .vr-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
       background:
-        radial-gradient(ellipse at 50% 110%, #ff5a1f 0%, #aa1a08 25%, #2a0a14 60%, #0a0612 100%);
+        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 90%, rgba(0,0,0,0.65) 100%),
+        linear-gradient(180deg, rgba(5,10,25,0.30) 0%, rgba(5,10,25,0.05) 20%, rgba(5,10,25,0.05) 80%, rgba(5,10,25,0.30) 100%);
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
       touch-action: manipulation; }
     .vr-back::before { content:""; position: absolute; inset: -10%; pointer-events: none;
-      background: radial-gradient(circle at 20% 30%, rgba(255,180,80,0.15), transparent 40%),
-                  radial-gradient(circle at 80% 70%, rgba(255,80,40,0.18), transparent 50%);
+      background: radial-gradient(circle at 20% 30%, rgba(255,180,80,0.08), transparent 40%),
+                  radial-gradient(circle at 80% 70%, rgba(255,80,40,0.10), transparent 50%);
       animation: vh-heat 8s ease-in-out infinite alternate; }
     .vr-header { position: relative; z-index: 2; padding: 10px 16px 4px; text-align: center; }
     .vr-title { font-size: 22px; font-weight: 900; letter-spacing: 0.5px;
@@ -2072,7 +2074,8 @@
     .bj-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
       background:
-        radial-gradient(ellipse at 50% 50%, #1a4a2a 0%, #0a2818 60%, #050a08 100%);
+        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 90%, rgba(0,0,0,0.65) 100%),
+        linear-gradient(180deg, rgba(5,10,25,0.30) 0%, rgba(5,10,25,0.05) 20%, rgba(5,10,25,0.05) 80%, rgba(5,10,25,0.30) 100%);
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom); }
     .bj-back::before { content: ""; position: absolute; inset: -10%; pointer-events: none;
@@ -2159,7 +2162,8 @@
     .hf-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
       background:
-        radial-gradient(ellipse at 50% 30%, #2a3a8a 0%, #100a3a 60%, #050514 100%);
+        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 90%, rgba(0,0,0,0.65) 100%),
+        linear-gradient(180deg, rgba(5,10,25,0.30) 0%, rgba(5,10,25,0.05) 20%, rgba(5,10,25,0.05) 80%, rgba(5,10,25,0.30) 100%);
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
       touch-action: manipulation; }
@@ -8396,6 +8400,62 @@ function restoreMinigameChrome(hidden) {
     for (const h of hidden) {
         if (h.el && h.el.style) h.el.style.display = h.prev;
     }
+}
+
+// ── Camera-helper: lerp hoog boven de vulkaan voor minigames met
+// transparante overlay (chwazi-style). Verbergt chrome, slaat
+// camera-state op, en retourneert een restore()-functie.
+//
+// Returns: function restore() — herstelt camera + chrome.
+function setupVolcanoTopCamera({ fov = 55, camPos = [0, 95, 28], camTgt = [0, 0, 0] } = {}) {
+    const hiddenChrome = hideMinigameChrome();
+    const savedCam = {
+        pos: camera.position.clone(),
+        fov: camera.fov,
+        target: controls.target.clone(),
+        autoRotate: controls.autoRotate,
+        enabled: controls.enabled,
+        enableDamping: controls.enableDamping,
+    };
+    controls.autoRotate = false;
+    controls.enabled = false;
+    controls.enableDamping = false;
+    camera.fov = fov;
+    camera.updateProjectionMatrix();
+    const TOP_CAM_POS = new THREE.Vector3(...camPos);
+    const TOP_CAM_TGT = new THREE.Vector3(...camTgt);
+    const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
+    const camTo = { pos: TOP_CAM_POS, tgt: TOP_CAM_TGT };
+    let camLerpT = 0;
+    const camLerpDur = 0.9;
+    const PREV_HOOK = window.__deGameHook;
+    window.__deGameHook = (time) => {
+        if (camLerpT < 1) {
+            const dt = 0.016;
+            camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
+            const k = camLerpT;
+            const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
+            camera.position.lerpVectors(camFrom.pos, camTo.pos, e);
+            controls.target.lerpVectors(camFrom.tgt, camTo.tgt, e);
+        } else {
+            camera.position.copy(camTo.pos);
+            controls.target.copy(camTo.tgt);
+        }
+        camera.lookAt(controls.target);
+    };
+
+    return function restoreVolcanoCam() {
+        window.__deGameHook = PREV_HOOK;
+        camera.fov = savedCam.fov;
+        camera.position.copy(savedCam.pos);
+        camera.updateProjectionMatrix();
+        controls.target.copy(savedCam.target);
+        controls.autoRotate = savedCam.autoRotate;
+        controls.enabled = savedCam.enabled;
+        controls.enableDamping = savedCam.enableDamping;
+        camera.lookAt(controls.target);
+        restoreMinigameChrome(hiddenChrome);
+    };
 }
 
 function refreshHUD() {
@@ -14780,6 +14840,7 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
 function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
     return new Promise(resolve => {
         const ui = document.getElementById('game-ui');
+        const restoreVolcanoCam = setupVolcanoTopCamera();
         const back = el('div', { className: 'tiki-back' });
         const head = el('div', { className: 'tiki-head' });
         head.append(el('h2', {}, '🗿 Tiki Ritme'));
@@ -14829,14 +14890,14 @@ function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
             level = 0;
             lVal.textContent = '1';
         }
-        function flashMask(i, dur = 500) {
+        function flashMask(i, dur = 300) {
             const m = masks[i];
             m.classList.add('lit');
             // Eenvoudig "sound" effect via WebAudio (sine-tone per index)
             playTone(220 + i * 80, dur);
             return new Promise(r => setTimeout(() => {
                 m.classList.remove('lit');
-                setTimeout(r, 120);
+                setTimeout(r, 70);    // gap tussen flashes — was 120ms
             }, dur));
         }
         let audioCtx = null;
@@ -14859,9 +14920,12 @@ function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
             locked = true;
             stage.classList.add('tiki-locked');
             tip.textContent = 'Kijk goed...';
-            await new Promise(r => setTimeout(r, 600));
+            await new Promise(r => setTimeout(r, 400));   // pre-roll was 600
+            // Dynamische snelheid: hoe langer de sequence, hoe sneller
+            // de flashes. Level 1: 300ms, level 5: 240ms, level 10: 165ms.
+            const flashDur = Math.max(150, 300 - (curSeq.length - 1) * 16);
             for (const idx of curSeq) {
-                await flashMask(idx, 460);
+                await flashMask(idx, flashDur);
             }
             phase = 'listening';
             locked = false;
@@ -14958,6 +15022,7 @@ function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
         function finish(sorted) {
             if (phase === 'closed') return;
             phase = 'closed';
+            restoreVolcanoCam();
             back.style.transition = 'opacity 0.3s ease';
             back.style.opacity = '0';
             setTimeout(() => { back.remove(); resolve(sorted || null); }, 300);
@@ -15935,6 +16000,7 @@ function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Whe
 function playVulcanoRoulette({ player, drinks = null } = {}) {
     return new Promise(resolve => {
         const ui = document.getElementById('game-ui');
+        const restoreVolcanoCam = setupVolcanoTopCamera();
         const back = el('div', { className: 'vr-back' });
         if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
 
@@ -16110,6 +16176,7 @@ function playVulcanoRoulette({ player, drinks = null } = {}) {
         }
 
         function finish(payload) {
+            restoreVolcanoCam();
             back.style.transition = 'opacity 0.3s ease';
             back.style.opacity = '0';
             setTimeout(() => { back.remove(); resolve(payload); }, 300);
@@ -16171,6 +16238,7 @@ function playGodBlackjack({ player, drinks = null } = {}) {
 
         // ── UI ──
         const ui = document.getElementById('game-ui');
+        const restoreVolcanoCam = setupVolcanoTopCamera();
         const back = el('div', { className: 'bj-back' });
         if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
 
@@ -16380,6 +16448,7 @@ function playGodBlackjack({ player, drinks = null } = {}) {
         }
 
         function finish(payload) {
+            restoreVolcanoCam();
             back.style.transition = 'opacity 0.3s ease';
             back.style.opacity = '0';
             setTimeout(() => { back.remove(); resolve(payload); }, 300);
@@ -16440,6 +16509,7 @@ function playHoofdsteden({ player, drinks = null, timeMs = 12000 } = {}) {
         const item = CAPITALS[Math.floor(Math.random() * CAPITALS.length)];
 
         const ui = document.getElementById('game-ui');
+        const restoreVolcanoCam = setupVolcanoTopCamera();
         const back = el('div', { className: 'hf-back' });
         if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
 
@@ -16572,6 +16642,7 @@ function playHoofdsteden({ player, drinks = null, timeMs = 12000 } = {}) {
         });
 
         function finish(payload) {
+            restoreVolcanoCam();
             back.style.transition = 'opacity 0.3s ease';
             back.style.opacity = '0';
             setTimeout(() => { back.remove(); resolve(payload); }, 300);

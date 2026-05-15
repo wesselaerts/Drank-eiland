@@ -1,5 +1,5 @@
 --- /mnt/user-data/uploads/index.html	2026-05-14 18:01:04.149813000 +0000
-+++ /home/claude/work/index.html	2026-05-15 16:49:18.246900899 +0000
++++ /home/claude/work/index.html	2026-05-15 16:58:34.788094677 +0000
 @@ -1376,6 +1376,15 @@
        display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
        user-select: none; overflow: hidden; touch-action: none;
@@ -16,7 +16,55 @@
      .krab-head { text-align: center; padding: 4px 8px 6px; }
      .krab-head h2 { margin: 0; font-size: 20px; font-weight: 900; }
      .krab-hud { display: flex; justify-content: space-around; align-items: center;
-@@ -4202,12 +4211,12 @@
+@@ -1439,7 +1448,8 @@
+     /* ─── 4. Tiki Ritme ───────────────────────────────────────── */
+     .tiki-back { position: fixed; inset: 0; z-index: 60;
+       background:
+-        radial-gradient(ellipse at 50% 30%, #2a1a0a 0%, #1a0a05 60%, #050000 100%);
++        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 90%, rgba(0,0,0,0.65) 100%),
++        linear-gradient(180deg, rgba(5,10,25,0.30) 0%, rgba(5,10,25,0.05) 20%, rgba(5,10,25,0.05) 80%, rgba(5,10,25,0.30) 100%);
+       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+       user-select: none; overflow: hidden; touch-action: none;
+       padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+@@ -1971,13 +1981,14 @@
+     .vr-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
+       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+       background:
+-        radial-gradient(ellipse at 50% 110%, #ff5a1f 0%, #aa1a08 25%, #2a0a14 60%, #0a0612 100%);
++        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 90%, rgba(0,0,0,0.65) 100%),
++        linear-gradient(180deg, rgba(5,10,25,0.30) 0%, rgba(5,10,25,0.05) 20%, rgba(5,10,25,0.05) 80%, rgba(5,10,25,0.30) 100%);
+       padding-top: env(safe-area-inset-top);
+       padding-bottom: env(safe-area-inset-bottom);
+       touch-action: manipulation; }
+     .vr-back::before { content:""; position: absolute; inset: -10%; pointer-events: none;
+-      background: radial-gradient(circle at 20% 30%, rgba(255,180,80,0.15), transparent 40%),
+-                  radial-gradient(circle at 80% 70%, rgba(255,80,40,0.18), transparent 50%);
++      background: radial-gradient(circle at 20% 30%, rgba(255,180,80,0.08), transparent 40%),
++                  radial-gradient(circle at 80% 70%, rgba(255,80,40,0.10), transparent 50%);
+       animation: vh-heat 8s ease-in-out infinite alternate; }
+     .vr-header { position: relative; z-index: 2; padding: 10px 16px 4px; text-align: center; }
+     .vr-title { font-size: 22px; font-weight: 900; letter-spacing: 0.5px;
+@@ -2063,7 +2074,8 @@
+     .bj-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
+       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+       background:
+-        radial-gradient(ellipse at 50% 50%, #1a4a2a 0%, #0a2818 60%, #050a08 100%);
++        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 90%, rgba(0,0,0,0.65) 100%),
++        linear-gradient(180deg, rgba(5,10,25,0.30) 0%, rgba(5,10,25,0.05) 20%, rgba(5,10,25,0.05) 80%, rgba(5,10,25,0.30) 100%);
+       padding-top: env(safe-area-inset-top);
+       padding-bottom: env(safe-area-inset-bottom); }
+     .bj-back::before { content: ""; position: absolute; inset: -10%; pointer-events: none;
+@@ -2150,7 +2162,8 @@
+     .hf-back { position: fixed; inset: 0; z-index: 60; overflow: hidden; user-select: none;
+       display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+       background:
+-        radial-gradient(ellipse at 50% 30%, #2a3a8a 0%, #100a3a 60%, #050514 100%);
++        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 90%, rgba(0,0,0,0.65) 100%),
++        linear-gradient(180deg, rgba(5,10,25,0.30) 0%, rgba(5,10,25,0.05) 20%, rgba(5,10,25,0.05) 80%, rgba(5,10,25,0.30) 100%);
+       padding-top: env(safe-area-inset-top);
+       padding-bottom: env(safe-area-inset-bottom);
+       touch-action: manipulation; }
+@@ -4202,12 +4215,12 @@
      cx:     BOWL.cx + 6,    // 88 — iets oost van bowling-centrum
      cz:     BOWL.cz,
      floorY: BOWL.sandTopY,  // staat op het zand, top y=1.05
@@ -34,7 +82,7 @@
      pegRad: 0.07,
      pegLen: 0.22,
  };
-@@ -4319,10 +4328,19 @@
+@@ -4319,10 +4332,19 @@
      const N  = options.length;
      const segAng = (Math.PI * 2) / N;
  
@@ -56,7 +104,7 @@
      ctx.beginPath();
      ctx.arc(cx, cy, R + 4, 0, Math.PI * 2);
      ctx.fillStyle = '#2a1a08';
-@@ -4337,18 +4355,19 @@
+@@ -4337,18 +4359,19 @@
          ctx.moveTo(cx, cy);
          ctx.arc(cx, cy, R, aStart, aEnd, false);
          ctx.closePath();
@@ -83,7 +131,7 @@
          ctx.beginPath();
          ctx.moveTo(cx, cy);
          ctx.arc(cx, cy, R, aStart, aEnd, false);
-@@ -4439,89 +4458,87 @@
+@@ -4439,89 +4462,87 @@
      stall.add(makeBambooBeam( halfW, -halfD,  halfW,  halfD, topY));   // oost zijkant
  
      // ── Schuin "rieten" dak (twee panelen + nokbalk) ──
@@ -215,7 +263,7 @@
      const axleMat = new THREE.MeshToonMaterial({
          color: 0x3a2810, gradientMap: toon,
          emissive: 0x1a1208, emissiveIntensity: 0.2 });
-@@ -4529,17 +4546,17 @@
+@@ -4529,17 +4550,17 @@
      const axle = new THREE.Mesh(
          new THREE.CylinderGeometry(0.09, 0.09, axleLen, 10), axleMat);
      axle.rotation.z = Math.PI / 2;
@@ -236,7 +284,7 @@
      const pointerMat = new THREE.MeshToonMaterial({
          color: 0xffd54a, gradientMap: toon,
          emissive: 0x885500, emissiveIntensity: 0.55 });
-@@ -4547,20 +4564,18 @@
+@@ -4547,20 +4568,18 @@
          new THREE.ConeGeometry(0.18, 0.42, 4), pointerMat);
      pointer.rotation.x = Math.PI;
      pointer.rotation.y = Math.PI / 4;
@@ -261,7 +309,7 @@
      stall.add(spin);
      mysteryWheelSpin = spin;
  
-@@ -4639,9 +4654,12 @@
+@@ -4639,9 +4658,12 @@
      mysteryWheelFaceMeshes.length = 0;
  
      // Front-disc met canvas-texture
@@ -276,7 +324,7 @@
          side: THREE.FrontSide });
      const faceGeo = new THREE.CircleGeometry(MWHEEL.radius, 64);
      const faceDisc = new THREE.Mesh(faceGeo, faceMat);
-@@ -5519,6 +5537,126 @@
+@@ -5519,6 +5541,126 @@
      layoutTokensOnTile(player.tileIdx);
  }
  
@@ -403,7 +451,7 @@
  // ── UI: helper ──
  const ui = document.getElementById('game-ui');
  function el(tag, props={}, children=[]) {
-@@ -7679,7 +7817,7 @@
+@@ -7679,7 +7821,7 @@
          // de Mystery Wheel pool van runMinigameOnTile).
          { id: 'lavasteen',   emoji: '🌋',  name: 'Hete Lavasteen',       meta: 'hot potato',    tag: 'BETA',  locked: false },
          { id: 'kano',        emoji: '🛶',  name: 'Kano Race',            meta: '1v1 race',      tag: 'NIEUW', locked: false },
@@ -412,7 +460,70 @@
          { id: 'tiki',        emoji: '🗿',  name: 'Tiki Ritme',           meta: 'memory',        tag: 'BETA',  locked: false },
          { id: 'brug',        emoji: '⚖️',  name: 'Brug Balans',          meta: 'gyro',          tag: 'BETA',  locked: false },
      ];
-@@ -11314,6 +11452,7 @@
+@@ -8260,6 +8402,62 @@
+     }
+ }
+ 
++// ── Camera-helper: lerp hoog boven de vulkaan voor minigames met
++// transparante overlay (chwazi-style). Verbergt chrome, slaat
++// camera-state op, en retourneert een restore()-functie.
++//
++// Returns: function restore() — herstelt camera + chrome.
++function setupVolcanoTopCamera({ fov = 55, camPos = [0, 95, 28], camTgt = [0, 0, 0] } = {}) {
++    const hiddenChrome = hideMinigameChrome();
++    const savedCam = {
++        pos: camera.position.clone(),
++        fov: camera.fov,
++        target: controls.target.clone(),
++        autoRotate: controls.autoRotate,
++        enabled: controls.enabled,
++        enableDamping: controls.enableDamping,
++    };
++    controls.autoRotate = false;
++    controls.enabled = false;
++    controls.enableDamping = false;
++    camera.fov = fov;
++    camera.updateProjectionMatrix();
++    const TOP_CAM_POS = new THREE.Vector3(...camPos);
++    const TOP_CAM_TGT = new THREE.Vector3(...camTgt);
++    const camFrom = { pos: camera.position.clone(), tgt: controls.target.clone() };
++    const camTo = { pos: TOP_CAM_POS, tgt: TOP_CAM_TGT };
++    let camLerpT = 0;
++    const camLerpDur = 0.9;
++    const PREV_HOOK = window.__deGameHook;
++    window.__deGameHook = (time) => {
++        if (camLerpT < 1) {
++            const dt = 0.016;
++            camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
++            const k = camLerpT;
++            const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3) / 2;
++            camera.position.lerpVectors(camFrom.pos, camTo.pos, e);
++            controls.target.lerpVectors(camFrom.tgt, camTo.tgt, e);
++        } else {
++            camera.position.copy(camTo.pos);
++            controls.target.copy(camTo.tgt);
++        }
++        camera.lookAt(controls.target);
++    };
++
++    return function restoreVolcanoCam() {
++        window.__deGameHook = PREV_HOOK;
++        camera.fov = savedCam.fov;
++        camera.position.copy(savedCam.pos);
++        camera.updateProjectionMatrix();
++        controls.target.copy(savedCam.target);
++        controls.autoRotate = savedCam.autoRotate;
++        controls.enabled = savedCam.enabled;
++        controls.enableDamping = savedCam.enableDamping;
++        camera.lookAt(controls.target);
++        restoreMinigameChrome(hiddenChrome);
++    };
++}
++
+ function refreshHUD() {
+     const cur = G.players[G.turnIdx];
+     if (!cur) return;
+@@ -11314,6 +11512,7 @@
              palette: 'lava',
          }).then(async () => {
              advanceTurn();
@@ -420,7 +531,7 @@
              G.phase = 'idle';
              refreshHUD();
              // Schnaps could still call after a skip-turn
-@@ -11330,6 +11469,23 @@
+@@ -11330,6 +11529,23 @@
      const useBonus = (player.bonusDice || 0) > 0;
      const diceCount = useBonus ? 2 : 1;
  
@@ -444,7 +555,7 @@
      // Build the iframe overlay (semi-transparent table, host page peeks through)
      const back = el('div', { className: 'dice-iframe-back' });
      const headerBar = el('div', { className: 'dice-iframe-header' });
-@@ -11441,6 +11597,15 @@
+@@ -11441,6 +11657,15 @@
                      sub: `${player.name} gooit ${total} en breekt uit Banana Brig!`,
                      palette: 'gold',
                  });
@@ -460,7 +571,7 @@
                  // Vervolg normaal: bewegen + onLandedOnTile
                  G.phase = 'moving';
                  moveTokenAlong(player, total, () => onLandedOnTile(player));
-@@ -11452,8 +11617,14 @@
+@@ -11452,8 +11677,14 @@
                      sub: `${player.name} gooide ${total} — te laag, blijft vast. Drinkt ${d} 🍻`,
                      palette: 'dark',
                  });
@@ -475,7 +586,7 @@
                  G.phase = 'idle';
                  refreshHUD();
                  await maybeFireSchnapsCall();
-@@ -11505,6 +11676,65 @@
+@@ -11505,6 +11736,65 @@
      }
  }
  
@@ -541,7 +652,7 @@
  function updateVolcanoBanner() {
      let banner = document.getElementById('vol-banner');
      if (G.volcanoActive > 0) {
-@@ -12594,25 +12824,22 @@
+@@ -12594,25 +12884,22 @@
  
          function buildTokenOnPlatform(p, platIdx) {
              const plat = platforms3D[platIdx];
@@ -578,7 +689,7 @@
              tokens3D.push(tokenGrp);
              return tokenGrp;
          }
-@@ -12633,7 +12860,7 @@
+@@ -12633,7 +12920,7 @@
                  const plat = platforms3D[idx];
                  const startY = plat.position.y;
                  const startTime = performance.now();
@@ -587,7 +698,7 @@
                  const fallingTokens = tokens3D.filter(t =>
                      t.userData.platIdx === idx);
                  fallingTokens.forEach(t => {
-@@ -12703,7 +12930,10 @@
+@@ -12703,7 +12990,10 @@
                  if (u.baseY !== undefined && u.bobPhase !== undefined) {
                      const plat = platforms3D[u.platIdx];
                      if (plat) {
@@ -599,7 +710,7 @@
                              Math.sin(time * 2.5 + u.bobPhase) * 0.05;
                      }
                  }
-@@ -12844,6 +13074,18 @@
+@@ -12844,6 +13134,18 @@
                  confirmBtn.disabled = true;
                  actionsRow.innerHTML = '';
                  actionsRow.append(confirmBtn);
@@ -618,7 +729,7 @@
                  await new Promise(r => {
                      btns.forEach((btn, idx) => {
                          btn.addEventListener('click', () => {
-@@ -12856,6 +13098,10 @@
+@@ -12856,6 +13158,10 @@
                              highlightPlatform(idx, p.color.hex);
                              picked = idx;
                              confirmBtn.disabled = false;
@@ -629,7 +740,7 @@
                          });
                      });
                      confirmBtn.addEventListener('click', () => {
-@@ -12863,6 +13109,10 @@
+@@ -12863,6 +13169,10 @@
                          r();
                      });
                  });
@@ -640,7 +751,7 @@
                  picks.set(p, picked);
                  for (let i = 0; i < platCount; i++) dimPlatform(i);
                  stones.innerHTML = '';
-@@ -12882,20 +13132,36 @@
+@@ -12882,20 +13192,36 @@
              }
              await sleep(800);
  
@@ -685,7 +796,7 @@
                  else survivors.push(p);
              }
              for (const p of losers) {
-@@ -13809,16 +14075,300 @@
+@@ -13809,16 +14135,300 @@
     ════════════════════════════════════════════════════════════════════ */
  function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
      return new Promise(resolve => {
@@ -990,7 +1101,7 @@
          const tChip = el('div', { className: 'krab-chip' });
          tChip.append(el('div', { className: 'lbl' }, 'Tijd'));
          const tVal = el('div', { className: 'val' }, '30');
-@@ -13828,84 +14378,201 @@
+@@ -13828,84 +14438,201 @@
          const sVal = el('div', { className: 'val' }, '0');
          sChip.append(sVal);
          hud.append(pChip, tChip, sChip);
@@ -1246,7 +1357,7 @@
          function startRun(playerIdx) {
              curIdx = playerIdx;
              const p = players[curIdx];
-@@ -13913,17 +14580,19 @@
+@@ -13913,17 +14640,19 @@
              pVal.style.color = p.color.css;
              pChip.style.setProperty('--pcol', p.color.css);
              sVal.textContent = '0';
@@ -1271,7 +1382,7 @@
                  el('button', { className: 'btn-pill gold', type: 'button',
                      style: { marginTop: '10px' },
                      on: { click: () => {
-@@ -13931,24 +14600,28 @@
+@@ -13931,24 +14660,28 @@
                          phase = 'playing';
                          phaseStart = performance.now();
                          crabSpawnTimer = 0;
@@ -1305,7 +1416,7 @@
                  el('p', {}, `krabben gevangen door ${p.name}`),
              );
              stage.append(banner);
-@@ -13958,13 +14631,13 @@
+@@ -13958,13 +14691,13 @@
                  else showFinal();
              }, 2200);
          }
@@ -1321,7 +1432,7 @@
              const banner = el('div', { className: 'krab-banner',
                  style: { '--pcol': winners[0].player.color.css } });
              const ranking = el('div', { style: {
-@@ -13993,49 +14666,106 @@
+@@ -13993,49 +14726,106 @@
              stage.append(banner);
              setTimeout(() => finish(sorted), 8000);
          }
@@ -1454,7 +1565,55 @@
      });
  }
  
-@@ -14801,6 +15531,20 @@
+@@ -14050,6 +14840,7 @@
+ function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
+     return new Promise(resolve => {
+         const ui = document.getElementById('game-ui');
++        const restoreVolcanoCam = setupVolcanoTopCamera();
+         const back = el('div', { className: 'tiki-back' });
+         const head = el('div', { className: 'tiki-head' });
+         head.append(el('h2', {}, '🗿 Tiki Ritme'));
+@@ -14099,14 +14890,14 @@
+             level = 0;
+             lVal.textContent = '1';
+         }
+-        function flashMask(i, dur = 500) {
++        function flashMask(i, dur = 300) {
+             const m = masks[i];
+             m.classList.add('lit');
+             // Eenvoudig "sound" effect via WebAudio (sine-tone per index)
+             playTone(220 + i * 80, dur);
+             return new Promise(r => setTimeout(() => {
+                 m.classList.remove('lit');
+-                setTimeout(r, 120);
++                setTimeout(r, 70);    // gap tussen flashes — was 120ms
+             }, dur));
+         }
+         let audioCtx = null;
+@@ -14129,9 +14920,12 @@
+             locked = true;
+             stage.classList.add('tiki-locked');
+             tip.textContent = 'Kijk goed...';
+-            await new Promise(r => setTimeout(r, 600));
++            await new Promise(r => setTimeout(r, 400));   // pre-roll was 600
++            // Dynamische snelheid: hoe langer de sequence, hoe sneller
++            // de flashes. Level 1: 300ms, level 5: 240ms, level 10: 165ms.
++            const flashDur = Math.max(150, 300 - (curSeq.length - 1) * 16);
+             for (const idx of curSeq) {
+-                await flashMask(idx, 460);
++                await flashMask(idx, flashDur);
+             }
+             phase = 'listening';
+             locked = false;
+@@ -14228,6 +15022,7 @@
+         function finish(sorted) {
+             if (phase === 'closed') return;
+             phase = 'closed';
++            restoreVolcanoCam();
+             back.style.transition = 'opacity 0.3s ease';
+             back.style.opacity = '0';
+             setTimeout(() => { back.remove(); resolve(sorted || null); }, 300);
+@@ -14801,6 +15596,20 @@
     chosen minigame id ('krokodil','paddle','tappy','volcano',
     'raft','roulette','blackjack','hoofdsteden') or null if skipped.
     ============================================================ */
@@ -1475,7 +1634,7 @@
  const MYSTERY_OPTIONS = [
      { id: 'krokodil',    emoji: '🐊', label: 'Krokodil',     color: '#b87aff' },
      { id: 'paddle',      emoji: '🏓', label: 'Paddle Duel',  color: '#4af2ff' },
-@@ -14848,7 +15592,14 @@
+@@ -14848,7 +15657,14 @@
          // Bouw stall (1× lazy) + pas opties toe
          buildMysteryStallOnce();
          applyMysteryOptionsToWheel(options);
@@ -1491,7 +1650,7 @@
          if (mysteryStall)     mysteryStall.visible = true;
  
          console.log('[MysteryWheel] stall built:', !!mysteryStall,
-@@ -14857,23 +15608,30 @@
+@@ -14857,23 +15673,30 @@
              'spin children:', mysteryWheelSpin?.children?.length);
  
          // ════════════════════════════════════════════════════════
@@ -1530,7 +1689,7 @@
  
          console.log('[MysteryWheel] camera snapped to',
              CAM_POS.toArray(), 'looking at', CAM_TGT.toArray());
-@@ -14915,7 +15673,9 @@
+@@ -14915,7 +15738,9 @@
          // angle (rad) = wheelSpin.rotation.x. Positieve waarden roteren
          // het rad CCW vanuit kamera-POV (top schuift naar viewer's LEFT).
          // We berekenen winnaar door angle modulo 2π → segment-index.
@@ -1541,7 +1700,7 @@
          let angVel = 0;            // rad/sec
          const FRICTION_PER_FRAME = 0.985;
          const STOP_THRESHOLD = 0.15;   // rad/sec
-@@ -15045,22 +15805,29 @@
+@@ -15045,22 +15870,29 @@
          });
  
          // ════════════════════════════════════════════════════════
@@ -1577,7 +1736,7 @@
              camera.position.copy(CAM_POS);
              controls.target.copy(CAM_TGT);
              camera.lookAt(controls.target);
-@@ -15093,10 +15860,7 @@
+@@ -15093,10 +15925,7 @@
                      announceWinner();
                  }
              }
@@ -1589,7 +1748,7 @@
  
          // ════════════════════════════════════════════════════════
          //  H. WINNER-ANNOUNCE — eindbanner met emoji + Start-knop
-@@ -15125,7 +15889,8 @@
+@@ -15125,7 +15954,8 @@
          // ════════════════════════════════════════════════════════
          function finish(id) {
              alive = false;
@@ -1599,7 +1758,7 @@
  
              stage.removeEventListener('pointerdown', onPointerDown);
              stage.removeEventListener('pointermove', onPointerMove);
-@@ -15143,6 +15908,8 @@
+@@ -15143,6 +15973,8 @@
              controls.enabled = savedCam.enabled;
              controls.enableDamping = savedCam.enableDamping;
              camera.lookAt(controls.target);
@@ -1608,7 +1767,55 @@
  
              restoreMinigameChrome(hiddenChrome);
  
-@@ -16321,15 +17088,47 @@
+@@ -15168,6 +16000,7 @@
+ function playVulcanoRoulette({ player, drinks = null } = {}) {
+     return new Promise(resolve => {
+         const ui = document.getElementById('game-ui');
++        const restoreVolcanoCam = setupVolcanoTopCamera();
+         const back = el('div', { className: 'vr-back' });
+         if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
+ 
+@@ -15343,6 +16176,7 @@
+         }
+ 
+         function finish(payload) {
++            restoreVolcanoCam();
+             back.style.transition = 'opacity 0.3s ease';
+             back.style.opacity = '0';
+             setTimeout(() => { back.remove(); resolve(payload); }, 300);
+@@ -15404,6 +16238,7 @@
+ 
+         // ── UI ──
+         const ui = document.getElementById('game-ui');
++        const restoreVolcanoCam = setupVolcanoTopCamera();
+         const back = el('div', { className: 'bj-back' });
+         if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
+ 
+@@ -15613,6 +16448,7 @@
+         }
+ 
+         function finish(payload) {
++            restoreVolcanoCam();
+             back.style.transition = 'opacity 0.3s ease';
+             back.style.opacity = '0';
+             setTimeout(() => { back.remove(); resolve(payload); }, 300);
+@@ -15673,6 +16509,7 @@
+         const item = CAPITALS[Math.floor(Math.random() * CAPITALS.length)];
+ 
+         const ui = document.getElementById('game-ui');
++        const restoreVolcanoCam = setupVolcanoTopCamera();
+         const back = el('div', { className: 'hf-back' });
+         if (player?.color?.css) back.style.setProperty('--pcol', player.color.css);
+ 
+@@ -15805,6 +16642,7 @@
+         });
+ 
+         function finish(payload) {
++            restoreVolcanoCam();
+             back.style.transition = 'opacity 0.3s ease';
+             back.style.opacity = '0';
+             setTimeout(() => { back.remove(); resolve(payload); }, 300);
+@@ -16321,15 +17159,47 @@
          });
          if (swap) {
              const pIdx = player.tileIdx, sIdx = swap.tileIdx;
@@ -1660,7 +1867,7 @@
          }
      }
      // ─── SKULL — pitchzwarte tegel die je naar Banana Brig verbant
-@@ -16381,33 +17180,9 @@
+@@ -16381,33 +17251,9 @@
              requestAnimationFrame(step);
          });
  
@@ -1697,7 +1904,7 @@
          //    Positie van Banana Brig satelliet is (4, -19), top y ≈ 2.4.
          const bbX = 4, bbZ = -19, bbY = 2.4;
          await new Promise(r => {
-@@ -16427,19 +17202,19 @@
+@@ -16427,19 +17273,19 @@
              requestAnimationFrame(step);
          });
  
@@ -1724,7 +1931,7 @@
          // 6. Camera zwaait terug naar het bord
          await new Promise(r => {
              const camFrom = camera.position.clone();
-@@ -16557,8 +17332,12 @@
+@@ -16557,8 +17403,12 @@
              palette: 'purple', auto: true, duration: 1200,
          });
          // Filter wheel options based on player count: 1v1 games need 2+
@@ -1737,7 +1944,7 @@
              if (!playerOk) return ['roulette','blackjack','hoofdsteden'].includes(o.id);
              return true;
          });
-@@ -16597,6 +17376,7 @@
+@@ -16597,6 +17447,7 @@
          });
      } else {
          advanceTurn();
