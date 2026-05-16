@@ -1350,14 +1350,24 @@
     .lava-result h2 { margin: 0 0 8px; font-size: 26px; font-weight: 900; }
     .lava-result p { margin: 4px 0; opacity: 0.9; }
 
-    /* ─── 2. De Kano Race ─────────────────────────────────────── */
+    /* ─── 2. De Kano Race (3D versie v3 — twee aparte canvassen) ── */
     .kano-back { position: fixed; inset: 0; z-index: 60;
-      background:
-        radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.40) 95%),
-        linear-gradient(180deg, #0a3a5a 0%, #1a5a7a 50%, #0a3a5a 100%);
-      display: flex; flex-direction: column; color: #fff; animation: fadeIn .25s ease;
+      background: #0a3a5a;
+      color: #fff; animation: fadeIn .25s ease;
       user-select: none; overflow: hidden; touch-action: none;
-      padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+      display: flex; flex-direction: column; }
+    /* Twee halve schermen, elk met eigen canvas */
+    .kano-half3d { flex: 1; position: relative; overflow: hidden; }
+    .kano-half3d.top { transform: rotate(180deg);
+      border-bottom: 2px solid rgba(255,255,255,0.20); }
+    .kano-half3d.bot { /* no rotation */ }
+    .kano-canvas-piece { position: absolute; inset: 0; width: 100%; height: 100%;
+      display: block; pointer-events: none; }
+    /* HUD zone vult de halve, vangt taps op */
+    .kano-zone3d { position: absolute; inset: 0;
+      pointer-events: auto; }
+    /* Oude CSS (.kano-zone, .kano-finish, .kano-island, .kano-boat) is
+       niet meer in gebruik — overgeschakeld naar 3D in playKanoRace. */
     .kano-zone { flex: 1; position: relative; overflow: hidden; }
     .kano-zone.top { transform: rotate(180deg); border-bottom: 2px solid rgba(255,255,255,0.20); }
     /* Water — subtiele animatie van lijntjes die langs scrollen */
@@ -16963,29 +16973,59 @@ function playHeteLavasteen({ players = G.players, drinks = 4 } = {}) {
    ════════════════════════════════════════════════════════════════════ */
 function playKanoRace({ playerA, playerB, drinks = 4 } = {}) {
     return new Promise(resolve => {
+        // ════════════════════════════════════════════════════════════
+        //  KANO RACE 3D — split-screen top-down race (v3)
+        // ════════════════════════════════════════════════════════════
+        //  ARCHITECTUUR FIX: TWEE APARTE CANVASSEN i.p.v. één canvas
+        //  met scissor-rendering. Top-helft wordt via CSS 180° geroteerd
+        //  voor speler A's perspectief. Beide canvassen gebruiken
+        //  IDENTIEKE standaard ortho top-down camera — geen up-vector
+        //  trucs, geen scene-rotatie. Simpel en robuust.
+        //
+        //  Camera setup (beide identiek):
+        //    position (0, 12, 0), lookAt (0, 0, 0), up = (0, 0, -1)
+        //    World +Z = onderkant viewport (kano start)
+        //    World -Z = bovenkant viewport (finish + eiland)
+        //
+        //  Voor speler A: het hele kano-half3d-element heeft CSS
+        //  transform: rotate(180deg). Dat draait de canvas-inhoud +
+        //  HUD samen 180° — zo komt de kano (gerenderd onderaan canvas)
+        //  visueel BOVEN te staan voor speler A.
+        // ════════════════════════════════════════════════════════════
+
         const ui = document.getElementById('game-ui');
         const back = el('div', { className: 'kano-back' });
-        // Zone bouwen helper
-        function buildZone(player, klass) {
-            const z = el('div', { className: 'kano-zone ' + klass });
-            const island = el('div', { className: 'kano-island' });
-            const finish = el('div', { className: 'kano-finish' });
-            const boat = el('div', { className: 'kano-boat', 'data-c': '1' });
-            boat.style.setProperty('--bcol', player.color.css);
+
+        // Twee halve schermen — top voor speler A (CSS-rotated), bot voor B
+        const halfA = el('div', { className: 'kano-half3d top' });
+        const halfB = el('div', { className: 'kano-half3d bot' });
+
+        const canvasA = el('canvas', { className: 'kano-canvas-piece' });
+        const canvasB = el('canvas', { className: 'kano-canvas-piece' });
+        halfA.append(canvasA);
+        halfB.append(canvasB);
+
+        // HUD per helft (zit binnen de helft → erft de CSS rotation)
+        function buildHUD(player) {
+            const zone = el('div', { className: 'kano-zone3d' });
             const name = el('div', { className: 'kano-name' }, player.name);
             name.style.setProperty('--pcol', player.color.css);
-            const taps = el('div', { className: 'kano-taps' }, 'TAP!');
             const prog = el('div', { className: 'kano-progress' });
-            const progBar = el('div');
-            prog.append(progBar);
-            progBar.parentElement.style.setProperty('--pcol', player.color.css);
-            z.append(island, finish, boat, name, taps, prog);
-            return { zone: z, boat, progBar };
+            const bar = el('div');
+            prog.append(bar);
+            prog.style.setProperty('--pcol', player.color.css);
+            const hint = el('div', { className: 'kano-taps' }, 'TAP!');
+            zone.append(name, prog, hint);
+            return { zone, bar };
         }
-        const A = buildZone(playerA, 'top');
-        const B = buildZone(playerB, 'bot');
-        back.append(A.zone, B.zone);
-        // Overlay
+        const hudA = buildHUD(playerA);
+        const hudB = buildHUD(playerB);
+        halfA.append(hudA.zone);
+        halfB.append(hudB.zone);
+
+        back.append(halfA, halfB);
+
+        // Start/finish overlay (zit BOVEN de halves, niet in een rotated half)
         const overlay = el('div', { className: 'kano-overlay show' });
         const oTitle = el('h2', {}, '🛶 Kano Race');
         const oText = el('p', {}, `${playerA.name} (boven) vs ${playerB.name} (onder). Tik zo snel mogelijk op JOUW helft! Eerste bij de finish wint.`);
@@ -16995,111 +17035,469 @@ function playKanoRace({ playerA, playerB, drinks = 4 } = {}) {
         back.append(overlay);
         ui.append(back);
 
-        // ── STATE ──
-        // pos = 0 (start) → 1 (finish). vel in pos-units/sec.
-        // Eindzone: finish ligt op top:60px, kano start op bottom:80px.
-        // We mappen pos:0 = bottom:80px en pos:1 = bottom: (zoneHeight - 100px) ~ finish.
+        // ──── ISLAND BUILDER ────
+        function buildIsland() {
+            const island = new THREE.Group();
+            const sand = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.4, 2.8, 0.4, 16),
+                new THREE.MeshToonMaterial({ color: 0xf4dc95, gradientMap: toon }));
+            sand.position.y = 0.2;
+            island.add(sand);
+
+            const grass = new THREE.Mesh(
+                new THREE.SphereGeometry(1.1, 12, 8),
+                new THREE.MeshToonMaterial({ color: 0x6dcf5a, gradientMap: toon }));
+            grass.position.y = 0.6;
+            grass.scale.y = 0.45;
+            island.add(grass);
+
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.12, 0.15, 1.8, 8),
+                new THREE.MeshToonMaterial({ color: 0x8b5a2b, gradientMap: toon }));
+            trunk.position.set(0, 1.2, 0);
+            trunk.rotation.z = 0.12;
+            island.add(trunk);
+
+            const leafMat = new THREE.MeshToonMaterial({
+                color: 0x4caf50, gradientMap: toon });
+            for (let i = 0; i < 6; i++) {
+                const leaf = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.05, 0.08, 0.28), leafMat);
+                const ang = i * Math.PI / 3;
+                leaf.position.set(
+                    Math.cos(ang) * 0.5 + 0.2, 2.1, Math.sin(ang) * 0.5);
+                leaf.rotation.y = ang;
+                leaf.rotation.z = -0.28;
+                island.add(leaf);
+            }
+
+            const pole = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.05, 0.05, 1.4, 6),
+                new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toon }));
+            pole.position.set(1.6, 1.1, 0);
+            island.add(pole);
+
+            const flag = new THREE.Mesh(
+                new THREE.BoxGeometry(0.7, 0.42, 0.04),
+                new THREE.MeshToonMaterial({ color: 0xff5252, gradientMap: toon }));
+            flag.position.set(2.0, 1.45, 0);
+            island.add(flag);
+
+            return island;
+        }
+
+        // ──── CANOE BUILDER ────
+        // Kano-local frame: -Z = forward (richting bow / finish), +Z = stern
+        function buildCanoe(colorHex) {
+            const canoe = new THREE.Group();
+            const hullMat = new THREE.MeshToonMaterial({
+                color: colorHex, gradientMap: toon });
+            const woodMat = new THREE.MeshToonMaterial({
+                color: 0x6b4226, gradientMap: toon });
+            const woodDark = new THREE.MeshToonMaterial({
+                color: 0x4a2e1a, gradientMap: toon });
+
+            const hullCenter = new THREE.Mesh(
+                new THREE.BoxGeometry(1.4, 0.5, 2.6), hullMat);
+            hullCenter.position.y = -0.10;
+            canoe.add(hullCenter);
+
+            const bow = new THREE.Mesh(
+                new THREE.ConeGeometry(0.78, 1.3, 6), hullMat);
+            bow.rotation.x = -Math.PI / 2;
+            bow.position.set(0, -0.10, -1.95);
+            bow.scale.set(1, 0.55, 1);
+            canoe.add(bow);
+
+            const stern = new THREE.Mesh(
+                new THREE.ConeGeometry(0.78, 1.3, 6), hullMat);
+            stern.rotation.x = Math.PI / 2;
+            stern.position.set(0, -0.10, +1.95);
+            stern.scale.set(1, 0.55, 1);
+            canoe.add(stern);
+
+            const inside = new THREE.Mesh(
+                new THREE.BoxGeometry(0.95, 0.06, 2.2), woodDark);
+            inside.position.y = 0.13;
+            canoe.add(inside);
+
+            const seat = new THREE.Mesh(
+                new THREE.BoxGeometry(0.8, 0.10, 0.7), woodMat);
+            seat.position.set(0, 0.21, 0);
+            canoe.add(seat);
+
+            const paddleMat = new THREE.MeshToonMaterial({
+                color: 0x8b5a2b, gradientMap: toon });
+            const paddleL = new THREE.Mesh(
+                new THREE.BoxGeometry(0.08, 0.06, 1.2), paddleMat);
+            paddleL.position.set(0.8, 0.30, 0.15);
+            paddleL.rotation.z = 0.35;
+            canoe.add(paddleL);
+
+            const paddleR = new THREE.Mesh(
+                new THREE.BoxGeometry(0.08, 0.06, 1.2), paddleMat);
+            paddleR.position.set(-0.8, 0.30, -0.15);
+            paddleR.rotation.z = -0.35;
+            canoe.add(paddleR);
+
+            return canoe;
+        }
+
+        // ──── SCENE BUILDER ────
+        // Beide scenes IDENTIEK opgebouwd. Geen root-rotation meer.
+        // Speler A's CANVAS wordt visueel geroteerd via CSS.
+        function buildKanoScene(player) {
+            const scn = new THREE.Scene();
+            scn.background = new THREE.Color(0x0e4060);
+
+            const sun = new THREE.DirectionalLight(0xfff5e0, 1.0);
+            sun.position.set(2, 8, 1);
+            scn.add(sun);
+            scn.add(new THREE.HemisphereLight(0xa0d0f0, 0x1a4060, 0.55));
+
+            // Water plane
+            const water = new THREE.Mesh(
+                new THREE.PlaneGeometry(20, 22),
+                new THREE.MeshToonMaterial({ color: 0x2a7eb8, gradientMap: toon }));
+            water.rotation.x = -Math.PI / 2;
+            water.position.y = -0.02;
+            scn.add(water);
+
+            // Lane (donkerdere strook)
+            const lane = new THREE.Mesh(
+                new THREE.PlaneGeometry(4.5, 12),
+                new THREE.MeshToonMaterial({
+                    color: 0x1f6a9c, gradientMap: toon,
+                    transparent: true, opacity: 0.7 }));
+            lane.rotation.x = -Math.PI / 2;
+            lane.position.y = 0.005;
+            scn.add(lane);
+
+            // Foam patches
+            const foamPatches = [];
+            for (let i = 0; i < 16; i++) {
+                const foam = new THREE.Mesh(
+                    new THREE.PlaneGeometry(
+                        0.6 + Math.random() * 0.5,
+                        0.14 + Math.random() * 0.12),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xc8e8f4, transparent: true, opacity: 0.45 }));
+                foam.rotation.x = -Math.PI / 2;
+                foam.position.set(
+                    (Math.random() - 0.5) * 8,
+                    0.01,
+                    Math.random() * 14 - 7);
+                scn.add(foam);
+                foamPatches.push(foam);
+            }
+
+            // Lily pads aan zijkanten
+            for (let i = 0; i < 6; i++) {
+                const pad = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.5, 8),
+                    new THREE.MeshToonMaterial({
+                        color: 0x6fa050, gradientMap: toon,
+                        side: THREE.DoubleSide }));
+                pad.rotation.x = -Math.PI / 2;
+                pad.position.set(
+                    (Math.random() < 0.5 ? -1 : 1) * (3 + Math.random() * 0.6),
+                    0.015,
+                    Math.random() * 12 - 6);
+                pad.rotation.z = Math.random() * Math.PI;
+                scn.add(pad);
+            }
+
+            // Finish line — geblokt patroon, op Z=-4.5
+            const finishGroup = new THREE.Group();
+            for (let i = -3; i <= 3; i++) {
+                const block = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.6, 0.12, 0.45),
+                    new THREE.MeshToonMaterial({
+                        color: (i + 3) % 2 === 0 ? 0xffffff : 0x1a1a1a,
+                        gradientMap: toon }));
+                block.position.set(i * 0.6, 0.07, 0);
+                finishGroup.add(block);
+            }
+            finishGroup.position.z = -4.5;
+            scn.add(finishGroup);
+
+            // Eiland achter finish, op Z=-6
+            const island = buildIsland();
+            island.position.z = -6.0;
+            scn.add(island);
+
+            // Kano + pawn
+            const canoe = buildCanoe(player.color.hex);
+
+            const pawn = buildPawnGroup(player.color.hex, player.avatar, {
+                jailed: !!player.inPrison });
+            pawn.scale.set(0.7, 0.7, 0.7);
+            pawn.position.set(0, 0.25, -0.10);
+            // Pawn kijkt naar canoe-local -Z (= naar bow = naar finish)
+            pawn.rotation.y = Math.PI;
+            canoe.add(pawn);
+
+            canoe.position.set(0, 0, 4.0);  // start position
+            scn.add(canoe);
+
+            return { scene: scn, canoe, foamPatches };
+        }
+
+        // ──── CAMERA — IDENTIEK voor beide spelers ────
+        // Recht naar beneden kijkend, ortho top-down.
+        // Met up=(0,0,-1): wereld -Z aan TOP van viewport, +Z aan BOTTOM.
+        // → kano (Z=+4) onderaan canvas (= dichtbij speler B)
+        // → finish/eiland (Z=-4..-6) bovenaan canvas (= ver weg)
+        // Voor speler A wordt het hele canvas-element via CSS 180°
+        // geroteerd, dus daar komt kano bovenaan en finish onderaan.
+        const V_HALF = 7;
+
+        function makeCamera(aspect) {
+            const hHalf = V_HALF * aspect;
+            const cam = new THREE.OrthographicCamera(
+                -hHalf, hHalf, V_HALF, -V_HALF, 0.1, 30);
+            cam.up.set(0, 0, -1);
+            cam.position.set(0, 12, 0);
+            cam.lookAt(0, 0, 0);
+            return cam;
+        }
+
+        // ──── RENDERER + SCENE setup per speler ────
+        function buildSetup(canvas, player) {
+            const renderer = new THREE.WebGLRenderer({
+                canvas, antialias: true, alpha: false,
+            });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setClearColor(0x0a3a5a);
+            const built = buildKanoScene(player);
+            return {
+                renderer,
+                scene: built.scene,
+                canoe: built.canoe,
+                foamPatches: built.foamPatches,
+                camera: null,
+            };
+        }
+        const A = buildSetup(canvasA, playerA);
+        const B = buildSetup(canvasB, playerB);
+
+        function resizeAll() {
+            // Beide halves zijn 50% van back.clientHeight, full width
+            const w = back.clientWidth;
+            const h = back.clientHeight / 2;
+            const aspect = w / h;
+            for (const S of [A, B]) {
+                S.renderer.setSize(w, h, false);
+                if (!S.camera) {
+                    S.camera = makeCamera(aspect);
+                } else {
+                    const hHalf = V_HALF * aspect;
+                    S.camera.left = -hHalf;
+                    S.camera.right = hHalf;
+                    S.camera.updateProjectionMatrix();
+                }
+            }
+        }
+        window.addEventListener('resize', resizeAll);
+        resizeAll();
+
+        // ════════════════════════════════════════════════════════════
+        //  GAME STATE — identiek aan 2D versie
+        // ════════════════════════════════════════════════════════════
         const state = {
             posA: 0, velA: 0, posB: 0, velB: 0,
             running: false, finished: false,
         };
-        const TAP_BOOST = 0.060;     // 6% van afstand per tap (op vel)
-        const FRICTION  = 0.985;     // exponentiele decay per ms (subtiel)
-        const TAP_DECAY_MS = 16.67;
+        const TAP_BOOST = 0.060;
+        const FRICTION  = 0.985;
         let lastT = 0;
         let rafId = 0;
         let tapsA = 0, tapsB = 0;
 
-        function updateVisual() {
-            const aH = A.zone.clientHeight;
-            const bH = B.zone.clientHeight;
-            // Bot edge gaat van 80px (start) tot aH-90 (finish near top)
-            // Maar A is geroteerd 180°, dus voor A werkt het visueel hetzelfde:
-            // we zetten gewoon style.bottom op de boat.
-            const aBot = 80 + (aH - 170) * state.posA;
-            const bBot = 80 + (bH - 170) * state.posB;
-            A.boat.style.bottom = aBot + 'px';
-            B.boat.style.bottom = bBot + 'px';
-            A.progBar.style.width = (state.posA * 100).toFixed(1) + '%';
-            B.progBar.style.width = (state.posB * 100).toFixed(1) + '%';
+        const Z_START = 4.0, Z_END = -4.0;
+
+        const splashesA = [];
+        const splashesB = [];
+
+        function spawnSplash(scn, list, x, z) {
+            const splash = new THREE.Mesh(
+                new THREE.RingGeometry(0.06, 0.22, 14),
+                new THREE.MeshBasicMaterial({
+                    color: 0xffffff, transparent: true,
+                    opacity: 0.7, side: THREE.DoubleSide }));
+            splash.rotation.x = -Math.PI / 2;
+            splash.position.set(x, 0.04, z);
+            splash.userData.life = 0;
+            scn.add(splash);
+            list.push(splash);
         }
+
+        function updateSplashes(list, dt) {
+            for (let i = list.length - 1; i >= 0; i--) {
+                const s = list[i];
+                s.userData.life += dt;
+                const t = s.userData.life;
+                s.scale.setScalar(1 + t * 5);
+                s.material.opacity = Math.max(0, 0.7 - t * 1.4);
+                if (t > 0.5) {
+                    s.parent.remove(s);
+                    s.geometry.dispose();
+                    s.material.dispose();
+                    list.splice(i, 1);
+                }
+            }
+        }
+
+        function updateVisual(dt) {
+            const t = performance.now();
+
+            // Kano Z-positie + subtiele bewegingen
+            A.canoe.position.z = Z_START + (Z_END - Z_START) * state.posA;
+            B.canoe.position.z = Z_START + (Z_END - Z_START) * state.posB;
+            A.canoe.position.x = Math.sin(t * 0.0018) * 0.10;
+            B.canoe.position.x = Math.sin(t * 0.0018 + 1.7) * 0.10;
+            A.canoe.rotation.y = Math.sin(t * 0.005) * 0.06 *
+                Math.min(1, state.velA * 6);
+            B.canoe.rotation.y = Math.sin(t * 0.005 + 0.7) * 0.06 *
+                Math.min(1, state.velB * 6);
+
+            // Foam scroll
+            for (const f of A.foamPatches) {
+                f.position.z += dt * (0.5 + state.velA * 4);
+                if (f.position.z > 8) f.position.z -= 15;
+            }
+            for (const f of B.foamPatches) {
+                f.position.z += dt * (0.5 + state.velB * 4);
+                if (f.position.z > 8) f.position.z -= 15;
+            }
+
+            updateSplashes(splashesA, dt);
+            updateSplashes(splashesB, dt);
+
+            hudA.bar.style.width = (state.posA * 100).toFixed(1) + '%';
+            hudB.bar.style.width = (state.posB * 100).toFixed(1) + '%';
+        }
+
+        function render3d() {
+            if (!A.camera || !B.camera) return;
+            A.renderer.render(A.scene, A.camera);
+            B.renderer.render(B.scene, B.camera);
+        }
+
         function tick(t) {
-            if (!state.running) return;
+            if (state.finished === 'closed') return;
             const dt = lastT ? Math.min(0.05, (t - lastT) / 1000) : 0;
             lastT = t;
-            // Friction (exponential)
-            const friFac = Math.pow(FRICTION, dt * 60);
-            state.velA *= friFac;
-            state.velB *= friFac;
-            // Apply velocity to position
-            state.posA = Math.min(1, state.posA + state.velA * dt);
-            state.posB = Math.min(1, state.posB + state.velB * dt);
-            updateVisual();
-            // Win conditie
-            const aDone = state.posA >= 1;
-            const bDone = state.posB >= 1;
-            if (aDone || bDone) {
-                state.finished = true;
-                state.running = false;
-                let winner, loser;
-                if (aDone && bDone) {
-                    // gelijkstand — degene met meeste taps wint? gebruik posA/posB extra
-                    winner = tapsA >= tapsB ? playerA : playerB;
-                    loser  = winner === playerA ? playerB : playerA;
-                } else {
-                    winner = aDone ? playerA : playerB;
-                    loser  = aDone ? playerB : playerA;
+
+            if (state.running) {
+                const friFac = Math.pow(FRICTION, dt * 60);
+                state.velA *= friFac;
+                state.velB *= friFac;
+                state.posA = Math.min(1, state.posA + state.velA * dt);
+                state.posB = Math.min(1, state.posB + state.velB * dt);
+
+                const aDone = state.posA >= 1;
+                const bDone = state.posB >= 1;
+                if (aDone || bDone) {
+                    state.finished = true;
+                    state.running = false;
+                    let winner, loser;
+                    if (aDone && bDone) {
+                        winner = tapsA >= tapsB ? playerA : playerB;
+                        loser  = winner === playerA ? playerB : playerA;
+                    } else {
+                        winner = aDone ? playerA : playerB;
+                        loser  = aDone ? playerB : playerA;
+                    }
+                    showResult(winner, loser);
                 }
-                showResult(winner, loser);
-                return;
             }
+
+            updateVisual(dt);
+            render3d();
             rafId = requestAnimationFrame(tick);
         }
+
         function showResult(winner, loser) {
             overlay.classList.add('show');
             overlay.replaceChildren(
-                el('h2', { style: { color: winner.color.css } }, `🏆 ${winner.name} wint!`),
+                el('h2', { style: { color: winner.color.css } },
+                    `🏆 ${winner.name} wint!`),
                 el('p', {}, `${loser.name} drinkt ${drinks} slokken 🍻`),
                 el('button', { className: 'btn-pill gold', type: 'button',
                     on: { click: () => finish(loser) } }, 'Klaar'),
             );
             setTimeout(() => finish(loser), 5000);
         }
+
+        function disposeScene(scn) {
+            scn.traverse(obj => {
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) {
+                    if (Array.isArray(obj.material)) {
+                        obj.material.forEach(m => m.dispose());
+                    } else {
+                        obj.material.dispose();
+                    }
+                }
+            });
+        }
+
         function finish(loser) {
             if (state.finished === 'closed') return;
             state.finished = 'closed';
             state.running = false;
             cancelAnimationFrame(rafId);
+            window.removeEventListener('resize', resizeAll);
+            try {
+                disposeScene(A.scene);
+                disposeScene(B.scene);
+                A.renderer.dispose();
+                B.renderer.dispose();
+            } catch (e) { console.warn('dispose err:', e); }
             back.style.transition = 'opacity 0.3s ease';
             back.style.opacity = '0';
             setTimeout(() => { back.remove(); resolve(loser); }, 300);
         }
 
-        // ── INPUT: tap-zones gescheiden ──
-        function onTapA(e) { e.preventDefault(); if (!state.running) return;
-            state.velA += TAP_BOOST; tapsA++; pulseBoat(A.boat); }
-        function onTapB(e) { e.preventDefault(); if (!state.running) return;
-            state.velB += TAP_BOOST; tapsB++; pulseBoat(B.boat); }
-        function pulseBoat(b) {
-            const cur = b.style.transform || 'translateX(-50%)';
-            b.style.transform = 'translateX(-50%) scale(1.05)';
-            setTimeout(() => { b.style.transform = ''; }, 60);
+        // ──── INPUT — tap-zones zitten IN de halves ────
+        function onTapA(e) {
+            e.preventDefault();
+            if (!state.running) return;
+            state.velA += TAP_BOOST;
+            tapsA++;
+            const side = (tapsA % 2 === 0) ? +0.8 : -0.8;
+            spawnSplash(A.scene, splashesA,
+                A.canoe.position.x + side, A.canoe.position.z);
         }
-        A.zone.addEventListener('touchstart', onTapA, { passive: false });
-        B.zone.addEventListener('touchstart', onTapB, { passive: false });
-        A.zone.addEventListener('mousedown', onTapA);
-        B.zone.addEventListener('mousedown', onTapB);
+        function onTapB(e) {
+            e.preventDefault();
+            if (!state.running) return;
+            state.velB += TAP_BOOST;
+            tapsB++;
+            const side = (tapsB % 2 === 0) ? +0.8 : -0.8;
+            spawnSplash(B.scene, splashesB,
+                B.canoe.position.x + side, B.canoe.position.z);
+        }
+
+        hudA.zone.addEventListener('touchstart', onTapA, { passive: false });
+        hudB.zone.addEventListener('touchstart', onTapB, { passive: false });
+        hudA.zone.addEventListener('mousedown', onTapA);
+        hudB.zone.addEventListener('mousedown', onTapB);
 
         oBtn.addEventListener('click', () => {
             overlay.classList.remove('show');
             state.running = true;
             lastT = 0;
-            rafId = requestAnimationFrame(tick);
         });
         oSkip.addEventListener('click', () => finish(null));
-        updateVisual();
+
+        rafId = requestAnimationFrame(tick);
     });
 }
+
+
+
 
 
 /* ════════════════════════════════════════════════════════════════════
