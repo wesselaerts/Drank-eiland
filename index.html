@@ -35,6 +35,11 @@
 <!-- Inline PWA manifest (data URI – no extra files needed for GitHub Pages) -->
 <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name"%3A"Volkaan Eiland"%2C"short_name"%3A"Volkaan"%2C"description"%3A"Wii Party stijl WebGL eiland"%2C"display"%3A"standalone"%2C"orientation"%3A"portrait-primary"%2C"theme_color"%3A"%234da6ff"%2C"background_color"%3A"%2387CEEB"%2C"start_url"%3A"."%2C"icons"%3A[{"src"%3A"data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iIzRkYTZmZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTYlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmb250LXNpemU9IjEzMCI+8J+MizwvdGV4dD48L3N2Zz4="%2C"sizes"%3A"180x180"%2C"type"%3A"image%2Fsvg%2Bxml"}]}'/>
 
+<!-- Fonts voor de dice-engine UI (Cormorant + Manrope) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
 <style>
     * { box-sizing: border-box; }
 
@@ -334,10 +339,12 @@
     .rb3-hit { position: absolute; inset: 0; pointer-events: auto;
         touch-action: none; background: transparent; }
     /* Top-bar: tegenstander HP + wind + naam */
-    /* Top-bar: HP + naam compact zodat alles met dynamic island past */
+    /* Top-bar: HP + naam compact zodat alles met dynamic island past.
+       Right-edge afgeschermd voor de stacked music + skip knoppen die
+       in de rechterbovenhoek staan (40+36+gap = ~82px). */
     .rb3-top { position: absolute;
         left: max(8px, env(safe-area-inset-left));
-        right: max(8px, env(safe-area-inset-right));
+        right: max(60px, calc(env(safe-area-inset-right) + 52px));
         top: calc(env(safe-area-inset-top) + 10px);
         display: flex; flex-direction: column; align-items: center; gap: 6px;
         pointer-events: none; }
@@ -349,7 +356,7 @@
         backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         pointer-events: none; min-width: 0; }
     .rb3-chip > div:not(.dot):not(.hp) {
-        max-width: 22vw; overflow: hidden;
+        max-width: 30vw; min-width: 50px; overflow: hidden;
         text-overflow: ellipsis; white-space: nowrap; }
     .rb3-chip .dot { width: 10px; height: 10px; border-radius: 50%;
         background: var(--pcol); box-shadow: 0 0 8px var(--pcol);
@@ -408,8 +415,11 @@
         background: radial-gradient(ellipse at center, rgba(255,80,40,0.55) 0%, rgba(0,0,0,0) 60%);
         opacity: 0; transition: opacity 0.25s ease; }
     .rb3-flash.show { opacity: 1; }
-    /* Skip pill */
-    .rb3-skip { position: absolute; z-index: 26;
+    /* Skip pill — z-index 30 zodat 'ie BOVEN rb3-top / pingrid (z:22)
+       en de gedeelde .mg-skip (z:6) blijft. Voorheen kreeg deze pill
+       door source-order de mg-skip waarde (6) en viel hij onder de
+       chips bij smal scherm. */
+    .rb3-skip { position: absolute; z-index: 30;
         top: calc(env(safe-area-inset-top) + 12px);
         right: calc(env(safe-area-inset-right) + 10px);
         padding: 7px 13px; border-radius: 999px;
@@ -540,21 +550,24 @@
         100% { transform: translateY(110vh) rotate(720deg); opacity: 0.2; }
     }
 
-    /* ===== Banner (centre): grote fase-specifieke tekst ===== */
-    .rb3-banner { position: absolute; left: 50%; top: 38%;
+    /* ===== Banner: speler-aankondiging boven het kijkbeeld =====
+       Verplaatst van top:38% (centrum) naar top:18% — zat midden
+       op de bowling-baan / vulkaan en blokkeerde het zicht. Nu
+       boven, compacter (10px 20px ipv 14px 26px), kleinere font,
+       semi-transparant zodat 3D scene erdoorheen schijnt. */
+    .rb3-banner { position: absolute; left: 50%; top: 18%;
         transform: translate(-50%, -50%);
-        padding: 14px 26px; border-radius: 22px;
-        background: rgba(15,30,50,0.82); color: #fff;
-        border: 3px solid var(--pcol, #ffd54a);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.55),
-                    0 0 30px var(--pcol, transparent);
-        font-weight: 900; font-size: 28px; letter-spacing: 0.5px;
+        padding: 10px 20px; border-radius: 18px;
+        background: rgba(15,30,50,0.85); color: #fff;
+        border: 2px solid var(--pcol, #ffd54a);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        font-weight: 900; font-size: 22px; letter-spacing: 0.5px;
         text-align: center; line-height: 1.1;
         text-shadow: 0 2px 0 rgba(0,0,0,0.5);
         backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         pointer-events: none; animation: rb3bnPop .35s ease; max-width: 80vw; }
-    .rb3-banner small { display: block; font-size: 11px;
-        letter-spacing: 1.5px; opacity: 0.7;
+    .rb3-banner small { display: block; font-size: 10px;
+        letter-spacing: 1.3px; opacity: 0.7;
         text-transform: uppercase; font-weight: 800;
         margin-bottom: 4px; }
     @keyframes rb3bnPop {
@@ -621,22 +634,60 @@
       color: #2a1a00; font-weight: 900; font-size: 16px; cursor: pointer;
       box-shadow: 0 4px 0 #b56a00; -webkit-tap-highlight-color: transparent; }
 
-    /* ===== Shared floating skip pill for fullscreen minigame iframes ===== */
-    .mg-skip { position: absolute; z-index: 6;
-      top: calc(env(safe-area-inset-top) + 6px); right: 10px;
-      padding: 7px 13px; border-radius: 999px;
-      background: rgba(0,0,0,0.55); color: #fff;
-      font-weight: 800; font-size: 12px; letter-spacing: 0.4px;
-      border: 1px solid rgba(255,255,255,0.22); cursor: pointer;
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    /* ===== Mini options-tab trigger =====
+       Altijd zichtbaar rechtsboven (36×36 "⋯"). Tap = klap muziek
+       + skip uit. Tap buiten = klap dicht. Zo nemen de twee
+       knoppen geen permanente scherm-real-estate in. */
+    #mg-options-trigger { position: fixed;
+      top: max(12px, env(safe-area-inset-top));
+      right: 12px;
+      z-index: 34;
+      width: 36px; height: 36px; padding: 0;
+      border-radius: 50%;
+      background: rgba(20,30,42,0.65);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      color: #fff; border: 1.5px solid rgba(255,255,255,0.30);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       -webkit-tap-highlight-color: transparent;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
-    .mg-skip:active { transform: translateY(1px); }
-    /* Long-press hint indicator on Skip */
-    .mg-skip::before { content: "⋯"; opacity: 0.7; margin-right: 4px; }
-    /* Manual-winner popup that appears on long-press Skip */
-    .mg-winpop { position: absolute; z-index: 7;
-      top: calc(env(safe-area-inset-top) + 50px); right: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+      transition: transform .15s ease, background .2s ease, border-color .2s ease; }
+    #mg-options-trigger:active { transform: scale(0.92); }
+    #mg-options-trigger::before { content: "⋯"; font-size: 22px;
+      line-height: 1; opacity: 0.9; }
+    body.mg-opts-expanded #mg-options-trigger {
+      background: rgba(255,213,74,0.22);
+      border-color: rgba(255,213,74,0.55); }
+
+    /* ===== Shared floating skip button =====
+       Kleine pil met "⋯ Skip" tekst voor duidelijkheid. Onderdeel
+       van de #mg-options-tab — default verborgen, zichtbaar
+       wanneer body.mg-opts-expanded. Tap = skip, lang-drukken =
+       handmatige winnaar-popup. */
+    .mg-skip { position: fixed; z-index: 33;
+      top: calc(env(safe-area-inset-top) + 102px);
+      right: 14px;
+      height: 32px; padding: 0 16px;
+      border-radius: 999px;
+      background: rgba(20,30,42,0.78);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      color: #fff; border: 1.5px solid rgba(255,255,255,0.30);
+      font-size: 12px; font-weight: 800; letter-spacing: 0.5px;
+      cursor: pointer; line-height: 1;
+      display: inline-flex; align-items: center; gap: 4px;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35); pointer-events: none;
+      opacity: 0; transform: translateY(-6px) scale(0.82);
+      transform-origin: top right;
+      transition: opacity .18s ease, transform .18s ease; }
+    body.mg-opts-expanded .mg-skip { opacity: 1; pointer-events: auto;
+      transform: translateY(0) scale(1); transition-delay: 60ms; }
+    .mg-skip:active { transform: scale(0.94); }
+    /* Manual-winner popup that appears on long-press Skip —
+       gepositioneerd ONDER de skip-pil (skip op safe+104, hoogte 32
+       + 10 gap = safe+146) */
+    .mg-winpop { position: fixed; z-index: 34;
+      top: calc(env(safe-area-inset-top) + 144px); right: 14px;
       padding: 10px; border-radius: 14px;
       background: rgba(10,16,32,0.92); border: 1px solid rgba(255,255,255,0.18);
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -900,6 +951,67 @@
     .dice-iframe { position: absolute; inset: 0; width: 100%; height: 100%;
       border: 0; background: transparent; }
 
+    /* ===== Inline dice engine (replaces iframe) =====
+       Canvas-stage + UI binnen .dice-iframe-back. Zelfde uiterlijk
+       als de oude dice-overlay.html, maar zonder iframe-grens. */
+    .dice-stage-inline { position: absolute; inset: 0; z-index: 1; }
+    .dice-stage-inline canvas { display: block; width: 100% !important;
+      height: 100% !important; touch-action: none; }
+    .dice-ui-inline { position: relative; z-index: 10; pointer-events: none;
+      height: 100%; display: flex; flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(14px, 3vw, 30px); }
+    .dice-ui-inline > * { pointer-events: auto; }
+    .dice-results-inline { text-align: center; min-width: 180px;
+      background: rgba(15,30,50,0.85);
+      border: 2px solid var(--pcol, #ffd54a);
+      border-radius: 18px;
+      padding: 14px 22px;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      align-self: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #fff; }
+    .dice-results-inline .turn-name {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--pcol, #ffd54a);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      margin-bottom: 4px; }
+    .dice-results-inline .label {
+      font-size: 10px; letter-spacing: .35em; text-transform: uppercase;
+      color: rgba(255,255,255,0.55); font-weight: 800; }
+    .dice-results-inline .total {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-weight: 900;
+      font-size: clamp(40px, 6.5vw, 68px); line-height: .95;
+      margin-top: 4px;
+      background: linear-gradient(180deg, #fff5cf 0%, #ffd54a 55%, #ff9a1a 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,0.45));
+      transition: transform .35s cubic-bezier(.2,1.4,.4,1), opacity .3s; }
+    .dice-results-inline.flash .total { transform: scale(1.08); }
+    .dice-results-inline .breakdown {
+      font-size: 12px; color: rgba(255,255,255,0.75);
+      margin-top: 4px; letter-spacing: .12em;
+      font-variant-numeric: tabular-nums; min-height: 14px;
+      font-weight: 700; }
+    .dice-verder-btn {
+      pointer-events: auto; align-self: center;
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 14px 36px; border-radius: 999px;
+      background: linear-gradient(180deg, #ffd54a, #ff9a1a);
+      color: #2a1a00; font-weight: 900; font-size: 17px; letter-spacing: .5px;
+      border: 2px solid #fff;
+      box-shadow: 0 4px 0 #b86c00, 0 8px 30px rgba(0,0,0,0.5);
+      cursor: pointer;
+      transition: transform .1s ease, box-shadow .1s ease, opacity .25s ease;
+      opacity: 0; pointer-events: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .dice-verder-btn.show { opacity: 1; pointer-events: auto; }
+    .dice-verder-btn:active { transform: translateY(3px);
+      box-shadow: 0 1px 0 #b86c00, 0 4px 14px rgba(0,0,0,0.5); }
+
 
     .tile-stamp-back { position: fixed; inset: 0; z-index: 55;
       display: flex; align-items: center; justify-content: center;
@@ -971,13 +1083,18 @@
       padding: 10px 22px; border-radius: 999px; font-weight: 700; cursor: pointer;
       -webkit-tap-highlight-color: transparent; }
 
-    /* ===== Volcano eruption banner ===== */
+    /* ===== Volcano eruption banner =====
+       Compacter + semi-transparant: voorheen blokte de massieve
+       oranje pill regelmatig een halve speler-token. Nu kleinere
+       padding, smaller font en 78% opacity zodat de scene
+       erdoorheen schijnt. */
     .vol-banner { position: fixed; left: 50%; top: max(56px, calc(env(safe-area-inset-top) + 48px));
       transform: translateX(-50%); z-index: 22;
-      padding: 8px 16px; border-radius: 999px;
-      background: linear-gradient(180deg, #ff5a1a, #d92500);
-      color: #fff5d6; font-weight: 800; font-size: 13px; letter-spacing: 0.5px;
-      border: 2px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.55), 0 0 20px rgba(255,90,26,0.6);
+      padding: 5px 12px; border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,90,26,0.82), rgba(217,37,0,0.82));
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      color: #fff5d6; font-weight: 800; font-size: 11px; letter-spacing: 0.4px;
+      border: 1px solid rgba(255,255,255,0.55); box-shadow: 0 3px 10px rgba(0,0,0,0.4), 0 0 16px rgba(255,90,26,0.45);
       animation: erupt 0.45s cubic-bezier(.3,1.6,.5,1) both, volPulse 1.2s ease-in-out infinite 0.5s; }
     @keyframes erupt { from { transform: translateX(-50%) scale(0); opacity: 0; }
                        to   { transform: translateX(-50%) scale(1); opacity: 1; } }
@@ -987,28 +1104,37 @@
     /* Quick screen-shake for big knockback events */
     .shake { animation: screenShake 0.4s ease-in-out; }
 
-    /* ── Background music toggle (rechts-boven) ── */
+    /* ── Background music toggle ──
+       Onderdeel van de #mg-options-tab — default verborgen, alleen
+       zichtbaar wanneer body.mg-opts-expanded. Positie: safe+58
+       (onder de "⋯" trigger op safe+12 met 36+10 gap = 58). */
     #bg-music-toggle {
       position: fixed;
-      top: max(12px, env(safe-area-inset-top));
+      top: calc(env(safe-area-inset-top) + 58px);
       right: 12px;
-      z-index: 30;
-      width: 40px; height: 40px;
+      z-index: 33;
+      width: 36px; height: 36px;
       border: 1.5px solid rgba(255,255,255,0.30);
       border-radius: 50%;
       background: rgba(20,30,42,0.65);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
       color: #ffd54a;
-      font-size: 18px;
+      font-size: 16px;
       cursor: pointer;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
-      transition: transform .15s ease, background .2s ease, opacity .25s ease;
+      pointer-events: none;
+      opacity: 0; transform: translateY(-6px) scale(0.82);
+      transform-origin: top right;
+      transition: opacity .18s ease, transform .18s ease;
       box-shadow: 0 2px 8px rgba(0,0,0,0.35);
     }
+    body.mg-opts-expanded #bg-music-toggle { opacity: 1; pointer-events: auto;
+      transform: translateY(0) scale(1); }
     #bg-music-toggle:active { transform: scale(0.92); }
-    #bg-music-toggle.muted { opacity: 0.55; color: rgba(255,255,255,0.65); }
+    #bg-music-toggle.muted { color: rgba(255,255,255,0.65); }
+    body.mg-opts-expanded #bg-music-toggle.muted { opacity: 0.7; }
 
     /* ── Volume slider (long-press) ── */
     #bg-vol-card {
@@ -1647,7 +1773,10 @@
       box-shadow: 0 0 40px #ffd54a; }
     .brug-perm h3 { margin: 0 0 8px; font-size: 20px; }
     .brug-perm p { margin: 6px 0; opacity: 0.85; max-width: 260px; font-size: 14px; }
-    .brug-banner { position: absolute; left: 50%; top: 50%;
+    /* brug-banner naar top:30% verplaatst zodat 'ie niet op exact
+       dezelfde plek staat als brug-perm (top:50%) — die overlap
+       gaf flicker bij snelle banner+perm achtereen. */
+    .brug-banner { position: absolute; left: 50%; top: 30%;
       transform: translate(-50%, -50%); padding: 16px 24px; border-radius: 16px;
       text-align: center; z-index: 4;
       background: rgba(0,0,0,0.92); border: 2px solid var(--pcol, #ffd54a);
@@ -2664,7 +2793,9 @@
 {
   "imports": {
     "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "OrbitControls": "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js"
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+    "OrbitControls": "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js",
+    "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
   }
 }
 </script>
@@ -2672,6 +2803,9 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'OrbitControls';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import * as CANNON from 'cannon-es';
 
 // ════════════════════════════════════════════════════════════
 //  PORTRAIT-ONLY GUARD
@@ -5928,6 +6062,45 @@ function layoutTokensOnTile(tileIdx) {
 }
 
 // animate token tile-by-tile along the path; camera does a 3rd-person follow
+
+// ────────────────────────────────────────────────────────────────
+//  panCameraToCurrentPlayer — drone-target naar speler-aan-de-beurt
+// ────────────────────────────────────────────────────────────────
+//  Bij elke turn-start drijft de drone-camera richting een paar
+//  tegels VOOR de huidige speler. De auto-rotate gaat door, het
+//  draaipunt schuift smooth mee (1.1s ease-out). Geeft de speler
+//  direct context van waar 'ie staat en waar 'ie naartoe kan.
+//  Wordt alleen gebruikt buiten minigames — minigames slaan camera
+//  state op en herstellen 'm zelf.
+function panCameraToCurrentPlayer(lookAhead = 2) {
+    if (!G.players || G.players.length === 0) return;
+    if (controls.enabled === false) return;   // we zitten in een minigame
+    const player = G.players[G.turnIdx];
+    if (!player) return;
+    // Bij gevangen speler: kijk naar de gevangenis (banana brig)
+    // i.p.v. het bord, anders zou de camera naar tile blijven kijken
+    // terwijl de speler ergens anders staat.
+    let targetVec;
+    if (player.inPrison && typeof JAIL_WORLD_POS !== 'undefined') {
+        targetVec = JAIL_WORLD_POS.clone();
+    } else {
+        const aheadIdx = Math.min((player.tileIdx ?? 0) + lookAhead,
+            TILE_COUNT - 1);
+        targetVec = tileWorldPos[aheadIdx].clone();
+        targetVec.y += 1;
+    }
+    const start = controls.target.clone();
+    const t0 = performance.now();
+    const dur = 1100;       // langzaam, drone-achtig
+    function step() {
+        const k = Math.min(1, (performance.now() - t0) / dur);
+        const e = k * (2 - k);    // ease-out quadratic
+        controls.target.lerpVectors(start, targetVec, e);
+        if (k < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
 function moveTokenAlong(player, steps, onDone) {
     player._animating = true;
     const prevAuto = controls.autoRotate;
@@ -11905,7 +12078,13 @@ function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
                      boxShadow: '0 0 8px ' + playerA.color.css } });
         const nmA  = el('div', {}, playerA.name);
         const hpA  = el('div', { className: 'hp' });
-        chipA.append(dotA, nmA, hpA);
+        // Naam UIT de chip gehaald — op smal iPhone scherm pasten 2
+        // chips + naam + hearts + wind-pill niet meer naast de
+        // options-tab. De gekleurde dot identificeert al wie wie
+        // is, en de AAN-DE-BEURT-box onderaan toont de huidige
+        // speler-naam. Naam-variabelen blijven gedefinieerd voor
+        // hergebruik (bv. banner / KO-overlay).
+        chipA.append(dotA, hpA);
         const windEl = el('div', { className: 'rb3-wind' });
         const chipB = el('div', { className: 'rb3-chip',
             style: { '--pcol': playerB.color.css } });
@@ -11914,7 +12093,7 @@ function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
                      boxShadow: '0 0 8px ' + playerB.color.css } });
         const nmB  = el('div', {}, playerB.name);
         const hpB  = el('div', { className: 'hp' });
-        chipB.append(dotB, nmB, hpB);
+        chipB.append(dotB, hpB);
         const rowAB = el('div', {
             style: { display: 'flex', gap: '10px', alignItems: 'center' }
         }, [chipA, windEl, chipB]);
@@ -11972,14 +12151,16 @@ function playRaftBattle({ playerA, playerB, drinks = 4, targetHp = 3 } = {}) {
             const cur = players[current];
             renderHP(hpA, players.A.hp);
             renderHP(hpB, players.B.hp);
-            // Wind
+            // Wind \u2014 alleen tonen als er ECHT wind is. Bij windstil
+            // staat hier nu \"STIL\" wat niks toevoegt en alleen ruimte\n            // kostte tussen de speler-chips. Bij wind: arrow + sterkte.
             const w = Math.abs(wind);
             if (w < 0.1) {
-                windEl.innerHTML = '💨 <b>STIL</b>';
+                windEl.style.display = 'none';
             } else {
-                const arrow = wind > 0 ? '➡️' : '⬅️';
+                windEl.style.display = '';
+                const arrow = wind > 0 ? '\u27a1\ufe0f' : '\u2b05\ufe0f';
                 const lbl = w > 1.7 ? 'STERK' : w > 1.0 ? 'MATIG' : 'ZWAK';
-                windEl.innerHTML = `💨 <b>${lbl}</b><span class="arrow">${arrow}</span>`;
+                windEl.innerHTML = `\ud83d\udca8 <b>${lbl}</b><span class="arrow">${arrow}</span>`;
             }
             turnBox.style.setProperty('--pcol', cur.color.css);
             turnName.textContent = cur.name;
@@ -12664,7 +12845,10 @@ function playBowling({ players, drinks = 4 } = {}) {
         const WATER_Y      = BOWL.waterY;                   // 0.05
         const BALL_R       = BOWL.ballRad;
         const PIN_R        = BOWL.pinRad;
-        const KNOCK_R      = BALL_R + PIN_R + 0.05;
+        // KNOCK_R: exacte ball+pin contact — geen magnetische padding meer.
+        // De oude losse bowlspel.html gebruikte ook precies ballR+pinR;
+        // dat geeft echte impact-feel ipv "klik vanaf afstand".
+        const KNOCK_R      = BALL_R + PIN_R;
         const CHAIN_R      = PIN_R * 2.4;
         const GUTTER_W     = BOWL.gutterW;
         const ROLL_FRICT   = 0.992;
@@ -12935,6 +13119,11 @@ function playBowling({ players, drinks = 4 } = {}) {
                 pin.userData.fallProgress = 0;
                 pin.userData.fallAxis = null;
                 pin.userData.fallTime = 0;
+                // Velocity-based fall state opruimen
+                pin.userData.fallVelocity = 0;
+                pin.userData.fallAngle = 0;
+                pin.userData.fallTarget = undefined;
+                pin.userData.cascadeDepth = 0;
             }
             fallenPinsThisRound.clear();
         }
@@ -12950,6 +13139,18 @@ function playBowling({ players, drinks = 4 } = {}) {
             // Rotatie-as loodrecht op valrichting (in xz-vlak)
             pin.userData.fallAxis = new THREE.Vector3(fz, 0, -fx).normalize();
             pin.userData.fallDir = { x: fx, z: fz };
+            // ── Echte engine-feel: per pin eigen initiële rotatie-
+            // snelheid + iets random target-hoek, zoals in de losse
+            // bowlspel.html. Geeft variatie tussen pinnen (sommige
+            // klappen snel, sommige tollen na). Chained pinnen krijgen
+            // een lagere startsnelheid zodat ze "meegeduwd" lijken.
+            const chained = (pin.userData.cascadeDepth || 0) > 0;
+            pin.userData.fallVelocity = chained
+                ? 3.0
+                : 5.0 + Math.random() * 1.5;
+            pin.userData.fallAngle = 0;
+            pin.userData.fallTarget = (Math.PI / 2) *
+                (0.95 + Math.random() * 0.1);
             fallenPinsThisRound.add(pin);
             // Directional cascade — alleen pinnen in de val-richting
             // krijgen een hoge kans om mee te vallen. Pinnen erachter
@@ -12971,12 +13172,17 @@ function playBowling({ players, drinks = 4 } = {}) {
                 const dot = nx * prevDx + nz * prevDz;
                 // Lagere kansen dan voorheen — moeilijker om
                 // strikes/kettingen te krijgen vanaf indirecte hits
+                // Cascade-kansen teruggezet naar oude bowlspel.html-
+                // waarden — die voelden "echt" en gaven natuurlijke
+                // strikes/spares. De restrictieve waardes ervoor
+                // maakten chains te zeldzaam.
                 let chance;
-                if (dot > 0.55) chance = 0.78;          // was 0.92
-                else if (dot > 0.15) chance = 0.32;     // was 0.55
-                else if (dot > -0.20) chance = 0.10;    // was 0.18
-                else chance = 0.01;                     // was 0.03
-                if (depth >= 2) chance *= 0.35;         // was 0.45
+                if (dot > 0.55) chance = 0.92;
+                else if (dot > 0.15) chance = 0.55;
+                else if (dot > -0.20) chance = 0.18;
+                else chance = 0.03;
+                if (depth >= 2) chance *= 0.45;
+                if (depth >= 3) chance *= 0.30;
                 if (Math.random() < chance) {
                     other.userData.cascadeDepth = depth;
                     knockDownPin(other, srcPin.position.clone(),
@@ -13332,8 +13538,11 @@ function playBowling({ players, drinks = 4 } = {}) {
             startBallPhysics(rel.power, rel.aimAngle, rel.spin);
         }
         function startBallPhysics(power01, aimAngle, spin) {
-            const minSpeed = 8.5;
-            const maxSpeed = 15;
+            // Snelheidsbereik gelijk aan losse bowlspel.html: 7–14 m/s.
+            // Iets meer spread dan 8.5–15 — zachte worpen voelen
+            // duidelijk anders dan power-shots.
+            const minSpeed = 7.0;
+            const maxSpeed = 14.0;
             const speed = minSpeed + power01 * (maxSpeed - minSpeed);
             // Bal vliegt langs -X (richting pinnen). aimAngle bepaalt
             // hoek in xz-vlak. spin geeft laterale acceleratie in Z.
@@ -13565,19 +13774,29 @@ function playBowling({ players, drinks = 4 } = {}) {
                     setTimeout(() => endRunWithScore(), 900);
                 }
             }
-            // Pin-val animaties (rotation lerp over 0.6s)
+            // ── Pin-val: echte momentum-fysica per pin ────────────
+            // Geport van de losse bowlspel.html. Elke pin heeft een
+            // eigen fallVelocity die accelereert (dt * 6.5) en een
+            // random target-hoek. Resultaat: pinnen vallen met
+            // variatie — sommige snel/scherp, sommige tollen na,
+            // chained pinnen draaien trager. Veel dynamischer dan
+            // een uniforme ease-out.
             for (const pin of bowlingPins) {
                 if (!pin.userData.fallen) continue;
-                pin.userData.fallProgress = pin.userData.fallProgress || 0;
-                if (pin.userData.fallProgress < 1) {
-                    pin.userData.fallProgress += dt / 0.55;
-                    const t01 = Math.min(1, pin.userData.fallProgress);
-                    // Ease-out
-                    const e = 1 - Math.pow(1 - t01, 3);
-                    const ang = (Math.PI / 2) * e;     // 0 → 90 graden
-                    pin.quaternion.setFromAxisAngle(pin.userData.fallAxis, ang);
-                    // Ook iets omlaag verschuiven zodat het er op de baan ligt
-                    pin.position.y = pin.userData.basePos.y - 0.05 * e;
+                if (pin.userData.fallTarget === undefined) continue;
+                if (pin.userData.fallAngle < pin.userData.fallTarget) {
+                    pin.userData.fallVelocity += dt * 6.5;
+                    pin.userData.fallAngle +=
+                        pin.userData.fallVelocity * dt;
+                    if (pin.userData.fallAngle > pin.userData.fallTarget) {
+                        pin.userData.fallAngle = pin.userData.fallTarget;
+                    }
+                    pin.quaternion.copy(pin.userData.baseQuat);
+                    pin.rotateOnWorldAxis(pin.userData.fallAxis,
+                        pin.userData.fallAngle);
+                    // Lichte y-drop tijdens val
+                    pin.position.y = pin.userData.basePos.y
+                        - 0.05 * Math.sin(pin.userData.fallAngle);
                 }
             }
         };
@@ -14440,6 +14659,553 @@ function spinDieTo(die, value, extraSpins = 4) {
 // Communication is via postMessage:
 //   iframe → host:  'dice-ready', 'dice-result', 'dice-dismiss'
 //   host  → iframe: 'dice-init', 'dice-roll'
+
+/* ═══════════════════════════════════════════════════════════════
+   openDiceOverlay — inline dice engine (vervangt dice-overlay.html)
+   ═══════════════════════════════════════════════════════════════
+   Geen iframe meer; bouwt de complete dice-scene direct in een
+   `.dice-iframe-back` div. Zelfde uiterlijk + gedrag als de oude
+   iframe-versie. Returns een object met `.start()` / `.destroy()`.
+
+   opts:
+     count        — aantal dobbelstenen (1 of 2)
+     hasGoldDie   — true = tweede dobbelsteen wordt goud (bonus die)
+     playerName   — naam getoond in de results-card
+     onResult({total, values, doubles}) — fires na settle
+     onDismiss()  — fires als de speler op "Verder →" tikt
+     parent       — DOM element om de overlay aan te koppelen
+   ═══════════════════════════════════════════════════════════════ */
+const DICE_PALETTES = {
+    ivory:  { color:'#efe6cf', metalness:0.05, roughness:0.45, clearcoat:0.4, pip:'#1a1410', envInt:0.9 },
+    bronze: { color:'#a36a32', metalness:1.0,  roughness:0.32, clearcoat:0.0, pip:'#160c05', envInt:1.0 },
+    silver: { color:'#d6d6d6', metalness:1.0,  roughness:0.18, clearcoat:0.0, pip:'#111111', envInt:1.0 },
+    gold:   { color:'#d4a93c', metalness:1.0,  roughness:0.22, clearcoat:0.0, pip:'#160c05', envInt:1.0 },
+};
+const DICE_FACE_VALUES = [3, 4, 1, 6, 2, 5];
+const DICE_PIP_LAYOUTS = {
+    1: [[.5,.5]],
+    2: [[.28,.28],[.72,.72]],
+    3: [[.25,.25],[.5,.5],[.75,.75]],
+    4: [[.27,.27],[.73,.27],[.27,.73],[.73,.73]],
+    5: [[.25,.25],[.75,.25],[.5,.5],[.25,.75],[.75,.75]],
+    6: [[.27,.22],[.73,.22],[.27,.5],[.73,.5],[.27,.78],[.73,.78]],
+};
+const DICE_TEXTURE_CACHE = new Map();
+
+function makeDiceFaceTexture(value, palette) {
+    const S = 512;
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const x = c.getContext('2d');
+    x.fillStyle = palette.color; x.fillRect(0,0,S,S);
+    const sheen = x.createLinearGradient(0,0,S,S);
+    sheen.addColorStop(0,'rgba(255,255,255,0.10)');
+    sheen.addColorStop(0.5,'rgba(255,255,255,0.0)');
+    sheen.addColorStop(1,'rgba(0,0,0,0.18)');
+    x.fillStyle = sheen; x.fillRect(0,0,S,S);
+    const inset = 26;
+    const grad = x.createLinearGradient(inset,inset,S-inset,S-inset);
+    grad.addColorStop(0,'rgba(255,255,255,0.06)');
+    grad.addColorStop(1,'rgba(0,0,0,0.10)');
+    x.strokeStyle = grad; x.lineWidth = 2;
+    x.strokeRect(inset, inset, S-2*inset, S-2*inset);
+    const pips = DICE_PIP_LAYOUTS[value];
+    const r = S * 0.075;
+    for (const [px,py] of pips) {
+        const cx = px*S, cy = py*S;
+        const ring = x.createRadialGradient(cx,cy,r*0.2,cx,cy,r*1.35);
+        ring.addColorStop(0, palette.pip);
+        ring.addColorStop(0.7, palette.pip);
+        ring.addColorStop(1, 'rgba(0,0,0,0)');
+        x.fillStyle = ring;
+        x.beginPath(); x.arc(cx,cy,r*1.35,0,Math.PI*2); x.fill();
+        x.fillStyle = palette.pip;
+        x.beginPath(); x.arc(cx,cy,r,0,Math.PI*2); x.fill();
+        const hi = x.createRadialGradient(cx-r*0.35,cy-r*0.35,0,cx-r*0.35,cy-r*0.35,r*0.6);
+        hi.addColorStop(0,'rgba(255,235,200,0.45)');
+        hi.addColorStop(1,'rgba(255,235,200,0)');
+        x.fillStyle = hi;
+        x.beginPath(); x.arc(cx-r*0.3,cy-r*0.3,r*0.55,0,Math.PI*2); x.fill();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    return tex;
+}
+function makeDiceRoughnessTexture(value, baseRough) {
+    const S = 256;
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const x = c.getContext('2d');
+    const base = Math.round(baseRough * 255);
+    x.fillStyle = `rgb(${base},${base},${base})`;
+    x.fillRect(0,0,S,S);
+    const pips = DICE_PIP_LAYOUTS[value];
+    const r = S * 0.075;
+    const pipR = Math.min(255, base + 80);
+    x.fillStyle = `rgb(${pipR},${pipR},${pipR})`;
+    for (const [px,py] of pips) {
+        x.beginPath(); x.arc(px*S,py*S,r,0,Math.PI*2); x.fill();
+    }
+    return new THREE.CanvasTexture(c);
+}
+function makeDiceNormalTexture(value) {
+    const S = 256;
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const x = c.getContext('2d');
+    x.fillStyle = 'rgb(128,128,255)';
+    x.fillRect(0,0,S,S);
+    const pips = DICE_PIP_LAYOUTS[value];
+    const r = S * 0.075;
+    for (const [px,py] of pips) {
+        const cx = px*S, cy = py*S;
+        const steps = 12;
+        for (let i=0; i<steps; i++) {
+            const t = i/steps;
+            const rr = r * (1 - t);
+            const ang = Math.PI*0.25;
+            const dx = Math.cos(ang), dy = Math.sin(ang);
+            const shade = 1 - t;
+            const nx = 128 + Math.round(60 * shade * dx);
+            const ny = 128 + Math.round(60 * shade * dy);
+            const grad = x.createRadialGradient(cx,cy,rr*0.8,cx,cy,rr);
+            grad.addColorStop(0, `rgba(${nx},${ny},255,0)`);
+            grad.addColorStop(1, `rgba(${nx},${ny},255,0.18)`);
+            x.fillStyle = grad;
+            x.beginPath(); x.arc(cx,cy,rr,0,Math.PI*2); x.fill();
+        }
+    }
+    return new THREE.CanvasTexture(c);
+}
+function getDiceTexturesFor(matKey) {
+    if (DICE_TEXTURE_CACHE.has(matKey)) return DICE_TEXTURE_CACHE.get(matKey);
+    const palette = DICE_PALETTES[matKey];
+    const set = [];
+    for (const v of DICE_FACE_VALUES) {
+        set.push({
+            map: makeDiceFaceTexture(v, palette),
+            roughnessMap: makeDiceRoughnessTexture(v, palette.roughness),
+            normalMap: makeDiceNormalTexture(v),
+        });
+    }
+    DICE_TEXTURE_CACHE.set(matKey, set);
+    return set;
+}
+
+function openDiceOverlay({ count = 1, hasGoldDie = false, playerName = '',
+                            onResult, onDismiss, parent,
+                            playerColor = '#ffd54a' } = {}) {
+    parent = parent || document.body;
+    const DIE_SIZE = 0.9;
+
+    // ─── DOM ─────────────────────────────────────────────────────
+    const back = document.createElement('div');
+    back.className = 'dice-iframe-back';
+    back.style.setProperty('--pcol', playerColor);
+    const stage = document.createElement('div');
+    stage.className = 'dice-stage-inline';
+    const ui = document.createElement('div');
+    ui.className = 'dice-ui-inline';
+    const resultsBox = document.createElement('div');
+    resultsBox.className = 'dice-results-inline';
+    const turnNameEl = document.createElement('div');
+    turnNameEl.className = 'turn-name';
+    turnNameEl.textContent = playerName || ' ';
+    const labelEl = document.createElement('div');
+    labelEl.className = 'label';
+    labelEl.textContent = 'Worp';
+    const totalEl = document.createElement('div');
+    totalEl.className = 'total';
+    totalEl.textContent = '—';
+    const breakdownEl = document.createElement('div');
+    breakdownEl.className = 'breakdown';
+    breakdownEl.textContent = 'klaar om te gooien';
+    resultsBox.append(turnNameEl, labelEl, totalEl, breakdownEl);
+    const verderBtn = document.createElement('button');
+    verderBtn.type = 'button';
+    verderBtn.className = 'dice-verder-btn';
+    verderBtn.textContent = 'Verder →';
+    ui.append(resultsBox, verderBtn);
+    back.append(stage, ui);
+    parent.append(back);
+
+    // ─── THREE.js setup ──────────────────────────────────────────
+    const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true,
+        powerPreference:'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.appendChild(renderer.domElement);
+
+    const dScene = new THREE.Scene();
+    dScene.background = null;
+
+    const dCam = new THREE.PerspectiveCamera(52, 1, 0.1, 100);
+    dCam.position.set(0, 9.5, 9.8);
+    dCam.lookAt(0, 0.3, 0);
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    pmrem.compileEquirectangularShader();
+    const envTex = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+    dScene.environment = envTex;
+
+    const hemi = new THREE.HemisphereLight(0xfff1cf, 0x0a0806, 0.35);
+    dScene.add(hemi);
+    const keyLight = new THREE.DirectionalLight(0xfff1cb, 2.4);
+    keyLight.position.set(4.5, 9, 5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 30;
+    keyLight.shadow.camera.left = -7; keyLight.shadow.camera.right = 7;
+    keyLight.shadow.camera.top = 7;   keyLight.shadow.camera.bottom = -7;
+    keyLight.shadow.bias = -0.0008;
+    keyLight.shadow.radius = 5;
+    dScene.add(keyLight);
+    const fillLight = new THREE.DirectionalLight(0x6b8cff, 0.45);
+    fillLight.position.set(-6, 4, -2);
+    dScene.add(fillLight);
+    const rimLight = new THREE.SpotLight(0xffcf8c, 1.2, 22, Math.PI/4, 0.6, 1.5);
+    rimLight.position.set(-3, 6, -5);
+    dScene.add(rimLight);
+
+    // Table
+    const tableGroup = new THREE.Group();
+    dScene.add(tableGroup);
+    const feltGeo = new THREE.CircleGeometry(3.5, 96);
+    const feltMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1410, roughness: 0.95, metalness: 0.0,
+        transparent: true, opacity: 0.55, depthWrite: false,
+    });
+    const felt = new THREE.Mesh(feltGeo, feltMat);
+    felt.rotation.x = -Math.PI/2;
+    felt.receiveShadow = true;
+    tableGroup.add(felt);
+    {
+        const c = document.createElement('canvas'); c.width = c.height = 512;
+        const x = c.getContext('2d');
+        const g = x.createRadialGradient(256,256,40,256,256,256);
+        g.addColorStop(0,'rgba(80,55,30,0.30)');
+        g.addColorStop(0.55,'rgba(20,15,10,0.15)');
+        g.addColorStop(1,'rgba(0,0,0,0.55)');
+        x.fillStyle = g; x.fillRect(0,0,512,512);
+        const tex = new THREE.CanvasTexture(c);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        const overlay = new THREE.Mesh(
+            new THREE.CircleGeometry(3.45, 96),
+            new THREE.MeshBasicMaterial({ map: tex, transparent:true,
+                depthWrite:false, opacity: 0.7 })
+        );
+        overlay.rotation.x = -Math.PI/2;
+        overlay.position.y = 0.001;
+        tableGroup.add(overlay);
+    }
+    {
+        // Buitenring: krijgt de kleur van de huidige speler i.p.v.
+        // statisch goud — zo voelt elke worp persoonlijk.
+        const ringGeo = new THREE.RingGeometry(3.26, 3.34, 128);
+        const playerCol3 = new THREE.Color(playerColor);
+        const ringMat = new THREE.MeshStandardMaterial({
+            color: playerCol3, metalness: 1.0, roughness: 0.28,
+            emissive: playerCol3, emissiveIntensity: 0.35,
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = -Math.PI/2;
+        ring.position.y = 0.003;
+        tableGroup.add(ring);
+        // Binnenring blijft donker-goud als subtiele accent
+        const inner = new THREE.Mesh(
+            new THREE.RingGeometry(3.10, 3.12, 128),
+            new THREE.MeshStandardMaterial({ color:0x8e6a30, metalness:1, roughness:0.35 })
+        );
+        inner.rotation.x = -Math.PI/2;
+        inner.position.y = 0.003;
+        tableGroup.add(inner);
+    }
+
+    // ─── Cannon physics ──────────────────────────────────────────
+    const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -38, 0) });
+    world.broadphase = new CANNON.SAPBroadphase(world);
+    world.allowSleep = true;
+    world.defaultContactMaterial.restitution = 0.25;
+    const matFloor = new CANNON.Material('floor');
+    const matDice  = new CANNON.Material('dice');
+    const matWall  = new CANNON.Material('wall');
+    world.addContactMaterial(new CANNON.ContactMaterial(matDice, matFloor, { friction: 0.35, restitution: 0.32 }));
+    world.addContactMaterial(new CANNON.ContactMaterial(matDice, matDice,  { friction: 0.10, restitution: 0.45 }));
+    world.addContactMaterial(new CANNON.ContactMaterial(matDice, matWall,  { friction: 0.05, restitution: 0.55 }));
+    const floorBody = new CANNON.Body({ type:CANNON.Body.STATIC,
+        shape:new CANNON.Plane(), material:matFloor });
+    floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI/2);
+    world.addBody(floorBody);
+    const WALL_RADIUS = 2.9, WALL_HEIGHT = 3, WALL_SEGMENTS = 16;
+    for (let i = 0; i < WALL_SEGMENTS; i++) {
+        const a = (i / WALL_SEGMENTS) * Math.PI * 2;
+        const wx = Math.cos(a) * WALL_RADIUS;
+        const wz = Math.sin(a) * WALL_RADIUS;
+        const seg = (2 * Math.PI * WALL_RADIUS) / WALL_SEGMENTS;
+        const body = new CANNON.Body({
+            type: CANNON.Body.STATIC,
+            shape: new CANNON.Box(new CANNON.Vec3(seg/2 + 0.05, WALL_HEIGHT/2, 0.15)),
+            material: matWall,
+        });
+        body.position.set(wx, WALL_HEIGHT/2, wz);
+        body.quaternion.setFromEuler(0, -a + Math.PI/2, 0);
+        world.addBody(body);
+    }
+    const ceil = new CANNON.Body({ type:CANNON.Body.STATIC,
+        shape:new CANNON.Plane(), material:matWall });
+    ceil.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0), Math.PI/2);
+    ceil.position.y = 7;
+    world.addBody(ceil);
+
+    // ─── Dice creation ───────────────────────────────────────────
+    function makeDieMaterials(matKey) {
+        const palette = DICE_PALETTES[matKey];
+        const texSet = getDiceTexturesFor(matKey);
+        return texSet.map(t => new THREE.MeshStandardMaterial({
+            map: t.map, roughnessMap: t.roughnessMap,
+            normalMap: t.normalMap,
+            normalScale: new THREE.Vector2(0.45, 0.45),
+            metalness: palette.metalness,
+            roughness: palette.roughness,
+            envMapIntensity: palette.envInt,
+        }));
+    }
+    function pickMaterialFor(i) {
+        if (hasGoldDie) return i === 0 ? 'ivory' : 'gold';
+        return 'ivory';
+    }
+    const dice = [];
+    const half = DIE_SIZE / 2;
+    for (let i = 0; i < count; i++) {
+        const geo = new RoundedBoxGeometry(DIE_SIZE, DIE_SIZE, DIE_SIZE, 6, DIE_SIZE * 0.14);
+        const mats = makeDieMaterials(pickMaterialFor(i));
+        const mesh = new THREE.Mesh(geo, mats);
+        mesh.castShadow = true;
+        dScene.add(mesh);
+        const body = new CANNON.Body({
+            mass: 1.0,
+            shape: new CANNON.Box(new CANNON.Vec3(half, half, half)),
+            material: matDice,
+            linearDamping: 0.10,
+            angularDamping: 0.12,
+            allowSleep: true,
+            sleepSpeedLimit: 0.15,
+            sleepTimeLimit: 0.4,
+        });
+        world.addBody(body);
+        dice.push({ mesh, body });
+    }
+    // Idle pose
+    {
+        const n = dice.length;
+        const spacing = DIE_SIZE * 1.4;
+        const totalW = (n - 1) * spacing;
+        for (let i = 0; i < n; i++) {
+            const d = dice[i];
+            d.body.velocity.set(0,0,0);
+            d.body.angularVelocity.set(0,0,0);
+            d.body.position.set(-totalW/2 + i*spacing, DIE_SIZE/2 + 0.001, 0);
+            d.body.quaternion.setFromEuler(0, (i - (n-1)/2) * 0.25, 0);
+            d.body.wakeUp();
+            d.mesh.position.copy(d.body.position);
+            d.mesh.quaternion.copy(d.body.quaternion);
+        }
+    }
+
+    // ─── Roll logic ──────────────────────────────────────────────
+    let rolling = false;
+    let settleTimer = 0;
+    let resultReported = false;
+
+    function roll() {
+        if (rolling) return;
+        rolling = true;
+        settleTimer = 0;
+        resultReported = false;
+        totalEl.textContent = '…';
+        breakdownEl.textContent = 'rolling';
+        const n = dice.length;
+        for (let i = 0; i < n; i++) {
+            const d = dice[i];
+            // Random spawn
+            const spawnAngle = Math.random() * Math.PI * 2;
+            const spawnR     = 0.4 + Math.random() * 2.0;
+            const startX     = Math.cos(spawnAngle) * spawnR;
+            const startZ     = Math.sin(spawnAngle) * spawnR;
+            const startY     = 3.5 + Math.random() * 3.0 + i * 0.2;
+            d.body.position.set(startX, startY, startZ);
+            // Uniform random orientation (Marsaglia/Shoemake)
+            const u1 = Math.random(), u2 = Math.random(), u3 = Math.random();
+            const s1 = Math.sqrt(1 - u1);
+            const s2 = Math.sqrt(u1);
+            d.body.quaternion.set(
+                s1 * Math.sin(2 * Math.PI * u2),
+                s1 * Math.cos(2 * Math.PI * u2),
+                s2 * Math.sin(2 * Math.PI * u3),
+                s2 * Math.cos(2 * Math.PI * u3),
+            );
+            // Random throw
+            const throwAngle = Math.random() * Math.PI * 2;
+            const speed      = 4.5 + Math.random() * 5.0;
+            d.body.velocity.set(
+                Math.cos(throwAngle) * speed,
+                -0.5 + Math.random() * 3.0,
+                Math.sin(throwAngle) * speed,
+            );
+            const spinMagX = 14 + Math.random() * 22;
+            const spinMagY = 14 + Math.random() * 22;
+            const spinMagZ = 14 + Math.random() * 22;
+            d.body.angularVelocity.set(
+                (Math.random() - 0.5) * 2 * spinMagX,
+                (Math.random() - 0.5) * 2 * spinMagY,
+                (Math.random() - 0.5) * 2 * spinMagZ,
+            );
+            d.body.wakeUp();
+        }
+    }
+    function isAllSettled() {
+        for (const d of dice) {
+            const v = d.body.velocity.length();
+            const a = d.body.angularVelocity.length();
+            if (v > 0.08 || a > 0.08) return false;
+        }
+        return true;
+    }
+    function getTopValue(d) {
+        const up = new THREE.Vector3(0,1,0);
+        const dirs = [
+            [new THREE.Vector3( 1, 0, 0), 3],
+            [new THREE.Vector3(-1, 0, 0), 4],
+            [new THREE.Vector3( 0, 1, 0), 1],
+            [new THREE.Vector3( 0,-1, 0), 6],
+            [new THREE.Vector3( 0, 0, 1), 2],
+            [new THREE.Vector3( 0, 0,-1), 5],
+        ];
+        const q = d.mesh.quaternion;
+        let best = -Infinity, val = 0;
+        for (const [dir, v] of dirs) {
+            const dot = dir.clone().applyQuaternion(q).dot(up);
+            if (dot > best) { best = dot; val = v; }
+        }
+        return val;
+    }
+    function reportResult() {
+        if (resultReported) return;
+        resultReported = true;
+        const values = dice.map(d => getTopValue(d));
+        const total = values.reduce((a,b)=>a+b, 0);
+        totalEl.textContent = total;
+        if (values.length > 1) {
+            breakdownEl.innerHTML = values[0] + ' + <span style="color:#ffd54a">' + values[1] + '</span>';
+        } else {
+            breakdownEl.textContent = '\u00A0';
+        }
+        resultsBox.classList.remove('flash');
+        void resultsBox.offsetWidth;
+        resultsBox.classList.add('flash');
+        const doubles = hasGoldDie && values.length >= 2 && values[0] === values[1];
+        if (onResult) onResult({ total, values, doubles });
+        verderBtn.classList.add('show');
+    }
+
+    // ─── Animation loop ──────────────────────────────────────────
+    const clock = new THREE.Clock();
+    let alive = true;
+    function loop() {
+        if (!alive) return;
+        const dt = Math.min(clock.getDelta(), 1/30);
+        world.step(1/60, dt, 3);
+        const SAFE_R = 2.55;
+        for (const d of dice) {
+            const x = d.body.position.x;
+            const z = d.body.position.z;
+            const r = Math.sqrt(x*x + z*z);
+            if (r > SAFE_R) {
+                const f = SAFE_R / r;
+                d.body.position.x = x * f;
+                d.body.position.z = z * f;
+                const vx = d.body.velocity.x;
+                const vz = d.body.velocity.z;
+                const radialVel = (vx*x + vz*z) / r;
+                if (radialVel > 0) {
+                    d.body.velocity.x = vx - radialVel * (x/r) * 1.2;
+                    d.body.velocity.z = vz - radialVel * (z/r) * 1.2;
+                }
+            }
+            if (d.body.position.y < DIE_SIZE/2 - 0.02) {
+                d.body.position.y = DIE_SIZE/2 + 0.05;
+                if (d.body.velocity.y < 0) d.body.velocity.y = 0;
+            }
+        }
+        for (const d of dice) {
+            d.mesh.position.copy(d.body.position);
+            d.mesh.quaternion.copy(d.body.quaternion);
+        }
+        if (rolling) {
+            if (isAllSettled()) {
+                settleTimer += dt;
+                if (settleTimer > 0.35) {
+                    rolling = false;
+                    reportResult();
+                }
+            } else {
+                settleTimer = 0;
+            }
+        }
+        // Subtle idle camera drift
+        const t = performance.now() * 0.0001;
+        dCam.position.x = Math.sin(t) * 0.20;
+        dCam.position.z = 9.8 + Math.cos(t * 1.3) * 0.12;
+        dCam.lookAt(0, 0.3, 0);
+        renderer.render(dScene, dCam);
+        requestAnimationFrame(loop);
+    }
+    loop();
+
+    // ─── Resize ──────────────────────────────────────────────────
+    function resize() {
+        const w = stage.clientWidth, h = stage.clientHeight;
+        renderer.setSize(w, h, false);
+        dCam.aspect = w / h;
+        dCam.updateProjectionMatrix();
+    }
+    const ro = new ResizeObserver(resize);
+    ro.observe(stage);
+    resize();
+
+    // ─── Verder button ───────────────────────────────────────────
+    verderBtn.addEventListener('click', () => {
+        if (onDismiss) onDismiss();
+    });
+
+    // ─── Public API ──────────────────────────────────────────────
+    return {
+        backEl: back,
+        roll,
+        destroy() {
+            alive = false;
+            try { ro.disconnect(); } catch(e) {}
+            // dispose three resources
+            for (const d of dice) {
+                dScene.remove(d.mesh);
+                if (Array.isArray(d.mesh.material)) {
+                    d.mesh.material.forEach(m => m.dispose());
+                } else {
+                    d.mesh.material.dispose();
+                }
+                d.mesh.geometry.dispose();
+                world.removeBody(d.body);
+            }
+            try { renderer.dispose(); } catch(e) {}
+            try { pmrem.dispose(); } catch(e) {}
+            back.remove();
+        },
+    };
+}
+
 function onRollDice() {
     if (G.phase !== 'idle') return;
     const player = G.players[G.turnIdx];
@@ -14488,8 +15254,31 @@ function onRollDice() {
         zoomCameraToJail(500);
     }
 
-    // Build the iframe overlay (semi-transparent table, host page peeks through)
-    const back = el('div', { className: 'dice-iframe-back' });
+    // Build the inline dice overlay (geen iframe meer — alles
+    // direct in de DOM). Zelfde uiterlijk: semi-transparante tafel,
+    // host page schijnt erdoorheen.
+    let done = false;
+    let result = null;  // { total, values, doubles }
+
+    const overlay = openDiceOverlay({
+        count: diceCount,
+        hasGoldDie: useBonus,
+        playerName: player.name,
+        playerColor: player.color.css,
+        parent: document.body,
+        onResult: (d) => {
+            result = d;
+            // consume the bonus die after the roll
+            if (useBonus && (player.bonusDice || 0) > 0) {
+                player.bonusDice--;
+                refreshHUD();
+            }
+            // mark doubles for the extra-roll logic later
+            if (d.doubles) player.extraRoll = true;
+        },
+        onDismiss: () => finish(),
+    });
+    // Header met turn-pill bovenop het overlay ("Speler X gooit")
     const headerBar = el('div', { className: 'dice-iframe-header' });
     const turnPill = el('div', { className: 'dice-iframe-pill', style: {
         '--pcol': player.color.css,
@@ -14499,57 +15288,13 @@ function onRollDice() {
         document.createTextNode(`${player.name} gooit${useBonus ? ' (met bonus 🎲💛)' : ''}`),
     );
     headerBar.append(turnPill);
-
-    const iframe = el('iframe', {
-        className: 'dice-iframe',
-        allow: 'autoplay',
-        scrolling: 'no',
-    });
-    // The iframe needs a transparent background — we set it via the `allow*`
-    // attributes and via CSS on the iframe element below.
-    back.append(headerBar, iframe);
-    document.body.append(back);
-
-    let done = false;
-    let result = null;  // { total, values, doubles }
-
-    function send(msg) {
-        try { iframe.contentWindow.postMessage(msg, '*'); } catch(e) {}
-    }
-
-    function onMsg(ev) {
-        if (ev.source !== iframe.contentWindow) return;
-        const d = ev.data;
-        if (!d || typeof d !== 'object') return;
-        if (d.type === 'dice-ready') {
-            // tell the iframe to set up the right number of dice for this roll
-            send({
-                type: 'dice-init',
-                count: diceCount,
-                hasGoldDie: useBonus,
-                playerName: player.name,
-            });
-            // a beat for the dice to settle into idle pose, then roll
-            setTimeout(() => send({ type: 'dice-roll' }), 350);
-        } else if (d.type === 'dice-result') {
-            result = d;
-            // consume the bonus die after the roll
-            if (useBonus && (player.bonusDice || 0) > 0) {
-                player.bonusDice--;
-                refreshHUD();
-            }
-            // mark doubles for the extra-roll logic later
-            if (d.doubles) player.extraRoll = true;
-        } else if (d.type === 'dice-dismiss') {
-            finish();
-        }
-    }
-    window.addEventListener('message', onMsg);
+    overlay.backEl.insertBefore(headerBar, overlay.backEl.firstChild);
+    // Een beat voor de dice in idle pose zijn, dan gooien
+    setTimeout(() => overlay.roll(), 350);
 
     async function finish() {
         if (done) return;
         done = true;
-        window.removeEventListener('message', onMsg);
 
         // If somehow no result came back, fall back to a random roll
         if (!result) {
@@ -14570,10 +15315,11 @@ function onRollDice() {
             total = Math.max(1, total - 1);
         }
 
-        // fade the iframe out
+        // fade the overlay out
+        const back = overlay.backEl;
         back.style.transition = 'opacity 0.3s ease';
         back.style.opacity = '0';
-        setTimeout(() => back.remove(), 300);
+        setTimeout(() => overlay.destroy(), 300);
 
         // Show a short eruption-penalty stamp if applicable (click-to-continue)
         if (eruptPenalty) {
@@ -14646,8 +15392,6 @@ function onRollDice() {
         G.phase = 'moving';
         moveTokenAlong(player, total, () => onLandedOnTile(player));
     }
-
-    iframe.src = 'dice-overlay.html';
 }
 
 // ── Schnaps trigger check — called after every turn advance ──
@@ -14703,6 +15447,10 @@ function advanceTurn() {
         if (G.volcanoActive > 0) G.volcanoActive--;
         updateVolcanoBanner();
     }
+    // Drone-camera pant naar de nieuwe speler-aan-de-beurt.
+    // Iets later zodat lopende animaties (bv. token-move terug
+    // naar bord) eerst kunnen settelen.
+    setTimeout(() => panCameraToCurrentPlayer(), 400);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -14835,10 +15583,11 @@ function playChwazi({ title = 'Iemand drinkt!', subtitle = 'Iedereen legt één 
         stage.append(result);
         const status = el('div', { className: 'chwazi-status' }, `Wachten op vingers…`);
         const foot = el('div', { className: 'chwazi-foot' });
-        const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
         const pickNowBtn = el('button', { className: 'btn-pill gold', type: 'button' }, 'Kies nu');
-        foot.append(skipBtn, pickNowBtn);
+        foot.append(pickNowBtn);
         back.append(head, stage, status, foot);
+        // Skip via #mg-options-tab i.p.v. dubbele knop onderaan
+        back.append(makeMinigameSkip({ onSkip: () => finish(null) }));
         ui.append(back);
 
         const fingers = new Map(); // id -> { el, x, y, playerIdx }
@@ -14930,7 +15679,6 @@ function playChwazi({ title = 'Iemand drinkt!', subtitle = 'Iedereen legt één 
             // Resolve met sentinel-object zodat caller weet dat iemand is
             // gekozen, maar zonder naam. Caller toont generieke tekst.
             pickNowBtn.onclick = () => finish({ anonymous: true, drinks });
-            skipBtn.style.display = 'none';
         }
 
         // Touch events
@@ -14984,7 +15732,6 @@ function playChwazi({ title = 'Iemand drinkt!', subtitle = 'Iedereen legt één 
                 resolve(winnerPlayer);
             }, 300);
         }
-        skipBtn.addEventListener('click', () => finish(null));
         pickNowBtn.addEventListener('click', () => {
             if (locked) return; // gets reassigned to "Verder" after pick
             if (fingers.size === 0) {
@@ -16010,6 +16757,8 @@ function playVolcanoHop({ players = G.players, drinks = 2 } = {}) {
         });
         foot.append(stones, actionsRow);
         back.append(header, stage, foot);
+        // Uniforme skip via #mg-options-tab
+        back.append(makeMinigameSkip({ onSkip: () => finish(null) }));
         ui.append(back);
 
         function renderChips(currentP = null) {
@@ -16376,11 +17125,13 @@ function playPaddleDuel({ playerA, playerB, targetScore = 3, drinks = 4 } = {}) 
         const oTitle = el('h2', {}, 'Paddle Duel');
         const oText = el('p', {}, `${playerA.name} (boven) vs ${playerB.name} (onder). Sleep in je helft om te bewegen. Eerste bij ${targetScore} wint.`);
         const oBtn = el('button', { className: 'btn-pill gold' }, '▶ Start');
-        const oSkip = el('button', { className: 'btn-pill' }, 'Skip');
-        overlay.append(oTitle, oText, oBtn, oSkip);
+        // Skip in intro-overlay verwijderd — zit nu in de #mg-options-tab.
+        overlay.append(oTitle, oText, oBtn);
         wrap.append(overlay);
 
         back.append(wrap);
+        // Uniforme skip via #mg-options-tab
+        back.append(makeMinigameSkip({ onSkip: () => finish(null) }));
         ui.append(back);
 
         const ctx = canvas.getContext('2d');
@@ -16672,7 +17423,6 @@ function playPaddleDuel({ playerA, playerB, targetScore = 3, drinks = 4 } = {}) 
             resetBall(Math.random() < 0.5 ? 1 : -1);
             state.running = true;
         });
-        oSkip.addEventListener('click', () => finish(null));
 
         rafId = requestAnimationFrame(tick);
     });
@@ -16805,9 +17555,7 @@ function playKrokodil({ playerA, playerB, drinks = 4, teethCount = 18 } = {}) {
             turn = 1 - turn;
             updateTurn();
         });
-        const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
-        skipBtn.addEventListener('click', () => finish(null));
-        foot.append(passBtn, skipBtn);
+        foot.append(passBtn);
 
         const result = el('div', { className: 'kroko-result' });
         function showResult(loser) {
@@ -16824,6 +17572,8 @@ function playKrokodil({ playerA, playerB, drinks = 4, teethCount = 18 } = {}) {
         stage.append(result);
 
         back.append(head, stage, foot);
+        // Uniforme skip via #mg-options-tab
+        back.append(makeMinigameSkip({ onSkip: () => finish(null) }));
         ui.append(back);
         updateTurn();
 
@@ -16883,6 +17633,8 @@ function playHeteLavasteen({ players = G.players, drinks = 4 } = {}) {
             textAlign: 'center', fontSize: '13px', opacity: '0.65', padding: '6px 14px' } },
             "Tik om de telefoon door te geven. Wie 'm vasthoudt als de steen ontploft, drinkt.");
         back.append(head, stage, tip);
+        // Uniforme skip via #mg-options-tab
+        back.append(makeMinigameSkip({ onSkip: () => finish(null) }));
         ui.append(back);
 
         // ── STATE ──
@@ -17030,9 +17782,11 @@ function playKanoRace({ playerA, playerB, drinks = 4 } = {}) {
         const oTitle = el('h2', {}, '🛶 Kano Race');
         const oText = el('p', {}, `${playerA.name} (boven) vs ${playerB.name} (onder). Tik zo snel mogelijk op JOUW helft! Eerste bij de finish wint.`);
         const oBtn = el('button', { className: 'btn-pill gold' }, '▶ Start');
-        const oSkip = el('button', { className: 'btn-pill' }, 'Skip');
-        overlay.append(oTitle, oText, oBtn, oSkip);
+        // Skip in intro-overlay verwijderd — zit nu in de #mg-options-tab.
+        overlay.append(oTitle, oText, oBtn);
         back.append(overlay);
+        // Uniforme skip via #mg-options-tab (ook tijdens gameplay)
+        back.append(makeMinigameSkip({ onSkip: () => finish(null) }));
         ui.append(back);
 
         // ──── ISLAND BUILDER ────
@@ -17490,7 +18244,6 @@ function playKanoRace({ playerA, playerB, drinks = 4 } = {}) {
             state.running = true;
             lastT = 0;
         });
-        oSkip.addEventListener('click', () => finish(null));
 
         rafId = requestAnimationFrame(tick);
     });
@@ -17814,6 +18567,8 @@ function playKrabbenVangen({ players = G.players, drinks = 2 } = {}) {
         hud.append(pChip, tChip, sChip);
         const stage = el('div', { className: 'krab-stage' });
         back.append(head, hud, stage);
+        // Uniforme skip via #mg-options-tab
+        back.append(makeMinigameSkip({ onSkip: () => finish(null) }));
         ui.append(back);
 
         // ── STATE ──
@@ -18251,6 +19006,8 @@ function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
             stage.append(m);
         }
         back.append(head, status, tip, stage);
+        // Uniforme skip via #mg-options-tab
+        back.append(makeMinigameSkip({ onSkip: () => finish(null) }));
         ui.append(back);
 
         // ── STATE ──
@@ -18425,13 +19182,19 @@ function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
 
 
 /* ════════════════════════════════════════════════════════════════════
-   5. Brug Balans — gyroscoop balanceer-game
+   5. Brug Balans — 3D tightrope over de vulkaankrater
    ════════════════════════════════════════════════════════════════════
-   Personage loopt automatisch over een brug. Telefoon-tilt (gamma) →
-   helling van het personage. Buiten threshold = val in lava.
-   Survival-time = score. Hoogste wint.
+   De gouden top-tegel verdwijnt en er hangt een touw tussen twee
+   ankerpalen op de kraterrand. Het touw is een cannon-es ketting van
+   bodies + distance constraints — het hangt door en deint echt. Elke
+   speler balanceert 15 sec; gyro-tilt compenseert zwaartekracht +
+   willekeurige wind­vlagen. Moeilijkheid groeit met de tijd: vlagen
+   worden frequenter en harder.
+   Lava-spetters arc'en uit de krater, warme PointLight gloeit van
+   onderaf, rook plumes blijven (uit hoofd-scène). Eerste die valt
+   verliest; langste tijd overlevend wint.
    ════════════════════════════════════════════════════════════════════ */
-function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
+function playBrugBalansLegacy({ players = G.players, drinks = 3 } = {}) {
     return new Promise(resolve => {
         const ui = document.getElementById('game-ui');
         const back = el('div', { className: 'brug-back' });
@@ -18456,6 +19219,8 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
         meter.append(center, pin);
         stage.append(bridge, char, meter);
         back.append(head, hud, stage);
+        // Uniforme skip via #mg-options-tab
+        back.append(makeMinigameSkip({ onSkip: () => finish(null) }));
         ui.append(back);
 
         // ── STATE ──
@@ -18650,6 +19415,541 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             }
         }
         rafId = requestAnimationFrame(tick);
+        showPermission();
+    });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   playBrugBalans — NIEUWE 3D tightrope over de vulkaankrater
+   ════════════════════════════════════════════════════════════════════ */
+function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
+    return new Promise(resolveOuter => {
+        const uiRoot = document.getElementById('game-ui');
+        const hiddenChrome = hideMinigameChrome();
+        const savedCam = {
+            pos: camera.position.clone(),
+            fov: camera.fov,
+            target: controls.target.clone(),
+            autoRotate: controls.autoRotate,
+            enabled: controls.enabled,
+            enableDamping: controls.enableDamping,
+        };
+        controls.autoRotate = false;
+        controls.enabled = false;
+        controls.enableDamping = false;
+        camera.fov = 50;
+        camera.updateProjectionMatrix();
+
+        // Hide gold summit zodat het touw vrij baan heeft
+        const summitWasVisible = (typeof goldSummit !== 'undefined') ? goldSummit.visible : true;
+        if (typeof goldSummit !== 'undefined') goldSummit.visible = false;
+
+        // ── Camera: diagonale view op de krater ──
+        const BRUG_CAM_POS = new THREE.Vector3(7.5, 16.0, 7.5);
+        const BRUG_CAM_TGT = new THREE.Vector3(0, 12.3, 0);
+        const camFromPos = camera.position.clone();
+        const camFromTgt = controls.target.clone();
+        let camLerpT = 0;
+        const camLerpDur = 1.0;
+
+        // ── Physics world (cannon-es) ──
+        const physWorld = new CANNON.World({
+            gravity: new CANNON.Vec3(0, -9.8, 0),
+        });
+        physWorld.broadphase = new CANNON.NaiveBroadphase();
+        physWorld.solver.iterations = 12;
+
+        // ── Anker-pillen op tegenovergestelde kraterrand ──
+        const ANCHOR_L = new THREE.Vector3(-2.2, 13.0, 0);
+        const ANCHOR_R = new THREE.Vector3( 2.2, 13.0, 0);
+        const N_SEGS = 14;
+        const ANCHOR_DIST = ANCHOR_L.distanceTo(ANCHOR_R);
+        const ROPE_TOTAL_LEN = ANCHOR_DIST * 1.18;   // 18% slack → catenary sag
+        const SEG_LEN = ROPE_TOTAL_LEN / N_SEGS;
+
+        const ropeBodies = [];
+        for (let i = 0; i <= N_SEGS; i++) {
+            const t = i / N_SEGS;
+            const x = THREE.MathUtils.lerp(ANCHOR_L.x, ANCHOR_R.x, t);
+            const y = 13.0 - Math.sin(t * Math.PI) * 1.0;
+            const z = 0;
+            const isAnchor = (i === 0 || i === N_SEGS);
+            const body = new CANNON.Body({
+                mass: isAnchor ? 0 : 0.12,
+                shape: new CANNON.Sphere(0.04),
+                position: new CANNON.Vec3(x, y, z),
+                linearDamping: 0.45,
+                angularDamping: 0.45,
+            });
+            physWorld.addBody(body);
+            ropeBodies.push(body);
+        }
+        for (let i = 0; i < N_SEGS; i++) {
+            const c = new CANNON.DistanceConstraint(
+                ropeBodies[i], ropeBodies[i + 1], SEG_LEN, 90);
+            physWorld.addConstraint(c);
+        }
+
+        // ── Visuals ──
+        const brugGroup = new THREE.Group();
+        scene.add(brugGroup);
+
+        // Ankerpalen
+        const pillarMat = new THREE.MeshStandardMaterial({
+            color: 0x3a2a18, roughness: 0.8, metalness: 0.0 });
+        for (const anchor of [ANCHOR_L, ANCHOR_R]) {
+            const pillar = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.10, 0.13, 0.55, 8), pillarMat);
+            pillar.position.set(anchor.x, anchor.y - 0.10, anchor.z);
+            pillar.castShadow = true;
+            brugGroup.add(pillar);
+            const cap = new THREE.Mesh(
+                new THREE.SphereGeometry(0.08, 8, 6),
+                new THREE.MeshStandardMaterial({ color: 0x8b6a3a, roughness: 0.7 }));
+            cap.position.copy(anchor);
+            brugGroup.add(cap);
+        }
+
+        // Touw — TubeGeometry herbouwd elke frame uit physics-posities
+        const ropeMat = new THREE.MeshStandardMaterial({
+            color: 0xb8895a, roughness: 0.85, metalness: 0.0,
+            emissive: 0x2a1a08, emissiveIntensity: 0.1 });
+        let ropeMesh = null;
+        function rebuildRopeMesh() {
+            if (ropeMesh) {
+                brugGroup.remove(ropeMesh);
+                ropeMesh.geometry.dispose();
+            }
+            const points = ropeBodies.map(b =>
+                new THREE.Vector3(b.position.x, b.position.y, b.position.z));
+            const curve = new THREE.CatmullRomCurve3(points);
+            const geo = new THREE.TubeGeometry(curve, N_SEGS * 4, 0.045, 8, false);
+            ropeMesh = new THREE.Mesh(geo, ropeMat);
+            ropeMesh.castShadow = true;
+            brugGroup.add(ropeMesh);
+        }
+        rebuildRopeMesh();
+
+        // Karakter
+        const charGroup = new THREE.Group();
+        brugGroup.add(charGroup);
+        const charBodyMat = new THREE.MeshStandardMaterial({
+            color: 0xffd54a, roughness: 0.5 });
+        const charBody = new THREE.Mesh(
+            new THREE.SphereGeometry(0.16, 12, 10), charBodyMat);
+        charBody.position.y = 0.22;
+        charBody.scale.y = 1.3;
+        charBody.castShadow = true;
+        charGroup.add(charBody);
+        const charHead = new THREE.Mesh(
+            new THREE.SphereGeometry(0.11, 10, 8),
+            new THREE.MeshStandardMaterial({ color: 0xffe0b0, roughness: 0.4 }));
+        charHead.position.y = 0.50;
+        charHead.castShadow = true;
+        charGroup.add(charHead);
+        const charRingMat = new THREE.MeshBasicMaterial({
+            color: 0xffd54a, transparent: true, opacity: 0.7 });
+        const charRing = new THREE.Mesh(
+            new THREE.TorusGeometry(0.22, 0.025, 6, 16), charRingMat);
+        charRing.position.y = 0.08;
+        charRing.rotation.x = Math.PI / 2;
+        charGroup.add(charRing);
+        // Balanceer-stok
+        const stickMat = new THREE.MeshStandardMaterial({
+            color: 0x6b4a28, roughness: 0.8 });
+        const stick = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.018, 0.018, 1.4, 6), stickMat);
+        stick.position.y = 0.30;
+        stick.rotation.z = Math.PI / 2;
+        charGroup.add(stick);
+
+        // Krater-licht (warme glow van onder)
+        const craterLight = new THREE.PointLight(0xff5a1f, 3.0, 8, 1.5);
+        craterLight.position.set(0, 12.3, 0);
+        brugGroup.add(craterLight);
+
+        // Diepere donker-kraterwand voor extra dramatiek tijdens deze
+        // minigame. Donkere cylinder-band die wegvalt in zwart, met een
+        // ring eromheen op rim-niveau. Wordt in finish() opgeruimd.
+        const craterBowl = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.45, 1.05, 1.4, 24, 1, true),
+            new THREE.MeshStandardMaterial({
+                color: 0x150a04, roughness: 0.95, metalness: 0.0,
+                side: THREE.DoubleSide,
+                emissive: 0x4a1a08, emissiveIntensity: 0.4,
+            }));
+        craterBowl.position.set(0, 11.85, 0);
+        brugGroup.add(craterBowl);
+        // Rim accent ring — donker met subtiele emissive gloed
+        const craterRim = new THREE.Mesh(
+            new THREE.TorusGeometry(1.55, 0.08, 6, 32),
+            new THREE.MeshStandardMaterial({
+                color: 0x1a0c04, roughness: 0.9, metalness: 0.2,
+                emissive: 0x5a2a10, emissiveIntensity: 0.35,
+            }));
+        craterRim.position.set(0, 12.6, 0);
+        craterRim.rotation.x = Math.PI / 2;
+        brugGroup.add(craterRim);
+
+        // Lava-spatters
+        const lavaBits = [];
+        const lavaBitMat = new THREE.MeshBasicMaterial({ color: 0xff7a20 });
+        const lavaBitMatHot = new THREE.MeshBasicMaterial({ color: 0xfff066 });
+        function spawnLavaBit() {
+            const isBright = Math.random() < 0.3;
+            const m = new THREE.Mesh(
+                new THREE.SphereGeometry(0.05 + Math.random() * 0.04, 6, 5),
+                isBright ? lavaBitMatHot : lavaBitMat);
+            const a = Math.random() * Math.PI * 2;
+            const r = Math.random() * 0.7;
+            m.position.set(Math.cos(a) * r, 12.5, Math.sin(a) * r);
+            const va = a + (Math.random() - 0.5) * 0.6;
+            const vSpeed = 1.5 + Math.random() * 1.5;
+            const vUp = 2.8 + Math.random() * 2;
+            const vel = new THREE.Vector3(
+                Math.cos(va) * vSpeed, vUp, Math.sin(va) * vSpeed);
+            brugGroup.add(m);
+            lavaBits.push({ mesh: m, vel, life: 0, maxLife: 1.8 });
+        }
+
+        // ── UI OVERLAY (transparant; alles staat in 3D) ──
+        const back = el('div', { className: 'brug-back', style: {
+            background: 'transparent',
+        }});
+        // Turn-pill bovenin
+        const turnPill = el('div', { className: 'rb3-banner', style: {
+            top: '10%', minWidth: '180px',
+        }});
+        const turnName = el('div', { style: {
+            fontSize: '15px', fontWeight: '900', letterSpacing: '0.5px',
+            marginBottom: '4px' } }, '–');
+        const turnTime = el('div', { style: {
+            fontSize: '32px', fontWeight: '900',
+            background: 'linear-gradient(180deg, #fff5cf 0%, #ffd54a 55%, #ff9a1a 100%)',
+            WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+            filter: 'drop-shadow(0 2px 0 rgba(0,0,0,0.45))',
+            fontVariantNumeric: 'tabular-nums', lineHeight: '1',
+        }}, '15.0');
+        const turnSub = el('div', { style: {
+            fontSize: '10px', opacity: '0.7', letterSpacing: '0.3em',
+            textTransform: 'uppercase', marginTop: '2px',
+        }}, 'Seconden');
+        turnPill.append(turnName, turnTime, turnSub);
+        back.append(turnPill);
+        // Skip via #mg-options-tab
+        back.append(makeMinigameSkip({ onSkip: () => finish(null) }));
+        uiRoot.append(back);
+
+        // ── State ──
+        const TURN_DURATION_MS = 15000;
+        const FAIL_ANGLE = Math.PI / 2.4;       // ~75° van verticaal
+        const scores = [];
+        let curIdx = 0;
+        let phase = 'permission';
+        let phaseT = 0;
+        let runStartMs = 0;
+        let lastGustMs = 0;
+        let charTilt = 0;
+        let charTiltVel = 0;
+        let fallSpinX = 0;
+        let fallSpinZ = 0;
+        let gamma = 0;
+        let gyroEnabled = false;
+
+        function onOrient(e) {
+            if (e.gamma != null) {
+                gamma = Math.max(-90, Math.min(90, e.gamma));
+            }
+        }
+        async function requestGyroPermission() {
+            if (typeof DeviceOrientationEvent !== 'undefined' &&
+                typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const res = await DeviceOrientationEvent.requestPermission();
+                    if (res === 'granted') {
+                        window.addEventListener('deviceorientation', onOrient);
+                        gyroEnabled = true;
+                        return true;
+                    }
+                    return false;
+                } catch (e) { return false; }
+            } else {
+                window.addEventListener('deviceorientation', onOrient);
+                gyroEnabled = true;
+                return true;
+            }
+        }
+        function showCardOverlay(content, pcol) {
+            const card = el('div', { className: 'brug-perm', style: {
+                top: '50%',
+                background: 'rgba(15,30,50,0.85)',
+                border: '2px solid ' + (pcol || '#ffd54a'),
+                padding: '18px 24px', borderRadius: '18px',
+                color: '#fff',
+                boxShadow: '0 6px 20px rgba(0,0,0,0.5)',
+                maxWidth: 'min(360px, 86vw)',
+            }});
+            content.forEach(c => card.append(c));
+            back.append(card);
+            return card;
+        }
+        function showPermission() {
+            phase = 'permission';
+            const card = showCardOverlay([
+                el('h3', { style: { margin: '0 0 8px' } }, '📱 Sensor nodig'),
+                el('p', { style: { margin: '6px 0' } },
+                    'Brug Balans gebruikt de gyroscoop. Houd je telefoon recht om op het touw te blijven.'),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    on: { click: async () => {
+                        const ok = await requestGyroPermission();
+                        card.remove();
+                        if (ok) startRun(0);
+                        else finish(null);
+                    }}}, '✓ Toestaan'),
+            ]);
+        }
+        function startRun(i) {
+            curIdx = i;
+            const p = players[curIdx];
+            const col = new THREE.Color(p.color.css);
+            charBodyMat.color.copy(col);
+            charRingMat.color.copy(col);
+            turnPill.style.setProperty('--pcol', p.color.css);
+            turnName.textContent = p.name;
+            turnName.style.color = p.color.css;
+            turnTime.textContent = '15.0';
+            charTilt = 0;
+            charTiltVel = 0;
+            fallSpinX = 0;
+            fallSpinZ = 0;
+            charGroup.rotation.set(0, 0, 0);
+            // Reset rope to rest by zeroing velocities (lets it hang naturally)
+            for (const b of ropeBodies) {
+                if (b.mass > 0) {
+                    b.velocity.set(0, 0, 0);
+                    b.angularVelocity.set(0, 0, 0);
+                }
+            }
+            const card = showCardOverlay([
+                el('h3', { style: { color: p.color.css, margin: '0 0 8px' } }, p.name),
+                el('p', { style: { margin: '6px 0' } },
+                    '15 seconden balanceren. Telefoon recht houden — de wind wordt sterker naarmate het langer duurt.'),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    on: { click: () => {
+                        card.remove();
+                        phase = 'running';
+                        runStartMs = performance.now();
+                        phaseT = 0;
+                        lastGustMs = performance.now();
+                    }}}, '▶ Start'),
+            ], p.color.css);
+            phase = 'intro';
+        }
+        function endRun(survivedMs, didFall) {
+            scores.push({ player: players[curIdx], time: survivedMs });
+            phase = 'falling';
+            phaseT = 0;
+            if (didFall) {
+                fallSpinX = (Math.random() - 0.5) * 8;
+                fallSpinZ = charTilt > 0 ? 6 : -6;
+            }
+            setTimeout(() => {
+                const p = players[curIdx];
+                const card = showCardOverlay([
+                    el('h3', { style: { margin: '0 0 4px' } },
+                        didFall ? 'Gevallen! 🌋' : 'Overleefd! 🎉'),
+                    el('div', { style: {
+                        fontSize: '32px', fontWeight: '900', color: p.color.css,
+                        margin: '6px 0' } },
+                        (survivedMs / 1000).toFixed(1) + 's'),
+                    el('p', { style: { margin: '0' } }, `${p.name}`),
+                ], p.color.css);
+                setTimeout(() => {
+                    card.remove();
+                    if (curIdx < players.length - 1) startRun(curIdx + 1);
+                    else showFinal();
+                }, 2200);
+            }, 1200);
+        }
+        function showFinal() {
+            phase = 'gameover';
+            const sorted = [...scores].sort((a, b) => b.time - a.time);
+            const topT = sorted[0].time;
+            const losers = sorted.filter(s => s.time < topT);
+            const winnerCol = sorted[0].player.color.css;
+            const rankingEl = el('div', { style: {
+                margin: '12px 0', display: 'flex', flexDirection: 'column',
+                gap: '6px', maxWidth: '280px',
+            }});
+            sorted.forEach((s, idx) => {
+                rankingEl.append(el('div', { style: {
+                    display: 'flex', justifyContent: 'space-between', gap: '12px',
+                    padding: '8px 14px', borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid ' + s.player.color.css,
+                    opacity: s.time === topT ? '1' : '0.7',
+                }},
+                    el('span', { style: { fontWeight: '700' } },
+                        `${idx + 1}. ${s.player.name}`),
+                    el('span', { style: { color: s.player.color.css,
+                        fontWeight: '900', fontVariantNumeric: 'tabular-nums' } },
+                        (s.time / 1000).toFixed(1) + 's'),
+                ));
+            });
+            const card = showCardOverlay([
+                el('h2', { style: { margin: '0 0 2px' } }, '🏆 Eindstand'),
+                rankingEl,
+                el('p', { style: { margin: '0' } },
+                    losers.length === 0 ? 'Gelijkspel — proost!' :
+                    `${losers.map(l => l.player.name).join(', ')} drinkt elk ${drinks} 🍻`),
+                el('button', { className: 'btn-pill gold', type: 'button',
+                    style: { marginTop: '12px' },
+                    on: { click: () => finish(sorted) }}, 'Klaar'),
+            ], winnerCol);
+            setTimeout(() => finish(sorted), 12000);
+        }
+
+        // ── Game loop ──
+        const PREV_HOOK = window.__deGameHook;
+        let lastT = performance.now();
+        let alive = true;
+        window.__deGameHook = (time) => {
+            if (!alive) return;
+            const now = performance.now();
+            const dt = Math.min(0.033, (now - lastT) / 1000);
+            lastT = now;
+
+            // Camera lerp
+            if (camLerpT < 1) {
+                camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
+                const e = 1 - Math.pow(1 - camLerpT, 3);
+                camera.position.lerpVectors(camFromPos, BRUG_CAM_POS, e);
+                controls.target.lerpVectors(camFromTgt, BRUG_CAM_TGT, e);
+                camera.lookAt(controls.target);
+            }
+
+            // Physics
+            physWorld.step(1 / 60, dt, 3);
+            rebuildRopeMesh();
+
+            // Character volgt midden van touw
+            const mid = ropeBodies[Math.floor(N_SEGS / 2)];
+            charGroup.position.set(mid.position.x, mid.position.y, mid.position.z);
+
+            if (phase === 'falling') {
+                phaseT += dt;
+                charGroup.rotation.z += fallSpinZ * dt;
+                charGroup.rotation.x += fallSpinX * dt;
+                charGroup.position.y -= dt * (3 + phaseT * 4);
+            } else {
+                charGroup.rotation.set(0, 0, -charTilt);
+                charGroup.position.y += 0.05;
+            }
+
+            if (phase === 'running') {
+                phaseT += dt;
+                const elapsed = now - runStartMs;
+                const remaining = Math.max(0, TURN_DURATION_MS - elapsed);
+                turnTime.textContent = (remaining / 1000).toFixed(1);
+
+                const diff = elapsed / TURN_DURATION_MS;
+                // Random wind-vlagen op midden van het touw
+                const gustChance = 0.025 + diff * 0.08;
+                const gustMag = 0.5 + diff * 1.6;
+                if (Math.random() < gustChance && now - lastGustMs > 280) {
+                    const zDir = Math.random() < 0.5 ? -1 : 1;
+                    for (let i = 4; i < N_SEGS - 4; i++) {
+                        ropeBodies[i].applyImpulse(
+                            new CANNON.Vec3(0, 0, zDir * gustMag * 0.32),
+                            new CANNON.Vec3(0, 0, 0));
+                    }
+                    const xDir = Math.random() < 0.5 ? -1 : 1;
+                    for (let i = 3; i < N_SEGS - 3; i++) {
+                        ropeBodies[i].applyImpulse(
+                            new CANNON.Vec3(xDir * gustMag * 0.06, 0, 0),
+                            new CANNON.Vec3(0, 0, 0));
+                    }
+                    lastGustMs = now;
+                }
+
+                // Inverted pendulum balance physics
+                const ropeLateral = mid.position.z * 1.8;
+                const gravityTorque = Math.sin(charTilt) * 12 * (0.8 + diff);
+                const gyroCounter = -(gamma / 45) * 9;
+                const disturbance = ropeLateral * 0.7;
+                charTiltVel += (gravityTorque + gyroCounter + disturbance) * dt;
+                charTiltVel *= Math.pow(0.92, dt * 60);
+                charTilt += charTiltVel * dt;
+
+                if (Math.abs(charTilt) >= FAIL_ANGLE) {
+                    endRun(elapsed, true);
+                } else if (elapsed >= TURN_DURATION_MS) {
+                    endRun(TURN_DURATION_MS, false);
+                }
+            }
+
+            // Lava spatters
+            if (Math.random() < 0.35) spawnLavaBit();
+            for (let i = lavaBits.length - 1; i >= 0; i--) {
+                const b = lavaBits[i];
+                b.life += dt;
+                if (b.life > b.maxLife || b.mesh.position.y < 11) {
+                    brugGroup.remove(b.mesh);
+                    b.mesh.geometry.dispose();
+                    lavaBits.splice(i, 1);
+                    continue;
+                }
+                b.vel.y -= 9.8 * dt;
+                b.mesh.position.x += b.vel.x * dt;
+                b.mesh.position.y += b.vel.y * dt;
+                b.mesh.position.z += b.vel.z * dt;
+            }
+
+            // Krater-licht flicker
+            craterLight.intensity = 2.5 + Math.sin(now * 0.006) * 1.2 + Math.random() * 0.3;
+        };
+
+        async function finish(sorted) {
+            if (phase === 'closed') return;
+            phase = 'closed';
+            alive = false;
+            window.__deGameHook = PREV_HOOK;
+            window.removeEventListener('deviceorientation', onOrient);
+            for (const b of lavaBits) {
+                brugGroup.remove(b.mesh);
+                b.mesh.geometry.dispose();
+            }
+            lavaBits.length = 0;
+            if (ropeMesh) {
+                brugGroup.remove(ropeMesh);
+                ropeMesh.geometry.dispose();
+            }
+            brugGroup.traverse(o => {
+                if (o.geometry) o.geometry.dispose();
+                if (o.material) {
+                    if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
+                    else o.material.dispose();
+                }
+            });
+            scene.remove(brugGroup);
+            if (typeof goldSummit !== 'undefined') goldSummit.visible = summitWasVisible;
+            camera.fov = savedCam.fov;
+            camera.position.copy(savedCam.pos);
+            camera.updateProjectionMatrix();
+            controls.target.copy(savedCam.target);
+            controls.autoRotate = savedCam.autoRotate;
+            controls.enabled = savedCam.enabled;
+            controls.enableDamping = savedCam.enableDamping;
+            camera.lookAt(controls.target);
+            back.style.transition = 'opacity 0.3s ease';
+            back.style.opacity = '0';
+            setTimeout(() => {
+                back.remove();
+                restoreMinigameChrome(hiddenChrome);
+                resolveOuter(sorted || null);
+            }, 300);
+        }
+
         showPermission();
     });
 }
@@ -18981,14 +20281,17 @@ function playSchnapsCall({ player = null, mode = 'standalone' } = {}) {
 // Welke minigames worden door ALLE spelers tegelijk gespeeld?
 // Die triggeren NIET meer via een tile op het bord, maar automatisch
 // aan het einde van een ronde-blok (zie maybeRunAllPlayerRoundGame).
-// Krab Vangen is uit BETA opgewaardeerd naar groeps-minigame; de
-// andere BETA-spellen (lavasteen, tiki, brug) blijven alleen
-// handmatig speelbaar via het minigame-menu.
+// Krab Vangen is uit BETA opgewaardeerd naar groeps-minigame; Brug
+// Balans is sinds de 3D-rewrite ook een echt groeps-spel — elke speler
+// 15 sec balanceren op het touw boven de krater. De andere BETA-
+// spellen (lavasteen, tiki) blijven alleen handmatig speelbaar via
+// het minigame-menu.
 const ALL_PLAYER_WHEEL_OPTIONS = [
     { id: 'tappy',   emoji: '🐦', label: 'Tappy Bird',  color: '#ff7ad6' },
     { id: 'volcano', emoji: '🌋', label: 'Volcano Hop', color: '#3aff9e' },
     { id: 'bowling', emoji: '🎳', label: 'Bowlspel',    color: '#1a7adb' },
     { id: 'krabben', emoji: '🦀', label: 'Krab Vangen', color: '#ff5a3a' },
+    { id: 'brug',    emoji: '⚖️', label: 'Brug Balans', color: '#ffa028' },
 ];
 const ALL_PLAYER_GAMES = ALL_PLAYER_WHEEL_OPTIONS.map(o => o.id);
 
@@ -19005,8 +20308,10 @@ const MYSTERY_OPTIONS = [
     { id: 'connect4',    emoji: '🟡', label: '4 op een Rij', color: '#ffcc1a' },
     // Kano Race blijft in de bordspel-pool (1v1 game)
     { id: 'kano',        emoji: '🛶', label: 'Kano Race',    color: '#5acdff' },
-    // Lavasteen, Krabben, Tiki, Brug staan in BETA — alleen via
-    // het minigame-menu speelbaar, niet via de Mystery Wheel.
+    // Brug Balans (3D tightrope boven de krater) — alle spelers
+    { id: 'brug',        emoji: '⚖️', label: 'Brug Balans',  color: '#ffa028' },
+    // Lavasteen, Tiki staan in BETA — alleen via het minigame-menu
+    // speelbaar, niet via de Mystery Wheel.
 ];
 
 function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Wheel', subtitle = 'Welke minigame wordt het?' } = {}) {
@@ -19119,13 +20424,21 @@ function playMysteryWheel({ options = MYSTERY_OPTIONS, title = '🎡 Mystery Whe
         // Eind-resultaat banner (verborgen tot wheel stopt)
         const result = el('div', { className: 'mw-result' });
 
-        // Footer met skip-knop
+        // Footer (skip-knop zit nu in de #mg-options-tab, niet meer onderaan)
         const foot = el('div', { className: 'mw-foot' });
         const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
-        foot.append(skipBtn);
+        // foot.append(skipBtn) — bewust niet zichtbaar, skipBtn-variabele
+        // blijft bestaan zodat de "disable tijdens spin" logica intact is.
 
         stage.append(tip, result);
         back.append(header, stage, foot);
+        // Uniforme skip via #mg-options-tab — maar GEEN skip meer
+        // zodra het rad gedraaid is (spun=true). Anders kon je de
+        // gekozen minigame nog wegklikken na het draaien.
+        back.append(makeMinigameSkip({ onSkip: () => {
+            if (spun) return;
+            finish(null);
+        }}));
         uiRoot.append(back);
 
         // ════════════════════════════════════════════════════════
@@ -19413,10 +20726,14 @@ function playVulcanoRoulette({ player, drinks = null } = {}) {
 
         const stage = el('div', { className: 'vr-stage' });
         const foot = el('div', { className: 'vr-foot' });
-        const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
-        skipBtn.addEventListener('click', () => finish(null));
-        foot.append(skipBtn);
+        // Skip zit nu in #mg-options-tab — geen bottom-knop meer.
         back.append(header, stage, foot);
+        // Geen skip meer als de inzet is gegooid (rolling || bet > 0):
+        // het resultaat is dan committed.
+        back.append(makeMinigameSkip({ onSkip: () => {
+            if (rolling || bet) return;
+            finish(null);
+        }}));
         ui.append(back);
 
         // ── Phase 1: roll the bet die ──
@@ -19676,9 +20993,14 @@ function playGodBlackjack({ player, drinks = null } = {}) {
         const foot = el('div', { className: 'bj-foot' });
         const hitBtn = el('button', { className: 'btn-pill gold', type: 'button' }, '🎴 Hit');
         const standBtn = el('button', { className: 'btn-pill red', type: 'button' }, '✋ Stand');
-        const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
-        foot.append(hitBtn, standBtn, skipBtn);
+        foot.append(hitBtn, standBtn);
         back.append(header, stage, foot);
+        // Skip via #mg-options-tab — maar geen skip meer zodra de
+        // spel is gestaakt (gameOver) of speler heeft gestaan/bust.
+        back.append(makeMinigameSkip({ onSkip: () => {
+            if (gameOver || playerStood) return;
+            finish(null);
+        }}));
         ui.append(back);
 
         // ── Render ──
@@ -19750,7 +21072,6 @@ function playGodBlackjack({ player, drinks = null } = {}) {
             hitBtn.disabled = true; standBtn.disabled = true;
             endGame();
         });
-        skipBtn.addEventListener('click', () => finish(null));
 
         // Edge case: opening blackjack
         if (isBlackjack(playerHand)) {
@@ -19944,10 +21265,15 @@ function playHoofdsteden({ player, drinks = null, timeMs = 12000 } = {}) {
         stage.append(prompt, row);
 
         const foot = el('div', { className: 'hf-foot' });
-        const skipBtn = el('button', { className: 'btn-pill', type: 'button' }, 'Skip');
-        foot.append(skipBtn);
+        // Skip zit nu in #mg-options-tab — geen bottom-knop meer.
 
         back.append(header, bar, stage, foot);
+        // Uniforme skip via #mg-options-tab
+        back.append(makeMinigameSkip({ onSkip: () => {
+            done = true;
+            if (rafId) cancelAnimationFrame(rafId);
+            finish(null);
+        } }));
         ui.append(back);
 
         // Focus the input after a beat so iOS opens the keyboard
@@ -20031,11 +21357,6 @@ function playHoofdsteden({ player, drinks = null, timeMs = 12000 } = {}) {
             if (e.key === 'Enter') { e.preventDefault(); submit(); }
         });
         goBtn.addEventListener('click', submit);
-        skipBtn.addEventListener('click', () => {
-            done = true;
-            if (rafId) cancelAnimationFrame(rafId);
-            finish(null);
-        });
 
         function finish(payload) {
             restoreVolcanoCam();
@@ -20080,7 +21401,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '🐊', title: 'Krokodil 1v1!',
             body: [`${player.name} tegen ${opp.name}.`,
                    `Druk om de beurt op een tand. Wie de pijnlijke vindt, drinkt ${d}.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         const loser = await playKrokodil({ playerA: player, playerB: opp, drinks: d });
@@ -20104,7 +21425,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '🏓', title: 'Paddle Duel!',
             body: [`${player.name} tegen ${opp.name}.`,
                    `Sleep in je helft. Eerste bij 3 punten wint, verliezer drinkt ${d}.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         const loser = await playPaddleDuel({ playerA: player, playerB: opp, drinks: d });
@@ -20126,7 +21447,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '🐦', title: 'Tappy Bird!',
             body: ['Iedereen speelt één potje, geef de telefoon door.',
                    `Wie het verst komt wint — anderen drinken ${d}.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         const w = await playTappyBird({ players: G.players, drinks: d });
@@ -20143,7 +21464,7 @@ async function runMinigameOnTile(id, player) {
         const go = await showModal({
             emoji: '🌋', title: 'Volcano Hop!',
             body: ['Iedereen kiest stiekem een platform.', 'Fout = lava + ⚡, laatste man wint.'],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         const w = await playVolcanoHop({ players: G.players, drinks: d });
@@ -20164,7 +21485,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '🏴‍☠️', title: 'Raft Battle!',
             body: [`${player.name} tegen ${opp.name}.`,
                    `Knock je tegenstander van het vlot. Verliezer drinkt ${d}.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         const winner = await playRaftBattle({ playerA: player, playerB: opp, drinks: d });
@@ -20271,7 +21592,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '🎳', title: 'Bowlspel!',
             body: ['Iedereen gooit één frame. Hoogste score wint.',
                    `Verliezers drinken ${d} 🍻 — winnaar krijgt een bonus-dobbelsteen.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         const res = await playBowling({ players: G.players, drinks: d });
@@ -20287,7 +21608,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '🟡', title: 'Vier op een Rij!',
             body: [`${player.name} tegen ${opp.name}.`,
                    `Tik op een kolom om je schijf te laten vallen. Eerste met 4 op een rij wint, verliezer drinkt ${d}.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         const winner = await playConnectFour({ playerA: player, playerB: opp, drinks: d });
@@ -20301,7 +21622,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '🌋', title: 'Hete Lavasteen!',
             body: ['Iedereen geeft de telefoon door door te tikken.',
                    `Wie de steen vasthoudt wanneer 'ie ontploft, drinkt ${d}.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         const loser = await playHeteLavasteen({ players: G.players, drinks: d });
@@ -20321,7 +21642,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '🛶', title: 'Kano Race!',
             body: [`${player.name} (boven) vs ${opp.name} (onder).`,
                    `Tik zo snel mogelijk op JOUW helft. Verliezer drinkt ${d}.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         const loser = await playKanoRace({ playerA: player, playerB: opp, drinks: d });
@@ -20339,7 +21660,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '🦀', title: 'Krabben Vangen!',
             body: ['Iedereen krijgt 30 seconden om zoveel mogelijk krabben te tikken.',
                    `Laagste score(s) drinken ${d} 🍻.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         await playKrabbenVangen({ players: G.players, drinks: d });
@@ -20350,7 +21671,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '🗿', title: 'Tiki Ritme!',
             body: ['Herhaal de volgorde van de Tiki-maskers. Elke ronde komt er één bij.',
                    `Wie het laagste level haalt, drinkt ${d} 🍻.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         await playTikiRitme({ players: G.players, drinks: d });
@@ -20361,7 +21682,7 @@ async function runMinigameOnTile(id, player) {
             emoji: '⚖️', title: 'Brug Balans!',
             body: ['Houd je telefoon zo recht mogelijk om de brug te overleven.',
                    `Kortste tijd(en) drinken ${d} 🍻.`],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
         await playBrugBalans({ players: G.players, drinks: d });
@@ -20753,7 +22074,7 @@ async function onLandedOnTile(player) {
         const go = await showModal({
             emoji: '👆', title: 'Iemand drinkt!',
             body: ['Tijd voor Vingers Op.', 'Iedereen legt zo een vinger op het scherm — één wordt willekeurig gekozen.'],
-            actions: [{ label: 'Start', value: true }, { label: 'Skip', value: false }],
+            actions: [{ label: 'Start', value: true }],
         });
         if (go) {
             const winner = await playChwazi({
@@ -20949,6 +22270,50 @@ renderSetup();
         window.addEventListener('keydown', onFirstInteract);
     }
     bgMusicSyncToggleVisual();
+})();
+
+// ── #mg-options-tab: een 36×36 "⋯" knop rechtsboven die bij tap
+//    de bg-music-toggle + .mg-skip uitklapt. Zo nemen die twee
+//    knoppen geen permanente scherm-real-estate in. Aan/uit via
+//    body.mg-opts-expanded class. Klik buiten = dicht.
+(() => {
+    const trigger = document.createElement('button');
+    trigger.id = 'mg-options-trigger';
+    trigger.type = 'button';
+    trigger.setAttribute('aria-label', 'Opties');
+    document.body.appendChild(trigger);
+
+    function toggle(forceState) {
+        const cur = document.body.classList.contains('mg-opts-expanded');
+        const want = (forceState === true || forceState === false)
+            ? forceState : !cur;
+        document.body.classList.toggle('mg-opts-expanded', want);
+    }
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggle();
+    });
+    // Klik buiten de tab elementen → dicht
+    document.addEventListener('pointerdown', (e) => {
+        if (!document.body.classList.contains('mg-opts-expanded')) return;
+        const t = e.target;
+        if (t.closest('#mg-options-trigger, #bg-music-toggle, .mg-skip, .mg-winpop, #bg-vol-card')) {
+            return;
+        }
+        toggle(false);
+    });
+    // Auto-collapse: zodra een minigame (en zijn .mg-skip) uit de
+    // DOM verdwijnt, klap de tab dicht. Voorkomt dat de tab open
+    // blijft staan tussen minigames door — anders zag je bij het
+    // laden/intro-scherm van de volgende minigame al meteen de
+    // skip-knop staan.
+    const obs = new MutationObserver(() => {
+        if (!document.body.classList.contains('mg-opts-expanded')) return;
+        if (!document.querySelector('.mg-skip')) {
+            document.body.classList.remove('mg-opts-expanded');
+        }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
 })();
 
 // ── Volume slider overlay ──
