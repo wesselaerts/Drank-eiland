@@ -5388,6 +5388,10 @@ function animate() {
     crackMat.color.setHSL(0.06, 1.0, 0.5 + Math.sin(time * 5) * 0.1);
 
     // ── smoke rising ──
+    // window.__smokeOpacityMul kan door minigames (zoals brug-balans)
+    // worden gezet om de rook tijdelijk te dimmen. Default = 1.
+    const smokeMul = (typeof window.__smokeOpacityMul === 'number')
+        ? window.__smokeOpacityMul : 1;
     for (const s of smokeParticles) {
         const t = (time * s.speed + s.phase) % 4;       // 0..4 lifespan
         const lifeT = t / 4;                              // 0..1
@@ -5396,7 +5400,7 @@ function animate() {
             12.8 + lifeT * 4.4,
             Math.cos(time * 0.7 + s.phase) * 0.6
         );
-        s.mesh.material.opacity = 0.55 * (1 - lifeT);
+        s.mesh.material.opacity = 0.55 * (1 - lifeT) * smokeMul;
         const sc = 0.6 + lifeT * 1.8;
         s.mesh.scale.set(sc, sc, sc);
     }
@@ -19458,6 +19462,10 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
         // Hide gold summit zodat het touw vrij baan heeft
         const summitWasVisible = (typeof goldSummit !== 'undefined') ? goldSummit.visible : true;
         if (typeof goldSummit !== 'undefined') goldSummit.visible = false;
+        // Rook dimmen tijdens deze minigame — vanuit pool-cam zou de
+        // krater anders dichtgerookt zijn. Wordt hersteld in finish().
+        const prevSmokeMul = window.__smokeOpacityMul;
+        window.__smokeOpacityMul = 0.40;
         // Hide pad-tegels die langs de vulkaan omhoog spiralen — die
         // blokkeren het zicht op het touw boven de krater. Bewaar de
         // oorspronkelijke visible-staat om te herstellen in finish().
@@ -19472,11 +19480,13 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             }
         }
 
-        // ── Camera: dichterbij en meer van bovenaf, met diagonale kanteling.
-        //    Eerder zoomde 'ie te ver uit. Position (3, 17, 3) is hoog
-        //    boven de vulkaan met een 45°-blik omlaag op de krater.
-        const BRUG_CAM_POS = new THREE.Vector3(3.0, 17.0, 3.0);
-        const BRUG_CAM_TGT = new THREE.Vector3(0, 12.3, 0);
+        // ── Camera: POV vanaf de LINKER ankerpaal — je kijkt langs het
+        //    touw richting de rechter paal. Hierdoor zie je glashelder
+        //    welke kant het poppetje overhelt en weet je naar welke kant
+        //    je telefoon moet kantelen om te corrigeren. Iets boven en
+        //    achter de paal zodat 'ie als foreground-referentie dient.
+        const BRUG_CAM_POS = new THREE.Vector3(-2.85, 13.70, 0.05);
+        const BRUG_CAM_TGT = new THREE.Vector3(0.40, 12.35, 0);
         const camFromPos = camera.position.clone();
         const camFromTgt = controls.target.clone();
         let camLerpT = 0;
@@ -19524,17 +19534,20 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
         const brugGroup = new THREE.Group();
         scene.add(brugGroup);
 
-        // Ankerpalen
+        // Ankerpalen — kleine stubs, anders staan ze in de weg van
+        //   de pool-camera die er pal naast/achter zit. Top zit nog
+        //   wel precies op het ankerpunt zodat 't touw realistisch
+        //   "vastzit".
         const pillarMat = new THREE.MeshStandardMaterial({
             color: 0x3a2a18, roughness: 0.8, metalness: 0.0 });
         for (const anchor of [ANCHOR_L, ANCHOR_R]) {
             const pillar = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.10, 0.13, 0.55, 8), pillarMat);
-            pillar.position.set(anchor.x, anchor.y - 0.10, anchor.z);
+                new THREE.CylinderGeometry(0.06, 0.08, 0.15, 8), pillarMat);
+            pillar.position.set(anchor.x, anchor.y - 0.075, anchor.z);
             pillar.castShadow = true;
             brugGroup.add(pillar);
             const cap = new THREE.Mesh(
-                new THREE.SphereGeometry(0.08, 8, 6),
+                new THREE.SphereGeometry(0.055, 8, 6),
                 new THREE.MeshStandardMaterial({ color: 0x8b6a3a, roughness: 0.7 }));
             cap.position.copy(anchor);
             brugGroup.add(cap);
@@ -19560,37 +19573,51 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
         }
         rebuildRopeMesh();
 
-        // Karakter
+        // Karakter — echte gepersonaliseerde speler-pion op het touw.
+        // We tonen de pawn (met avatar, snor, shoes, item) van wie aan
+        // de beurt is. Per beurt wisselen via swapPuppet().
         const charGroup = new THREE.Group();
         brugGroup.add(charGroup);
-        const charBodyMat = new THREE.MeshStandardMaterial({
-            color: 0xffd54a, roughness: 0.5 });
-        const charBody = new THREE.Mesh(
-            new THREE.SphereGeometry(0.16, 12, 10), charBodyMat);
-        charBody.position.y = 0.22;
-        charBody.scale.y = 1.3;
-        charBody.castShadow = true;
-        charGroup.add(charBody);
-        const charHead = new THREE.Mesh(
-            new THREE.SphereGeometry(0.11, 10, 8),
-            new THREE.MeshStandardMaterial({ color: 0xffe0b0, roughness: 0.4 }));
-        charHead.position.y = 0.50;
-        charHead.castShadow = true;
-        charGroup.add(charHead);
-        const charRingMat = new THREE.MeshBasicMaterial({
-            color: 0xffd54a, transparent: true, opacity: 0.7 });
-        const charRing = new THREE.Mesh(
-            new THREE.TorusGeometry(0.22, 0.025, 6, 16), charRingMat);
-        charRing.position.y = 0.08;
-        charRing.rotation.x = Math.PI / 2;
-        charGroup.add(charRing);
-        // Balanceer-stok
+
+        // puppetSlot bepaalt de schaal van de pion op het touw, los
+        // van de balanceer-stok eronder.
+        const puppetSlot = new THREE.Group();
+        puppetSlot.scale.setScalar(0.42);   // pion is ±1.6 hoog → ±0.67 op touw
+        charGroup.add(puppetSlot);
+        let currentPuppet = null;
+        function swapPuppet(player) {
+            if (currentPuppet) {
+                puppetSlot.remove(currentPuppet);
+                try {
+                    if (typeof _disposePawn === 'function') _disposePawn(currentPuppet);
+                } catch (_) {}
+                currentPuppet = null;
+            }
+            // Probeer eerst de avatar-token (met snor/shoes/items),
+            // val terug op simpele makePlayerToken bij rendering-issue.
+            let tok = null;
+            try {
+                tok = makePlayerAvatarToken(player.color.hex, player.avatar || null, false);
+            } catch (e) {
+                tok = makePlayerToken(player.color.hex);
+            }
+            // makePlayer*Token hangt 'm in tokenGroup — loshalen en
+            // in onze puppetSlot zetten zodat 'ie meebeweegt met touw.
+            if (tok.parent) tok.parent.remove(tok);
+            puppetSlot.add(tok);
+            currentPuppet = tok;
+        }
+
+        // Balanceer-stok — dwars op de loop-richting (langs Z-as), dus
+        // van de pool-camera uit gezien een duidelijke horizontale balk.
+        // Tilt mee met het karakter zodat overhellen extra zichtbaar is.
         const stickMat = new THREE.MeshStandardMaterial({
-            color: 0x6b4a28, roughness: 0.8 });
+            color: 0x6b4a28, roughness: 0.85, metalness: 0.0 });
         const stick = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.018, 0.018, 1.4, 6), stickMat);
-        stick.position.y = 0.30;
-        stick.rotation.z = Math.PI / 2;
+            new THREE.CylinderGeometry(0.022, 0.022, 1.05, 8), stickMat);
+        stick.position.y = 0.36;
+        stick.rotation.x = Math.PI / 2;     // cilinder default Y → Z
+        stick.castShadow = true;
         charGroup.add(stick);
 
         // Krater-licht (warme glow van onder)
@@ -19649,7 +19676,7 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
 
         // ── State ──
         const TURN_DURATION_MS = 15000;
-        const FAIL_ANGLE = Math.PI / 2.4;       // ~75° van verticaal
+        const FAIL_ANGLE = Math.PI / 2.05;      // ~88° — veel toleranter (was ~75°)
         const scores = [];
         let curIdx = 0;
         let phase = 'permission';
@@ -19718,9 +19745,7 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
         function startRun(i) {
             curIdx = i;
             const p = players[curIdx];
-            const col = new THREE.Color(p.color.css);
-            charBodyMat.color.copy(col);
-            charRingMat.color.copy(col);
+            swapPuppet(p);
             turnPill.style.setProperty('--pcol', p.color.css);
             turnName.textContent = p.name;
             turnName.style.color = p.color.css;
@@ -19757,8 +19782,12 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             phase = 'falling';
             phaseT = 0;
             if (didFall) {
-                fallSpinX = (Math.random() - 0.5) * 8;
-                fallSpinZ = charTilt > 0 ? 6 : -6;
+                // Tilt is nu rond X-as (zichtbaar als links/rechts vanaf
+                // de pool-camera). Hoofdval-spin draait om X en gaat in
+                // dezelfde richting als waarheen 'ie aan het overhellen
+                // was; een kleine Z-wobble eroverheen voor variatie.
+                fallSpinX = charTilt > 0 ? -7 : 7;
+                fallSpinZ = (Math.random() - 0.5) * 3;
             }
             setTimeout(() => {
                 const p = players[curIdx];
@@ -19850,11 +19879,14 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
 
             if (phase === 'falling') {
                 phaseT += dt;
-                charGroup.rotation.z += fallSpinZ * dt;
                 charGroup.rotation.x += fallSpinX * dt;
+                charGroup.rotation.z += fallSpinZ * dt;
                 charGroup.position.y -= dt * (3 + phaseT * 4);
             } else {
-                charGroup.rotation.set(0, 0, -charTilt);
+                // Tilt om X-as = lean in YZ-vlak = volledig links/rechts
+                // vanaf de pool-camera gezien. Direct duidelijk welke
+                // kant je telefoon op moet om te corrigeren.
+                charGroup.rotation.set(-charTilt, 0, 0);
                 charGroup.position.y += 0.05;
             }
 
@@ -19865,33 +19897,44 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
                 turnTime.textContent = (remaining / 1000).toFixed(1);
 
                 const diff = elapsed / TURN_DURATION_MS;
-                // Random wind-vlagen op midden van het touw
-                const gustChance = 0.025 + diff * 0.08;
-                const gustMag = 0.5 + diff * 1.6;
-                if (Math.random() < gustChance && now - lastGustMs > 280) {
+                // Wind-vlagen — fors verzwakt zodat 't echt speelbaar is.
+                //   (was: chance 0.025+diff*0.08, mag 0.5+diff*1.6)
+                const gustChance = 0.010 + diff * 0.035;
+                const gustMag    = 0.18 + diff * 0.55;
+                if (Math.random() < gustChance && now - lastGustMs > 450) {
                     const zDir = Math.random() < 0.5 ? -1 : 1;
                     for (let i = 4; i < N_SEGS - 4; i++) {
                         ropeBodies[i].applyImpulse(
-                            new CANNON.Vec3(0, 0, zDir * gustMag * 0.32),
+                            new CANNON.Vec3(0, 0, zDir * gustMag * 0.14),
                             new CANNON.Vec3(0, 0, 0));
                     }
                     const xDir = Math.random() < 0.5 ? -1 : 1;
                     for (let i = 3; i < N_SEGS - 3; i++) {
                         ropeBodies[i].applyImpulse(
-                            new CANNON.Vec3(xDir * gustMag * 0.06, 0, 0),
+                            new CANNON.Vec3(xDir * gustMag * 0.025, 0, 0),
                             new CANNON.Vec3(0, 0, 0));
                     }
                     lastGustMs = now;
                 }
 
-                // Inverted pendulum balance physics
-                const ropeLateral = mid.position.z * 1.8;
-                const gravityTorque = Math.sin(charTilt) * 12 * (0.8 + diff);
-                const gyroCounter = -(gamma / 45) * 9;
-                const disturbance = ropeLateral * 0.7;
+                // Inverted-pendulum balans — versoepeld zodat 't ook
+                // speelbaar is zonder pro-balans-skills:
+                //  • zwaartekracht-torque omlaag: 12 → 4.5
+                //  • difficulty-rampup zachter: 0.8+diff → 0.85+diff*0.35
+                //  • gyro-reactie ruim 2× sterker (12 i.p.v. 9, /30 i.p.v. /45)
+                //  • touw-zwaai geeft minder kanteling (0.7 → 0.25)
+                //  • meer demping (0.92 → 0.86)
+                //  • gyro-teken is POSITIEF i.p.v. negatief — nodig omdat
+                //    we tilt nu om X-as i.p.v. Z-as draaien (in nieuwe
+                //    pool-view geldt: telefoon naar rechts = pion-top
+                //    duwt naar -Z = scherm-rechts → zelfde kant).
+                const ropeLateral = mid.position.z * 1.2;
+                const gravityTorque = Math.sin(charTilt) * 4.5 * (0.85 + diff * 0.35);
+                const gyroCounter   = (gamma / 30) * 12;
+                const disturbance   = ropeLateral * 0.25;
                 charTiltVel += (gravityTorque + gyroCounter + disturbance) * dt;
-                charTiltVel *= Math.pow(0.92, dt * 60);
-                charTilt += charTiltVel * dt;
+                charTiltVel *= Math.pow(0.86, dt * 60);
+                charTilt    += charTiltVel * dt;
 
                 if (Math.abs(charTilt) >= FAIL_ANGLE) {
                     endRun(elapsed, true);
@@ -19900,8 +19943,8 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
                 }
             }
 
-            // Lava spatters
-            if (Math.random() < 0.35) spawnLavaBit();
+            // Lava spatters — iets minder dan voorheen (was 0.35)
+            if (Math.random() < 0.20) spawnLavaBit();
             for (let i = lavaBits.length - 1; i >= 0; i--) {
                 const b = lavaBits[i];
                 b.life += dt;
@@ -19945,6 +19988,8 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             });
             scene.remove(brugGroup);
             if (typeof goldSummit !== 'undefined') goldSummit.visible = summitWasVisible;
+            // Rook-multiplier herstellen
+            window.__smokeOpacityMul = prevSmokeMul;
             // Pad-tegels herstellen
             if (typeof tiles !== 'undefined') {
                 for (const h of hiddenTileVisibility) {
