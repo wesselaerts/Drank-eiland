@@ -10968,14 +10968,15 @@ function renderSetup() {
         { id: 'connect4',    emoji: '🟡',  name: 'Vier op een Rij',      meta: '1v1',           tag: 'NIEUW', locked: false },
         { id: 'mystery',     emoji: '🎡',  name: 'Mystery Wheel',        meta: 'random',        tag: 'NIEUW', locked: false },
         // ── nieuwste minigames ──
-        // Deze 4 staan in BETA: speelbaar vanuit het minigame-menu
-        // maar (nog) niet onderdeel van het bordspel (zitten niet in
-        // de Mystery Wheel pool van runMinigameOnTile).
+        // Lavasteen + Tiki staan in BETA: speelbaar vanuit het
+        // minigame-menu maar (nog) niet onderdeel van de rad-pools
+        // (zie MYSTERY_OPTIONS / ALL_PLAYER_WHEEL_OPTIONS). Kano,
+        // Krabben en Brug zitten daar wel in en zijn dus uit BETA.
         { id: 'lavasteen',   emoji: '🌋',  name: 'Hete Lavasteen',       meta: 'hot potato',    tag: 'BETA',  locked: false },
         { id: 'kano',        emoji: '🛶',  name: 'Kano Race',            meta: '1v1 race',      tag: 'NIEUW', locked: false },
         { id: 'krabben',     emoji: '🦀',  name: 'Krabben Vangen',       meta: 'whack-a-mole',  tag: null,    locked: false },
         { id: 'tiki',        emoji: '🗿',  name: 'Tiki Ritme',           meta: 'memory',        tag: 'BETA',  locked: false },
-        { id: 'brug',        emoji: '⚖️',  name: 'Brug Balans',          meta: 'gyro',          tag: 'BETA',  locked: false },
+        { id: 'brug',        emoji: '⚖️',  name: 'Brug Balans',          meta: 'groep / gyro',  tag: 'NIEUW', locked: false },
     ];
 
     for (const mg of MINIGAMES) {
@@ -19206,7 +19207,7 @@ function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
    De gouden top-tegel verdwijnt en er hangt een touw tussen twee
    ankerpalen op de kraterrand. Het touw is een cannon-es ketting van
    bodies + distance constraints — het hangt door en deint echt. Elke
-   speler balanceert 15 sec; gyro-tilt compenseert zwaartekracht +
+   speler balanceert 20 sec; gyro-tilt compenseert zwaartekracht +
    willekeurige wind­vlagen. Moeilijkheid groeit met de tijd: vlagen
    worden frequenter en harder.
    Lava-spetters arc'en uit de krater, warme PointLight gloeit van
@@ -19663,7 +19664,7 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
             filter: 'drop-shadow(0 2px 0 rgba(0,0,0,0.45))',
             fontVariantNumeric: 'tabular-nums', lineHeight: '1',
-        }}, '15.0');
+        }}, '20.0');
         const turnSub = el('div', { style: {
             fontSize: '10px', opacity: '0.7', letterSpacing: '0.3em',
             textTransform: 'uppercase', marginTop: '2px',
@@ -19675,7 +19676,7 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
         uiRoot.append(back);
 
         // ── State ──
-        const TURN_DURATION_MS = 15000;
+        const TURN_DURATION_MS = 20000;
         const FAIL_ANGLE = Math.PI / 2.05;      // ~88° — veel toleranter (was ~75°)
         const scores = [];
         let curIdx = 0;
@@ -19749,7 +19750,7 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             turnPill.style.setProperty('--pcol', p.color.css);
             turnName.textContent = p.name;
             turnName.style.color = p.color.css;
-            turnTime.textContent = '15.0';
+            turnTime.textContent = '20.0';
             charTilt = 0;
             charTiltVel = 0;
             fallSpinX = 0;
@@ -19765,7 +19766,7 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             const card = showCardOverlay([
                 el('h3', { style: { color: p.color.css, margin: '0 0 8px' } }, p.name),
                 el('p', { style: { margin: '6px 0' } },
-                    '15 seconden balanceren. Telefoon recht houden — de wind wordt sterker naarmate het langer duurt.'),
+                    '20 seconden balanceren. Telefoon recht houden — de wind wordt sterker naarmate het langer duurt.'),
                 el('button', { className: 'btn-pill gold', type: 'button',
                     on: { click: () => {
                         card.remove();
@@ -19924,13 +19925,9 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
                 //  • gyro-reactie ruim 2× sterker (12 i.p.v. 9, /30 i.p.v. /45)
                 //  • touw-zwaai geeft minder kanteling (0.7 → 0.25)
                 //  • meer demping (0.92 → 0.86)
-                //  • gyro-teken is POSITIEF i.p.v. negatief — nodig omdat
-                //    we tilt nu om X-as i.p.v. Z-as draaien (in nieuwe
-                //    pool-view geldt: telefoon naar rechts = pion-top
-                //    duwt naar -Z = scherm-rechts → zelfde kant).
                 const ropeLateral = mid.position.z * 1.2;
                 const gravityTorque = Math.sin(charTilt) * 4.5 * (0.85 + diff * 0.35);
-                const gyroCounter   = (gamma / 30) * 12;
+                const gyroCounter   = -(gamma / 30) * 12;
                 const disturbance   = ropeLateral * 0.25;
                 charTiltVel += (gravityTorque + gyroCounter + disturbance) * dt;
                 charTiltVel *= Math.pow(0.86, dt * 60);
@@ -20348,7 +20345,7 @@ function playSchnapsCall({ player = null, mode = 'standalone' } = {}) {
 // aan het einde van een ronde-blok (zie maybeRunAllPlayerRoundGame).
 // Krab Vangen is uit BETA opgewaardeerd naar groeps-minigame; Brug
 // Balans is sinds de 3D-rewrite ook een echt groeps-spel — elke speler
-// 15 sec balanceren op het touw boven de krater. De andere BETA-
+// 20 sec balanceren op het touw boven de krater. De andere BETA-
 // spellen (lavasteen, tiki) blijven alleen handmatig speelbaar via
 // het minigame-menu.
 const ALL_PLAYER_WHEEL_OPTIONS = [
