@@ -19207,9 +19207,10 @@ function playTikiRitme({ players = G.players, drinks = 3 } = {}) {
    De gouden top-tegel verdwijnt en er hangt een touw tussen twee
    ankerpalen op de kraterrand. Het touw is een cannon-es ketting van
    bodies + distance constraints — het hangt door en deint echt. Elke
-   speler balanceert 20 sec; gyro-tilt compenseert zwaartekracht +
-   willekeurige wind­vlagen. Moeilijkheid groeit met de tijd: vlagen
-   worden frequenter en harder.
+   speler balanceert zo lang mogelijk; eerste 5 sec is een grace
+   period, daarna ramped de difficulty 0→1 over 85s, en blijft groeien
+   voorbij 1.0 zodat ~90s 'bijna onmogelijk' is. Wie 't langst overleeft
+   wint. Gyro-tilt compenseert zwaartekracht + willekeurige windvlagen.
    Lava-spetters arc'en uit de krater, warme PointLight gloeit van
    onderaf, rook plumes blijven (uit hoofd-scène). Eerste die valt
    verliest; langste tijd overlevend wint.
@@ -19664,7 +19665,7 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
             filter: 'drop-shadow(0 2px 0 rgba(0,0,0,0.45))',
             fontVariantNumeric: 'tabular-nums', lineHeight: '1',
-        }}, '20.0');
+        }}, '0.0');
         const turnSub = el('div', { style: {
             fontSize: '10px', opacity: '0.7', letterSpacing: '0.3em',
             textTransform: 'uppercase', marginTop: '2px',
@@ -19676,8 +19677,14 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
         uiRoot.append(back);
 
         // ── State ──
-        const TURN_DURATION_MS = 20000;
-        const FAIL_ANGLE = Math.PI / 2.05;      // ~88° — veel toleranter (was ~75°)
+        // Geen vaste tijdslimiet meer — count-UP timer, je speelt tot je
+        // valt. Eerste GRACE_SEC zijn 'rustig' (geen wind/disturbance)
+        // zodat je aan de controls went. Daarna ramped de difficulty
+        // gradueel van 0 → 1 in RAMP_SEC seconden en groeit dóór (>1)
+        // voor de uitzonderlijk goede spelers.
+        const GRACE_SEC   = 5;
+        const RAMP_SEC    = 85;     // bereikt diff=1.0 rond 90s totaal
+        const FAIL_ANGLE  = Math.PI / 2.05;      // ~88° — toleranter
         const scores = [];
         let curIdx = 0;
         let phase = 'permission';
@@ -19750,7 +19757,7 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             turnPill.style.setProperty('--pcol', p.color.css);
             turnName.textContent = p.name;
             turnName.style.color = p.color.css;
-            turnTime.textContent = '20.0';
+            turnTime.textContent = '0.0';
             charTilt = 0;
             charTiltVel = 0;
             fallSpinX = 0;
@@ -19766,7 +19773,7 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             const card = showCardOverlay([
                 el('h3', { style: { color: p.color.css, margin: '0 0 8px' } }, p.name),
                 el('p', { style: { margin: '6px 0' } },
-                    '20 seconden balanceren. Telefoon recht houden — de wind wordt sterker naarmate het langer duurt.'),
+                    'Hou het zo lang mogelijk vol! Eerste 5 sec is rustig. Daarna wordt het langzaam zwaarder — wie het langst blijft staan wint.'),
                 el('button', { className: 'btn-pill gold', type: 'button',
                     on: { click: () => {
                         card.remove();
@@ -19792,20 +19799,29 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             }
             setTimeout(() => {
                 const p = players[curIdx];
+                const t = survivedMs / 1000;
+                // Flavor-tekst per tijds-bracket — geeft elke speler een
+                // mini-rang ongeacht of ze later nog ingehaald worden.
+                let tier;
+                if      (t <  8)  tier = 'Snel gevallen 🌋';
+                else if (t < 20)  tier = 'Goed bezig 💪';
+                else if (t < 40)  tier = 'Sterke balans 🎯';
+                else if (t < 60)  tier = 'Indrukwekkend 🔥';
+                else if (t < 90)  tier = 'Bijna onmogelijk 🏆';
+                else              tier = 'LEGENDARISCH 👑';
                 const card = showCardOverlay([
-                    el('h3', { style: { margin: '0 0 4px' } },
-                        didFall ? 'Gevallen! 🌋' : 'Overleefd! 🎉'),
+                    el('h3', { style: { margin: '0 0 4px' } }, tier),
                     el('div', { style: {
-                        fontSize: '32px', fontWeight: '900', color: p.color.css,
+                        fontSize: '36px', fontWeight: '900', color: p.color.css,
                         margin: '6px 0' } },
-                        (survivedMs / 1000).toFixed(1) + 's'),
+                        t.toFixed(1) + 's'),
                     el('p', { style: { margin: '0' } }, `${p.name}`),
                 ], p.color.css);
                 setTimeout(() => {
                     card.remove();
                     if (curIdx < players.length - 1) startRun(curIdx + 1);
                     else showFinal();
-                }, 2200);
+                }, 2400);
             }, 1200);
         }
         function showFinal() {
@@ -19894,49 +19910,68 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             if (phase === 'running') {
                 phaseT += dt;
                 const elapsed = now - runStartMs;
-                const remaining = Math.max(0, TURN_DURATION_MS - elapsed);
-                turnTime.textContent = (remaining / 1000).toFixed(1);
+                const elapsedSec = elapsed / 1000;
+                // Count-UP timer — laat zien hoe lang je 't volhoudt.
+                turnTime.textContent = elapsedSec.toFixed(1);
 
-                const diff = elapsed / TURN_DURATION_MS;
-                // Wind-vlagen — fors verzwakt zodat 't echt speelbaar is.
-                //   (was: chance 0.025+diff*0.08, mag 0.5+diff*1.6)
-                const gustChance = 0.010 + diff * 0.035;
-                const gustMag    = 0.18 + diff * 0.55;
-                if (Math.random() < gustChance && now - lastGustMs > 450) {
+                // ── Difficulty curve ─────────────────────────────────
+                //  • Eerste GRACE_SEC: 'grace' fade-in van 0 → 1.
+                //    Tijdens grace=0 zijn er geen wind-vlagen en geen
+                //    rope-disturbance → speler went rustig aan controls.
+                //  • Daarna 'diff' ramp 0 → 1 over RAMP_SEC seconden,
+                //    licht versneld (^1.2). Diff blijft groeien voorbij
+                //    1.0 voor de uitzonderlijk goede balanceer-kampioenen
+                //    → rond 90s 'bijna onmogelijk', daarna écht onmogelijk.
+                const grace = THREE.MathUtils.clamp(elapsedSec / GRACE_SEC, 0, 1);
+                const rampedSec = Math.max(0, elapsedSec - GRACE_SEC);
+                const diff = Math.pow(rampedSec / RAMP_SEC, 1.2);
+
+                // ── Wind-vlagen ──────────────────────────────────────
+                //  Schalen fors mee: bij diff=1 ~3× zoveel kans, ~3×
+                //  zwaardere stoot, en korter cooldown. Vermenigvuldigd
+                //  met grace zodat de eerste 5 sec écht rustig zijn.
+                const gustChance   = grace * (0.012 + diff * 0.10);
+                const gustMag      = (0.18 + diff * 1.5) * grace;
+                const gustCooldown = Math.max(180, 450 - diff * 240);
+                if (Math.random() < gustChance && now - lastGustMs > gustCooldown) {
                     const zDir = Math.random() < 0.5 ? -1 : 1;
+                    const zImp = zDir * gustMag * (0.14 + diff * 0.05);
                     for (let i = 4; i < N_SEGS - 4; i++) {
                         ropeBodies[i].applyImpulse(
-                            new CANNON.Vec3(0, 0, zDir * gustMag * 0.14),
+                            new CANNON.Vec3(0, 0, zImp),
                             new CANNON.Vec3(0, 0, 0));
                     }
                     const xDir = Math.random() < 0.5 ? -1 : 1;
+                    const xImp = xDir * gustMag * 0.03;
                     for (let i = 3; i < N_SEGS - 3; i++) {
                         ropeBodies[i].applyImpulse(
-                            new CANNON.Vec3(xDir * gustMag * 0.025, 0, 0),
+                            new CANNON.Vec3(xImp, 0, 0),
                             new CANNON.Vec3(0, 0, 0));
                     }
                     lastGustMs = now;
                 }
 
-                // Inverted-pendulum balans — versoepeld zodat 't ook
-                // speelbaar is zonder pro-balans-skills:
-                //  • zwaartekracht-torque omlaag: 12 → 4.5
-                //  • difficulty-rampup zachter: 0.8+diff → 0.85+diff*0.35
-                //  • gyro-reactie ruim 2× sterker (12 i.p.v. 9, /30 i.p.v. /45)
-                //  • touw-zwaai geeft minder kanteling (0.7 → 0.25)
-                //  • meer demping (0.92 → 0.86)
-                const ropeLateral = mid.position.z * 1.2;
-                const gravityTorque = Math.sin(charTilt) * 4.5 * (0.85 + diff * 0.35);
+                // ── Inverted-pendulum balans ─────────────────────────
+                //  • zwaartekracht-torque groeit fors met diff
+                //    (0.7 → 2.7 bij diff=1, daarna verder)
+                //  • disturbance van rope-zwaai schaalt ook mee, maar
+                //    is 0 tijdens grace
+                //  • demping vermindert geleidelijk: bij hoge diff
+                //    blijven oscillaties veel langer hangen
+                //  • gyro-respons blijft constant — anders zou 't
+                //    oneerlijk frustrerend worden
+                const ropeLateral   = mid.position.z * 1.2;
+                const gravityTorque = Math.sin(charTilt) * 4.5 * (0.70 + diff * 2.0);
                 const gyroCounter   = -(gamma / 30) * 12;
-                const disturbance   = ropeLateral * 0.25;
+                const disturbance   = ropeLateral * (0.18 + diff * 0.6) * grace;
                 charTiltVel += (gravityTorque + gyroCounter + disturbance) * dt;
-                charTiltVel *= Math.pow(0.86, dt * 60);
+                const dampFactor = Math.min(0.95, 0.84 + diff * 0.10);
+                charTiltVel *= Math.pow(dampFactor, dt * 60);
                 charTilt    += charTiltVel * dt;
 
+                // Enige exit-conditie: vallen. Geen tijdslimiet meer.
                 if (Math.abs(charTilt) >= FAIL_ANGLE) {
                     endRun(elapsed, true);
-                } else if (elapsed >= TURN_DURATION_MS) {
-                    endRun(TURN_DURATION_MS, false);
                 }
             }
 
@@ -20344,10 +20379,10 @@ function playSchnapsCall({ player = null, mode = 'standalone' } = {}) {
 // Die triggeren NIET meer via een tile op het bord, maar automatisch
 // aan het einde van een ronde-blok (zie maybeRunAllPlayerRoundGame).
 // Krab Vangen is uit BETA opgewaardeerd naar groeps-minigame; Brug
-// Balans is sinds de 3D-rewrite ook een echt groeps-spel — elke speler
-// 20 sec balanceren op het touw boven de krater. De andere BETA-
-// spellen (lavasteen, tiki) blijven alleen handmatig speelbaar via
-// het minigame-menu.
+// Balans is sinds de 3D-rewrite ook een echt groeps-spel — endless
+// survival, wie het langst op het touw blijft wint (difficulty ramped
+// tot ±90s onmogelijk). De andere BETA-spellen (lavasteen, tiki)
+// blijven alleen handmatig speelbaar via het minigame-menu.
 const ALL_PLAYER_WHEEL_OPTIONS = [
     { id: 'tappy',   emoji: '🐦', label: 'Tappy Bird',  color: '#ff7ad6' },
     { id: 'volcano', emoji: '🌋', label: 'Volcano Hop', color: '#3aff9e' },
@@ -21742,8 +21777,9 @@ async function runMinigameOnTile(id, player) {
         const d = slokken(3);
         const go = await showModal({
             emoji: '⚖️', title: 'Brug Balans!',
-            body: ['Houd je telefoon zo recht mogelijk om de brug te overleven.',
-                   `Kortste tijd(en) drinken ${d} 🍻.`],
+            body: ['Hou je telefoon zo recht mogelijk en blijf zo lang mogelijk op het touw.',
+                   'Eerste 5 sec is rustig, daarna wordt het langzaam zwaarder.',
+                   `Wie het langst overleeft wint — kortste tijd(en) drinken ${d} 🍻.`],
             actions: [{ label: 'Start', value: true }],
         });
         if (!go) return;
