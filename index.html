@@ -19958,11 +19958,16 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
                 //    is 0 tijdens grace
                 //  • demping vermindert geleidelijk: bij hoge diff
                 //    blijven oscillaties veel langer hangen
-                //  • gyro-respons blijft constant — anders zou 't
-                //    oneerlijk frustrerend worden
+                //  • gyro-gevoeligheid groeit OOK mee: 12 → 22 bij
+                //    diff=1, blijft daarna verder stijgen. Effect is
+                //    tweesnijdend: je kunt sneller corrigeren maar de
+                //    pion reageert ook op kleine onbewuste handtrillingen
+                //    → precisie wordt cruciaal naarmate je 't langer
+                //    volhoudt.
                 const ropeLateral   = mid.position.z * 1.2;
                 const gravityTorque = Math.sin(charTilt) * 4.5 * (0.70 + diff * 2.0);
-                const gyroCounter   = -(gamma / 30) * 12;
+                const gyroSens      = 12 + diff * 10;
+                const gyroCounter   = -(gamma / 30) * gyroSens;
                 const disturbance   = ropeLateral * (0.18 + diff * 0.6) * grace;
                 charTiltVel += (gravityTorque + gyroCounter + disturbance) * dt;
                 const dampFactor = Math.min(0.95, 0.84 + diff * 0.10);
