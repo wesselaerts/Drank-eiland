@@ -3527,7 +3527,8 @@ volcano.position.set(-0.2, 0, 0.2);
 mainIsland.add(volcano);
 
 // slim deformed cone — sits ON the upper grass terrace, leaves room for the path to spiral around
-const coneGeo = deformCylinder(new THREE.CylinderGeometry(1.6, 3.2, 6.5, 22), 0.3);
+// openEnded: true zodat de top open is en je in de echte krater kunt kijken
+const coneGeo = deformCylinder(new THREE.CylinderGeometry(1.6, 3.2, 6.5, 22, 1, true), 0.3);
 const cone = new THREE.Mesh(coneGeo, MAT.rock);
 cone.position.y = 9.15;   // base at y≈5.9 (top of upper terrace), tip at y≈12.4
 cone.castShadow = true;
@@ -3535,37 +3536,51 @@ cone.receiveShadow = true;
 volcano.add(cone);
 addOutline(cone, 1.02);
 
-// crater rim (slightly tilted for asymmetry)
-const rimGeo = new THREE.CylinderGeometry(1.7, 1.85, 0.6, 20);
+// crater rim — nu een echte hollow ring (open-ended cylinder) zodat
+// je in de krater kunt kijken in plaats van een dichte deksel.
+const rimGeo = new THREE.CylinderGeometry(1.7, 1.85, 0.6, 20, 1, true);
 const rim = new THREE.Mesh(rimGeo, MAT.rockDark);
+rim.material.side = THREE.DoubleSide;
 rim.position.y = 12.55;
 rim.rotation.z = 0.05;
 volcano.add(rim);
-addOutline(rim, 1.04);
 
-// inner crater bowl
+// inner crater bowl — wijder en dieper voor een echte gat-look. De
+// wand loopt van rim-niveau (~12.55) naar omlaag, dichter naar het
+// bestaande cone-bot. DoubleSide zodat je van bovenaf in de krater
+// kijkt en de wand ziet.
 const bowl = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.3, 0.8, 1.0, 20, 1, true),
+    new THREE.CylinderGeometry(1.55, 0.9, 1.6, 24, 1, true),
     MAT.rockDark
 );
-bowl.position.y = 12.05;
+bowl.position.y = 11.75;
 bowl.material.side = THREE.DoubleSide;
 volcano.add(bowl);
 
-// bubbling lava pool (animated emissive)
+// Dichte bodem onder de lava zodat je niet door de vulkaan heen kijkt
+const craterFloor = new THREE.Mesh(
+    new THREE.CircleGeometry(0.95, 20),
+    MAT.rockDark
+);
+craterFloor.rotation.x = -Math.PI / 2;
+craterFloor.position.y = 10.95;
+volcano.add(craterFloor);
+
+// bubbling lava pool (animated emissive) — nu RECESSED, ligt dieper
+// in de krater zodat 'r echte wanden boven uitsteken.
 const lavaPool = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.2, 1.2, 0.4, 24),
+    new THREE.CylinderGeometry(1.1, 1.0, 0.35, 24),
     MAT.lava
 );
-lavaPool.position.y = 12.4;
+lavaPool.position.y = 11.20;
 volcano.add(lavaPool);
 
-// inner bright spot for extra glow
+// inner bright spot for extra glow — ook lager mee
 const lavaInner = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.7, 0.7, 0.45, 18),
+    new THREE.CylinderGeometry(0.65, 0.65, 0.35, 18),
     MAT.lavaBright
 );
-lavaInner.position.y = 12.45;
+lavaInner.position.y = 11.25;
 volcano.add(lavaInner);
 
 // emissive cracks running down the cone (thin curved planes)
@@ -19443,9 +19458,24 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
         // Hide gold summit zodat het touw vrij baan heeft
         const summitWasVisible = (typeof goldSummit !== 'undefined') ? goldSummit.visible : true;
         if (typeof goldSummit !== 'undefined') goldSummit.visible = false;
+        // Hide pad-tegels die langs de vulkaan omhoog spiralen — die
+        // blokkeren het zicht op het touw boven de krater. Bewaar de
+        // oorspronkelijke visible-staat om te herstellen in finish().
+        const HIDDEN_TILE_RANGE = { start: 35, end: 41 };  // tiles 35–40
+        const hiddenTileVisibility = [];
+        if (typeof tiles !== 'undefined') {
+            for (let i = HIDDEN_TILE_RANGE.start; i < HIDDEN_TILE_RANGE.end; i++) {
+                if (tiles[i] && tiles[i].mesh) {
+                    hiddenTileVisibility.push({ idx: i, vis: tiles[i].mesh.visible });
+                    tiles[i].mesh.visible = false;
+                }
+            }
+        }
 
-        // ── Camera: diagonale view op de krater ──
-        const BRUG_CAM_POS = new THREE.Vector3(7.5, 16.0, 7.5);
+        // ── Camera: dichterbij en meer van bovenaf, met diagonale kanteling.
+        //    Eerder zoomde 'ie te ver uit. Position (3, 17, 3) is hoog
+        //    boven de vulkaan met een 45°-blik omlaag op de krater.
+        const BRUG_CAM_POS = new THREE.Vector3(3.0, 17.0, 3.0);
         const BRUG_CAM_TGT = new THREE.Vector3(0, 12.3, 0);
         const camFromPos = camera.position.clone();
         const camFromTgt = controls.target.clone();
@@ -19567,29 +19597,6 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
         const craterLight = new THREE.PointLight(0xff5a1f, 3.0, 8, 1.5);
         craterLight.position.set(0, 12.3, 0);
         brugGroup.add(craterLight);
-
-        // Diepere donker-kraterwand voor extra dramatiek tijdens deze
-        // minigame. Donkere cylinder-band die wegvalt in zwart, met een
-        // ring eromheen op rim-niveau. Wordt in finish() opgeruimd.
-        const craterBowl = new THREE.Mesh(
-            new THREE.CylinderGeometry(1.45, 1.05, 1.4, 24, 1, true),
-            new THREE.MeshStandardMaterial({
-                color: 0x150a04, roughness: 0.95, metalness: 0.0,
-                side: THREE.DoubleSide,
-                emissive: 0x4a1a08, emissiveIntensity: 0.4,
-            }));
-        craterBowl.position.set(0, 11.85, 0);
-        brugGroup.add(craterBowl);
-        // Rim accent ring — donker met subtiele emissive gloed
-        const craterRim = new THREE.Mesh(
-            new THREE.TorusGeometry(1.55, 0.08, 6, 32),
-            new THREE.MeshStandardMaterial({
-                color: 0x1a0c04, roughness: 0.9, metalness: 0.2,
-                emissive: 0x5a2a10, emissiveIntensity: 0.35,
-            }));
-        craterRim.position.set(0, 12.6, 0);
-        craterRim.rotation.x = Math.PI / 2;
-        brugGroup.add(craterRim);
 
         // Lava-spatters
         const lavaBits = [];
@@ -19819,14 +19826,19 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             const dt = Math.min(0.033, (now - lastT) / 1000);
             lastT = now;
 
-            // Camera lerp
+            // Camera lerp — forceer positie ELKE frame zodat OrbitControls
+            // (die controls.update() draait vóór deze hook) ons niet
+            // wegspringt. Anders zag je een 'snap' na de lerp.
             if (camLerpT < 1) {
                 camLerpT = Math.min(1, camLerpT + dt / camLerpDur);
                 const e = 1 - Math.pow(1 - camLerpT, 3);
                 camera.position.lerpVectors(camFromPos, BRUG_CAM_POS, e);
                 controls.target.lerpVectors(camFromTgt, BRUG_CAM_TGT, e);
-                camera.lookAt(controls.target);
+            } else {
+                camera.position.copy(BRUG_CAM_POS);
+                controls.target.copy(BRUG_CAM_TGT);
             }
+            camera.lookAt(controls.target);
 
             // Physics
             physWorld.step(1 / 60, dt, 3);
@@ -19933,6 +19945,14 @@ function playBrugBalans({ players = G.players, drinks = 3 } = {}) {
             });
             scene.remove(brugGroup);
             if (typeof goldSummit !== 'undefined') goldSummit.visible = summitWasVisible;
+            // Pad-tegels herstellen
+            if (typeof tiles !== 'undefined') {
+                for (const h of hiddenTileVisibility) {
+                    if (tiles[h.idx] && tiles[h.idx].mesh) {
+                        tiles[h.idx].mesh.visible = h.vis;
+                    }
+                }
+            }
             camera.fov = savedCam.fov;
             camera.position.copy(savedCam.pos);
             camera.updateProjectionMatrix();
